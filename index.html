@@ -207,6 +207,16 @@ button{font:inherit;color:inherit}
 .ref h3:first-child{margin-top:0}
 .ref h4{font-size:15px;margin:22px 0 8px;color:var(--marge);font-family:var(--body);font-weight:700;letter-spacing:0}
 .ref p{font-size:14.5px;color:var(--ink-2);margin:0 0 10px}
+.ref .lead{font-size:16.5px;color:var(--ink);margin:0 0 18px;max-width:70ch}
+.ref ol.steps{counter-reset:st;list-style:none;padding:0;margin:14px 0}
+.ref ol.steps li{position:relative;padding:2px 0 0 42px;margin:0 0 14px;font-size:14.5px}
+.ref ol.steps li::before{counter-increment:st;content:counter(st);position:absolute;left:0;top:0;
+  width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);
+  font-size:12px;display:flex;align-items:center;justify-content:center}
+.ref ol.steps .tbl{margin-top:8px}
+.ref .ex{font-size:15px;background:var(--paper);border:1px dashed var(--seyes);border-radius:8px;
+  padding:11px 13px;margin:10px 0;line-height:1.7}
+.ref .ex b{color:var(--rhodia)}
 .ref .rule{
   background:var(--paper);border-left:3px solid var(--rhodia);border-radius:0 8px 8px 0;
   padding:12px 14px;margin:12px 0;font-size:14.5px;
@@ -600,7 +610,7 @@ const TOPICS = [];
 TOPICS.push({
 id:"verben", title:"Verben & Konjugation", page:"S. 154–157",
 desc:"Hilfsverben, die drei Verbgruppen, Besonderheiten der Schreibung und alle unregelmäßigen Verben aus dem Buch.",
-modes:["ref","conj","flash","mc","fill"],
+modes:["how","ref","conj","flash","mc","fill"],
 ref:"verbRef",
 items:[
  {t:"mc",q:"nous ___ (commencer) — présent",opts:["commencons","commençons","commencions","commençions"],a:1,
@@ -649,7 +659,7 @@ items:[
 TOPICS.push({
 id:"verbpraep", title:"Verben mit Präposition", page:"S. 158–159",
 desc:"Verben mit indirektem Objekt (de / à) und Verben mit Infinitivergänzung. Der häufigste Fehlerquell im Test.",
-modes:["ref","match","mc","flash"],
+modes:["how","ref","match","mc","flash"],
 ref:"verbPrepRef",
 items:[
  {t:"match",title:"Indirektes Objekt mit de",pairs:[
@@ -708,7 +718,7 @@ items:[
 TOPICS.push({
 id:"zeiten", title:"Zeiten & ihr Gebrauch", page:"Ergänzung",
 desc:"Wann passé composé, wann imparfait? Dazu futur, conditionnel, subjonctif, gérondif und die si-Sätze.",
-modes:["ref","mc","fill","flash"],
+modes:["how","ref","mc","fill","flash"],
 ref:"tenseRef",
 items:[
  {t:"mc",q:"Quand j'étais petit, je ___ toujours chez ma grand-mère.",opts:["allais","suis allé","irai","aille"],a:0,
@@ -751,7 +761,7 @@ items:[
 TOPICS.push({
 id:"zahlen", title:"Zahlen", page:"S. 160",
 desc:"Grundzahlen, Ordnungszahlen, Jahres- und Dezimalzahlen — mit unendlich vielen Zufallsaufgaben.",
-modes:["ref","num","mc","flash"],
+modes:["how","ref","num","mc","flash"],
 ref:"numRef",
 items:[
  {t:"mc",q:"78 heißt auf Französisch …",opts:["septante-huit","soixante-dix-huit","quatre-vingt-dix-huit","soixante-huit"],a:1,
@@ -783,7 +793,7 @@ items:[
 TOPICS.push({
 id:"praep", title:"Präpositionen & kleine Wörter", page:"Ergänzung",
 desc:"à, de, en, chez, depuis, pendant … dazu Länder, Verkehrsmittel und die Bindewörter, die Texte zusammenhalten.",
-modes:["ref","mc","fill","match","flash"],
+modes:["how","ref","mc","fill","match","flash"],
 ref:"prepRef",
 items:[
  {t:"mc",q:"Je parle ___ prof de maths.",opts:["à le","au","à la","del"],a:1,why:"à + le wird immer zu au. à + les wird zu aux."},
@@ -825,7 +835,7 @@ items:[
 TOPICS.push({
 id:"pronomen", title:"Pronomen", page:"Ergänzung",
 desc:"Objektpronomen, y und en, betonte Pronomen und Relativpronomen — samt ihrer Stellung im Satz.",
-modes:["ref","mc","order","fill","flash"],
+modes:["how","ref","mc","order","fill","flash"],
 ref:"pronRef",
 items:[
  {t:"mc",q:"Tu vois Paul ? — Oui, je ___ vois.",opts:["lui","le","y","en"],a:1,
@@ -869,7 +879,7 @@ items:[
 TOPICS.push({
 id:"satzbau", title:"Satzbau, Negation & Fragen", page:"Ergänzung",
 desc:"Wortstellung, alle Verneinungen, drei Arten zu fragen — und wie man Nebensätze anschließt.",
-modes:["ref","order","mc","fill","flash"],
+modes:["how","ref","order","mc","fill","flash"],
 ref:"synRef",
 items:[
  {t:"order",de:"Wir sind gestern nach Paris gefahren.",a:["Nous","sommes","allés","à","Paris","hier"],end:"."},
@@ -909,7 +919,7 @@ items:[
 TOPICS.push({
 id:"adjektive", title:"Adjektive, Adverbien & Vergleich", page:"Ergänzung",
 desc:"Angleichung, Stellung vor oder nach dem Nomen, Adverbien auf -ment und alle Vergleichsformen.",
-modes:["ref","mc","fill","flash"],
+modes:["how","ref","mc","fill","flash"],
 ref:"adjRef",
 items:[
  {t:"mc",q:"une fille ___ (sportif)",opts:["sportife","sportive","sportifve","sportif"],a:1,why:"-if wird im Femininum zu -ive: sportif → sportive."},
@@ -1348,10 +1358,548 @@ assez <b>d'</b>argent, un peu <b>de</b> lait, une bouteille <b>d'</b>eau.</div>`
 </script>
 <script>
 /* ============================================================
+   6. ERKLÄRUNGEN — wie alles gebildet wird
+   ============================================================ */
+const EXPL = {};
+
+EXPL.verben = () => `
+<p class="lead">Ein französisches Verb besteht immer aus zwei Teilen: einem <b>Stamm</b> (der sagt, <i>was</i> passiert)
+und einer <b>Endung</b> (die sagt, <i>wer</i> es tut und <i>wann</i>). Konjugieren heißt nichts anderes, als den
+richtigen Stamm zu finden und die passende Endung anzuhängen.</p>
+
+<h3>Schritt 0: Den Stamm finden</h3>
+<p>Man nimmt den Infinitiv und schneidet die letzten zwei Buchstaben ab. Was übrig bleibt, ist der Stamm.</p>
+<div class="ex">regard<b>er</b> → Stamm <b>regard-</b> · fin<b>ir</b> → Stamm <b>fin-</b> · attend<b>re</b> → Stamm <b>attend-</b></div>
+<p>Genau darum unterscheidet man drei Gruppen: -er, -ir und -re. Die Gruppe entscheidet, welche Endungen drankommen.</p>
+
+<h3>Das Präsens</h3>
+<ol class="steps">
+<li>Stamm abschneiden (siehe oben).</li>
+<li>Endung der Gruppe anhängen:
+<table class="tbl">
+<tr><th></th><th>-er (regarder)</th><th>-re (attendre)</th><th>-ir (finir)</th><th>-ir (sortir)</th></tr>
+<tr><td>je</td><td class="fr">-e</td><td class="fr">-s</td><td class="fr">-is</td><td class="fr">-s</td></tr>
+<tr><td>tu</td><td class="fr">-es</td><td class="fr">-s</td><td class="fr">-is</td><td class="fr">-s</td></tr>
+<tr><td>il/elle/on</td><td class="fr">-e</td><td class="fr">—</td><td class="fr">-it</td><td class="fr">-t</td></tr>
+<tr><td>nous</td><td class="fr">-ons</td><td class="fr">-ons</td><td class="fr">-issons</td><td class="fr">-ons</td></tr>
+<tr><td>vous</td><td class="fr">-ez</td><td class="fr">-ez</td><td class="fr">-issez</td><td class="fr">-ez</td></tr>
+<tr><td>ils/elles</td><td class="fr">-ent</td><td class="fr">-ent</td><td class="fr">-issent</td><td class="fr">-ent</td></tr>
+</table></li>
+</ol>
+<div class="rule"><b>Warum zwei Sorten -ir-Verben?</b> Bei <i>finir</i> schiebt sich im Plural ein <b>-iss-</b> dazwischen
+(nous fin<b>iss</b>ons), bei <i>sortir</i> nicht (nous sortons). Das muss man pro Verb mitlernen — <i>finir, choisir, grandir,
+réagir, réussir</i> gehören zur ersten Sorte, <i>sortir, partir, dormir, sentir</i> zur zweiten.</div>
+<div class="rule"><b>Hörtipp:</b> je, tu, il und ils klingen bei den -er-Verben alle gleich (je regarde = ils regardent).
+Nur nous und vous hört man wirklich heraus. Beim Schreiben zählt aber jeder Buchstabe.</div>
+
+<h3>Das passé composé — die abgeschlossene Vergangenheit</h3>
+<p>Es besteht aus zwei Wörtern, genau wie das deutsche Perfekt („ich <u>habe</u> ge<u>macht</u>“).</p>
+<ol class="steps">
+<li><b>Hilfsverb wählen:</b> fast immer <b>avoir</b>. <b>être</b> nur bei den 13 Bewegungs- und Zustandsverben
+(aller, arriver, descendre, devenir, entrer, monter, partir, rentrer, rester, retourner, sortir, tomber, venir)
+und bei allen reflexiven Verben.</li>
+<li><b>Hilfsverb im Präsens konjugieren:</b> j'ai / je suis, tu as / tu es …</li>
+<li><b>Partizip bilden:</b> -er → <b>-é</b> (regardé) · -ir → <b>-i</b> (fini) · -re → <b>-u</b> (attendu).
+Unregelmäßige muss man lernen: fait, dit, pris, mis, vu, lu, eu, été, écrit, ouvert, offert, venu, voulu, pu, dû, su.</li>
+<li><b>Nur bei être:</b> das Partizip ans Subjekt angleichen — wie ein Adjektiv.
+elle est allé<b>e</b>, ils sont allé<b>s</b>, elles sont allé<b>es</b>.</li>
+</ol>
+<div class="ex">j' <b>ai</b> regard<b>é</b> un film. · elle <b>est</b> parti<b>e</b> à huit heures.</div>
+
+<h3>Der imparfait — die beschreibende Vergangenheit</h3>
+<p>Hier gibt es genau <b>eine</b> Regel, und sie gilt für jedes Verb außer <i>être</i>.</p>
+<ol class="steps">
+<li>Verb im Präsens in die <b>nous-Form</b> setzen: <i>faire</i> → nous <b>faisons</b>.</li>
+<li><b>-ons</b> abschneiden: <b>fais-</b></li>
+<li>Endung anhängen: <b>-ais, -ais, -ait, -ions, -iez, -aient</b> → je faisais, nous faisions.</li>
+</ol>
+<div class="ex">prendre → nous pren<b>ons</b> → je <b>prenais</b> · finir → nous fin<b>issons</b> → je <b>finissais</b></div>
+<div class="rule"><b>Einzige Ausnahme:</b> être → j'<b>étais</b>. Und: -ais, -ait, -aient klingen alle gleich [ɛ] —
+welches man schreibt, entscheidet nur das Subjekt.</div>
+
+<h3>Das futur simple — die Zukunft</h3>
+<ol class="steps">
+<li><b>Futurstamm:</b> der ganze Infinitiv. Bei -re-Verben fällt das e weg: attendre → <b>attendr-</b>.
+Der Stamm endet <b>immer</b> auf -r, das ist der Erkennungston der Zukunft.</li>
+<li>Endungen anhängen — das sind genau die Präsensformen von <i>avoir</i>: <b>-ai, -as, -a, -ons, -ez, -ont</b>.</li>
+</ol>
+<div class="ex">parler → je parler<b>ai</b> · attendre → tu attendr<b>as</b> · finir → ils finir<b>ont</b></div>
+<p>Etwa ein Dutzend Verben hat einen eigenen Stamm, den Rest der Regel ändert das nicht:
+aur-, ser-, ir-, fer-, viendr-, pourr-, devr-, saur-, voudr-, verr-, faudr-, courr-, enverr-.</p>
+
+<h3>Der conditionnel — die Höflichkeitsform</h3>
+<div class="rule">Futurstamm + imparfait-Endungen. Mehr ist es nicht.<br>
+je voudr<b>ais</b> (statt je veux), j'aimer<b>ais</b>, ce ser<b>ait</b> possible.<br>
+<b>Verwechslungsgefahr:</b> je parler<b>ai</b> = ich werde sprechen · je parler<b>ais</b> = ich würde sprechen.
+Ein einziger Buchstabe.</div>
+
+<h3>Der subjonctif</h3>
+<ol class="steps">
+<li>Verb im Präsens in die <b>ils-Form</b> setzen: <i>prendre</i> → ils <b>prennent</b>.</li>
+<li><b>-ent</b> abschneiden: <b>prenn-</b></li>
+<li>Endungen: <b>-e, -es, -e, -ions, -iez, -ent</b> → que je prenne, qu'ils prennent.</li>
+<li><b>Achtung bei nous und vous:</b> die sehen aus wie der imparfait — que nous <b>prenions</b>, que vous <b>preniez</b>.
+Genau dort steckt der rote Warnpunkt im Buch.</li>
+</ol>
+<p>Eigene Stämme haben nur: être (sois), avoir (aie), aller (aille), faire (fasse), pouvoir (puisse),
+savoir (sache), vouloir (veuille), falloir (faille).</p>
+
+<h3>Der Imperativ</h3>
+<div class="rule">Man nimmt die Präsensformen von tu, nous und vous und lässt das Subjektpronomen weg.<br>
+Bei -er-Verben (und bei ouvrir, offrir, aller) fällt beim <b>tu</b> das -s weg: tu regardes → <b>Regarde !</b> · <b>Va !</b><br>
+Reflexiv: das Pronomen rutscht nach hinten und me wird zu toi — <b>Lève-toi !</b>, verneint aber wieder nach vorn: <b>Ne te lève pas !</b></div>
+
+<h3>Die reflexiven Verben</h3>
+<p>Sie haben ein zweites Pronomen, das sich mitverändert und immer <b>vor</b> dem Verb steht:</p>
+<div class="ex">je <b>me</b> couche · tu <b>te</b> couches · il <b>se</b> couche · nous <b>nous</b> couchons · vous <b>vous</b> couchez · ils <b>se</b> couchent</div>
+<p>Vor einem Vokal wird me/te/se zu m'/t'/s' (je m'entraîne). Im passé composé immer mit être:
+je me suis couché(e). Und im Infinitiv passt sich das Pronomen an: je vais <b>me</b> coucher, nous allons <b>nous</b> coucher.</p>
+
+<h3>Warum manche -er-Verben die Schreibung ändern</h3>
+<p>Nicht aus Bosheit, sondern damit die Aussprache stimmt. Drei Muster:</p>
+<table class="tbl">
+<tr><td class="fr">c → ç · g → ge</td><td>vor a und o, damit c und g weich bleiben: nous commen<b>ç</b>ons, nous man<b>ge</b>ons.
+Vor i und e passiert nichts: nous commencions.</td></tr>
+<tr><td class="fr">e → è · é → è</td><td>wenn die Endung stumm ist, braucht die Silbe davor den offenen Klang:
+j'ach<b>è</b>te, je préf<b>è</b>re — aber nous achetons, nous préférons (dort ist die Endung hörbar).</td></tr>
+<tr><td class="fr">Doppelkonsonant</td><td>gleicher Grund, andere Lösung: j'appe<b>ll</b>e, je je<b>tt</b>e — aber nous appelons, nous jetons.</td></tr>
+</table>
+<div class="rule"><b>Faustregel:</b> Die Änderung passiert immer in den vier „stummen“ Formen (je, tu, il, ils) —
+nous und vous bleiben brav wie der Infinitiv.</div>`;
+
+EXPL.verbpraep = () => `
+<p class="lead">Hier gibt es nichts abzuleiten — aber es gibt ein System, wie man es sich merkt und wofür man es braucht.</p>
+
+<h3>Was à und de hier überhaupt bedeuten</h3>
+<p>In diesen Ausdrücken sind à und de <b>keine</b> Wörter mit eigener Bedeutung mehr. Sie gehören fest zum Verb,
+so wie im Deutschen „warten <u>auf</u>“ oder „sich freuen <u>über</u>“. Deshalb hilft die Übersetzung meistens nicht:
+<i>téléphoner <b>à</b> qn</i> heißt „jdn anrufen“ — von „an“ ist im Deutschen nichts zu sehen.</p>
+<div class="rule"><b>Deshalb gilt:</b> Ein Verb nie allein lernen, sondern immer mit seiner Präposition und den Kürzeln.
+<b>qn</b> = quelqu'un (jemand), <b>qc</b> = quelque chose (etwas). <i>parler à qn</i> und <i>parler de qc</i> sind zwei
+verschiedene Vokabeln.</div>
+
+<h3>Direktes oder indirektes Objekt — der Unterschied</h3>
+<ol class="steps">
+<li><b>Direktes Objekt:</b> steht ohne Präposition direkt hinter dem Verb. <i>Je vois <b>Paul</b>.</i></li>
+<li><b>Indirektes Objekt:</b> hängt über à oder de am Verb. <i>Je téléphone <b>à Paul</b>.</i></li>
+</ol>
+<p>Das ist kein Selbstzweck — davon hängt ab, welches Pronomen du später einsetzt:</p>
+<table class="tbl">
+<tr><td>direkt</td><td class="fr">le / la / les</td><td>Je vois Paul → Je <b>le</b> vois.</td></tr>
+<tr><td>indirekt mit à + Person</td><td class="fr">lui / leur</td><td>Je téléphone à Paul → Je <b>lui</b> téléphone.</td></tr>
+<tr><td>à + Sache</td><td class="fr">y</td><td>Je pense à mon test → J'<b>y</b> pense.</td></tr>
+<tr><td>de + Sache</td><td class="fr">en</td><td>Je parle de mon test → J'<b>en</b> parle.</td></tr>
+</table>
+
+<h3>Zwei Objekte im selben Satz</h3>
+<p>Viele Verben verlangen beides gleichzeitig — <b>qc à qn</b>: eine Sache und eine Person.</p>
+<div class="ex">Je donne <b>le livre</b> (was?) <b>à Marie</b> (wem?). → Je <b>le lui</b> donne.</div>
+<p>Im Deutschen ist das der Dativ: jdm etwas geben, zeigen, erklären, leihen, schenken, schicken.
+Wenn du im Deutschen „wem?“ fragen kannst, steht im Französischen fast immer <b>à</b>.</p>
+
+<h3>Die drei Klassiker, die im Test drankommen</h3>
+<div class="rule"><b>1. manquer à qn</b> — dreht sich um. Wer im Deutschen fehlt, ist im Französischen das Subjekt:
+<i>Tu me manques</i> = Du fehlst mir. Wörtlich: „Du fehlst zu mir.“<br><br>
+<b>2. jouer de / jouer à</b> — <i>de</i> für Instrumente (jouer <b>du</b> piano), <i>à</i> für Spiele und Sport (jouer <b>au</b> foot).
+Merkhilfe: Ein Instrument macht Töne <i>aus</i> sich heraus (de), bei einem Spiel macht man mit (à).<br><br>
+<b>3. emprunter qc à qn</b> — sich etwas <i>bei</i> jdm ausleihen, aber mit <b>à</b>. Das Gegenstück <i>prêter qc à qn</i>
+(jdm etwas leihen) hat dieselbe Präposition — nur die Richtung ist umgekehrt.</div>
+
+<h3>Verben mit Infinitivergänzung</h3>
+<p>Wenn nach dem Verb ein zweites Verb im Infinitiv folgt, gibt es drei Möglichkeiten:</p>
+<table class="tbl">
+<tr><td class="fr">ohne alles</td><td>nach vouloir, pouvoir, devoir, aller, aimer, préférer, savoir, falloir<br><i>Je veux partir. · Il faut partir.</i></td></tr>
+<tr><td class="fr">mit de</td><td>décider, essayer, oublier, refuser, accepter, avoir envie, être content/e<br><i>J'ai décidé <b>de</b> partir.</i></td></tr>
+<tr><td class="fr">mit à</td><td>commencer, continuer, apprendre, réussir, arriver, aider qn, obliger qn<br><i>Je commence <b>à</b> comprendre.</i></td></tr>
+</table>
+<div class="rule"><b>Grobe Tendenz</b> (kein Gesetz, aber sie hilft): <b>à</b> steht oft, wenn etwas anfängt, weitergeht oder
+angestrebt wird — <b>de</b> oft, wenn etwas beendet, entschieden oder abgelehnt wird.</div>`;
+
+EXPL.zeiten = () => `
+<p class="lead">Französisch hat für Vergangenheit zwei Zeiten, wo Deutsch nur eine hat. Genau da entscheidet sich
+die Note — der Rest ist Baukasten.</p>
+
+<h3>Die Grundfrage: Foto oder Film?</h3>
+<p>Stell dir vor, du erzählst von gestern. Zwei Sorten Sätze kommen vor:</p>
+<table class="tbl">
+<tr><th>imparfait — der Hintergrund</th><th>passé composé — das Ereignis</th></tr>
+<tr><td>Wie war es? Wetter, Stimmung, Aussehen, Alter, Gefühle</td><td>Was ist passiert? Eine Handlung, die anfängt und aufhört</td></tr>
+<tr><td>Was passierte immer wieder? (Gewohnheit)</td><td>Was passierte einmal, an einem Punkt?</td></tr>
+<tr><td>Was lief gerade, als etwas anderes passierte?</td><td>Was hat das Laufende unterbrochen?</td></tr>
+<tr><td>souvent, toujours, tous les jours, chaque, avant, quand j'étais petit</td><td>hier, soudain, tout à coup, une fois, à ce moment-là, puis</td></tr>
+</table>
+<div class="ex">Il <b>faisait</b> beau et je <b>me promenais</b> dans le parc <span style="color:var(--ink-3)">(Kulisse — imparfait)</span>,
+quand soudain j'<b>ai vu</b> mon prof <span style="color:var(--ink-3)">(Ereignis — passé composé)</span>.</div>
+<div class="rule"><b>Testfrage:</b> Kannst du im Deutschen „gerade“ oder „immer“ einfügen, ohne dass der Satz komisch wird?
+Dann imparfait. Passt eher „dann“ oder „plötzlich“? Dann passé composé.</div>
+
+<h3>Das plus-que-parfait — noch eine Stufe zurück</h3>
+<ol class="steps">
+<li>Hilfsverb (avoir oder être — dieselbe Wahl wie beim passé composé) in den <b>imparfait</b> setzen: j'<b>avais</b>, j'<b>étais</b>.</li>
+<li>Partizip anhängen, bei être angleichen.</li>
+</ol>
+<div class="ex">Quand je suis arrivé, ils <b>avaient</b> déjà <b>mangé</b>. — Erst haben sie gegessen, <i>dann</i> kam ich.</div>
+
+<h3>Zwei Zukünfte — welche wann?</h3>
+<table class="tbl">
+<tr><td class="fr">futur composé<br>aller + Infinitiv</td><td>nah, konkret, gesprochen. Wie im Deutschen „ich gehe gleich einkaufen“.<br><i>Je <b>vais</b> partir.</i></td></tr>
+<tr><td class="fr">futur simple<br>Stamm + ai, as, a, ons, ez, ont</td><td>weiter weg, geschrieben, Vorhersagen und Versprechen.<br><i>Je <b>partirai</b> demain.</i></td></tr>
+</table>
+<p>Beides ist meistens nicht falsch — im Aufsatz wirkt das futur simple erwachsener.</p>
+
+<h3>Die si-Sätze — feste Paare</h3>
+<ol class="steps">
+<li><b>Realer Fall</b> (kann gut passieren): si + <b>présent</b> → Hauptsatz im <b>futur</b>.<br>
+<i>Si tu viens, je serai content.</i> — Wenn du kommst, werde ich mich freuen.</li>
+<li><b>Irrealer Fall</b> (eher hypothetisch): si + <b>imparfait</b> → Hauptsatz im <b>conditionnel</b>.<br>
+<i>Si tu venais, je serais content.</i> — Wenn du kämst, würde ich mich freuen.</li>
+</ol>
+<div class="rule"><b>Die eine Regel, die man nie brechen darf:</b> Direkt nach <i>si</i> steht nie ein futur und nie ein
+conditionnel. Kein „si je serai“, kein „si je serais“. Die Zukunft steckt im anderen Satzteil.
+(Ausnahme: <i>si</i> im Sinn von „ob“ — <i>Je ne sais pas si je viendrai.</i>)</div>
+
+<h3>Wann subjonctif — und warum überhaupt?</h3>
+<p>Der subjonctif steht nie allein, sondern immer nach einem <b>que</b>, das von einem bestimmten Ausdruck ausgelöst wird.
+Gemeinsam ist diesen Ausdrücken: Es geht nicht um eine Tatsache, sondern darum, wie jemand dazu <i>steht</i>.</p>
+<table class="tbl">
+<tr><td>Wunsch und Wille</td><td class="fr">je voudrais que, je veux que, je ne veux pas que</td></tr>
+<tr><td>Gefühl und Bewertung</td><td class="fr">je suis content/e que, je n'aime pas que, je trouve (ne) normal que</td></tr>
+<tr><td>Notwendigkeit und Möglichkeit</td><td class="fr">il faut que, il est important que, il est possible que</td></tr>
+<tr><td>bestimmte Bindewörter</td><td class="fr">bien que, pour que, avant que, à condition que</td></tr>
+</table>
+<div class="rule"><b>Wichtig:</b> Nur wenn zwei <b>verschiedene</b> Subjekte im Spiel sind.
+Bei gleichem Subjekt nimmt man den Infinitiv: <i>Je veux <b>partir</b></i> (ich will selbst) vs.
+<i>Je veux que tu <b>partes</b></i> (ich will, dass du gehst).</div>
+
+<h3>Der gérondif — „indem / während“</h3>
+<ol class="steps">
+<li>Verb in die <b>nous-Form</b> des Präsens setzen: nous <b>regardons</b>.</li>
+<li><b>-ons</b> abschneiden, <b>-ant</b> anhängen: <b>regardant</b>.</li>
+<li><b>en</b> davorsetzen: <b>en regardant</b>.</li>
+</ol>
+<div class="ex">Elle apprend le français <b>en regardant</b> des séries. — Sie lernt Französisch, indem sie Serien schaut.</div>
+<p>Unregelmäßig sind nur drei: en <b>étant</b>, en <b>ayant</b>, en <b>sachant</b>.
+Und: Beide Handlungen müssen dieselbe Person betreffen.</p>`;
+
+EXPL.zahlen = () => `
+<p class="lead">Die französischen Zahlen wirken chaotisch, folgen aber vier Bauprinzipien. Wer die kennt,
+muss nur bis 16 auswendig lernen.</p>
+
+<h3>Baustein 1: 0 bis 16 — auswendig</h3>
+<p>zéro, un, deux, trois, quatre, cinq, six, sept, huit, neuf, dix, onze, douze, treize, quatorze, quinze, seize.
+Danach hört das Auswendiglernen auf.</p>
+
+<h3>Baustein 2: 17 bis 19 — zusammenzählen</h3>
+<div class="ex">10 + 7 = <b>dix-sept</b> · 10 + 8 = <b>dix-huit</b> · 10 + 9 = <b>dix-neuf</b></div>
+
+<h3>Baustein 3: Zehner + Einer</h3>
+<p>Die Zehner 20 bis 60 sind eigene Wörter (vingt, trente, quarante, cinquante, soixante). Dahinter hängt man den Einer:</p>
+<div class="ex">vingt-deux · trente-quatre · cinquante-neuf</div>
+<p>Nur bei der <b>1</b> schiebt sich ein <b>et</b> dazwischen — als hätte man „zwanzig <i>und</i> eins“ gesagt:</p>
+<div class="ex">21 vingt-<b>et</b>-un · 31 trente-<b>et</b>-un · 41, 51, 61 genauso · 71 soixante-<b>et</b>-onze</div>
+
+<h3>Baustein 4: 70, 80, 90 — hier wird gerechnet</h3>
+<p>Für 70, 80 und 90 gibt es keine eigenen Wörter. Französisch rechnet stattdessen:</p>
+<table class="tbl">
+<tr><td class="fr">70 = 60 + 10</td><td>soixante-dix. Dann weiter mit 11, 12, 13 …: 71 soixante-et-onze, 72 soixante-douze, 77 soixante-dix-sept.</td></tr>
+<tr><td class="fr">80 = 4 × 20</td><td>quatre-vingts. Dann weiter mit 1, 2, 3 …: 81 quatre-vingt-un, 82 quatre-vingt-deux.</td></tr>
+<tr><td class="fr">90 = 4 × 20 + 10</td><td>quatre-vingt-dix. Dann weiter mit 11, 12 …: 91 quatre-vingt-onze, 99 quatre-vingt-dix-neuf.</td></tr>
+</table>
+<div class="rule"><b>Die Denkweise:</b> Ab 70 zählst du nicht in Einern weiter, sondern hängst die kompletten Zahlen
+10 bis 19 an. 77 ist also nicht „70 + 7“, sondern „60 + 17“.<br>
+<b>Warum kein et bei 81 und 91?</b> Weil dort keine echte 1 steht, sondern der Rest einer Rechnung.
+et gibt es nur bei 21, 31, 41, 51, 61 und 71.</div>
+
+<h3>Hunderter und Tausender</h3>
+<ol class="steps">
+<li>Anzahl davorsetzen — bei 100 und 1000 lässt man die 1 weg: <b>cent</b>, <b>mille</b> (nicht „un cent“).</li>
+<li>Rest anhängen: 101 cent-un · 250 deux-cent-cinquante · 1950 mille-neuf-cent-cinquante.</li>
+<li><b>-s</b> bei cent und vingt nur, wenn nichts mehr folgt: deux-cent<b>s</b>, quatre-vingt<b>s</b> — aber deux-cent-un, quatre-vingt-un.</li>
+<li><b>mille</b> bekommt nie ein -s: deux-mille.</li>
+</ol>
+
+<h3>Jahreszahlen, Kommazahlen, Millionen</h3>
+<table class="tbl">
+<tr><td>Jahr</td><td class="fr">1950 = mille-neuf-cent-cinquante</td><td>Anders als im Deutschen sagt man nicht „neunzehnhundert…“, sondern liest die ganze Zahl.</td></tr>
+<tr><td>Komma</td><td class="fr">1,7 = un virgule sept</td><td>Das Komma heißt <i>virgule</i>. Französisch trennt Dezimalstellen wie Deutsch mit Komma.</td></tr>
+<tr><td>Million</td><td class="fr">2 000 000 d'habitants</td><td>Nach million/milliard steht immer <b>de</b>: deux-millions <b>d'</b>habitants.</td></tr>
+</table>
+
+<h3>Die Ordnungszahlen</h3>
+<ol class="steps">
+<li>Nur die 1 hat eine eigene Form: <b>premier / première</b>.</li>
+<li>Ab 2: Grundzahl + <b>-ième</b> — deuxième, troisième, dixième, vingtième.</li>
+<li>Drei kleine Anpassungen: endet die Zahl auf -e, fällt es weg (quatre → quatr<b>ième</b>);
+cinq bekommt ein u (cinq<b>u</b>ième); neuf wird zu neu<b>v</b>ième.</li>
+<li>Bei zusammengesetzten Zahlen zählt nur das letzte Wort: 21. = vingt-et-un<b>ième</b>.</li>
+</ol>
+<p>Kurzschreibung: 1<sup>er</sup> (männlich), 1<sup>ère</sup> (weiblich), ab dann 2<sup>e</sup>, 3<sup>e</sup>, 10<sup>e</sup>.</p>`;
+
+EXPL.praep = () => `
+<p class="lead">Präpositionen sind winzig und entscheiden trotzdem über den ganzen Satz. Am schnellsten kommt man
+weiter, wenn man ihre <b>Grundbedeutung</b> versteht und die paar festen Regeln lernt.</p>
+
+<h3>à und de — die zwei Arbeitspferde</h3>
+<table class="tbl">
+<tr><td class="fr">à</td><td><b>Ziel und Ort:</b> wohin, wo, wem, wann. <i>Je vais à Paris. Je suis à la maison. À huit heures.</i></td></tr>
+<tr><td class="fr">de</td><td><b>Herkunft und Zugehörigkeit:</b> woher, von wem, wovon. <i>Je viens de Lyon. Le vélo de Paul.</i></td></tr>
+</table>
+
+<h3>Warum aus à le plötzlich au wird</h3>
+<p>Französisch mag zwei aufeinanderfolgende Vokale nicht. Deshalb verschmelzen à und de mit den Artikeln <i>le</i> und <i>les</i>:</p>
+<table class="tbl">
+<tr><th></th><th>+ le</th><th>+ la</th><th>+ l'</th><th>+ les</th></tr>
+<tr><td class="fr">à</td><td class="fr">au</td><td>à la</td><td>à l'</td><td class="fr">aux</td></tr>
+<tr><td class="fr">de</td><td class="fr">du</td><td>de la</td><td>de l'</td><td class="fr">des</td></tr>
+</table>
+<div class="rule">Bei <b>la</b> und <b>l'</b> passiert nichts — dort steht schon ein anderer Laut im Weg.
+Das ist keine Ausnahme, sondern reine Aussprache-Bequemlichkeit.</div>
+
+<h3>Länder: en, au oder aux?</h3>
+<ol class="steps">
+<li><b>Geschlecht bestimmen.</b> Endet der Ländername auf <b>-e</b>, ist er fast immer weiblich
+(la France, l'Allemagne, la Suisse, l'Italie). Ausnahme: le Mexique.</li>
+<li>Weiblich oder mit Vokal am Anfang → <b>en</b>: en France, en Allemagne, en Iran.</li>
+<li>Männlich → <b>au</b>: au Portugal, au Maroc, au Japon, au Canada.</li>
+<li>Plural → <b>aux</b>: aux Pays-Bas, aux États-Unis.</li>
+<li>Städte → einfach <b>à</b>: à Paris, à Berlin, à Löhne.</li>
+</ol>
+<p>Für „woher“ tauscht man nur die Präposition: <b>de</b> France, <b>du</b> Portugal, <b>des</b> États-Unis, <b>de</b> Paris.</p>
+
+<h3>Zeitangaben: der Entscheidungsbaum</h3>
+<ol class="steps">
+<li>Läuft es <b>bis jetzt</b> noch? → <b>depuis</b> + Präsens. <i>J'habite ici depuis trois ans.</i>
+(Deutsch steht hier ein Perfekt — Französisch nicht!)</li>
+<li>Ist es <b>vorbei</b> und du nennst den Zeitpunkt? → <b>il y a</b>. <i>Je suis arrivé il y a deux jours.</i></li>
+<li>Ist es <b>vorbei</b> und du nennst die Dauer? → <b>pendant</b>. <i>J'ai lu pendant deux heures.</i></li>
+<li>Liegt es in der <b>Zukunft</b>? → <b>dans</b>. <i>Le train part dans dix minutes.</i></li>
+<li>Geplante Dauer in der Zukunft? → <b>pour</b>. <i>Je pars pour une semaine.</i></li>
+</ol>
+<div class="rule"><b>Die drei, die am häufigsten verwechselt werden:</b><br>
+<i>depuis deux heures</i> = seit zwei Stunden (läuft noch) ·
+<i>il y a deux heures</i> = vor zwei Stunden ·
+<i>pendant deux heures</i> = zwei Stunden lang (vorbei)</div>
+
+<h3>Verkehrsmittel: en oder à?</h3>
+<div class="rule">Sitzt du <b>drin</b>, steht <b>en</b>: en voiture, en train, en bus, en avion, en métro.<br>
+Sitzt du <b>drauf</b> oder gehst du, steht <b>à</b>: à pied, à vélo, à moto, à cheval.</div>
+
+<h3>Kleine Wörter, die den Text erst gut machen</h3>
+<p>Im Aufsatz zählt weniger, wie viele Vokabeln du kennst, sondern ob die Sätze verbunden sind. Diese acht reichen weit:</p>
+<table class="tbl">
+<tr><td class="fr">d'abord … ensuite … enfin</td><td>zuerst … danach … schließlich (Reihenfolge)</td></tr>
+<tr><td class="fr">parce que / car</td><td>weil / denn (car verbindet zwei Hauptsätze)</td></tr>
+<tr><td class="fr">donc / alors</td><td>also, deshalb (Folge)</td></tr>
+<tr><td class="fr">mais / pourtant / par contre</td><td>aber / trotzdem / dagegen (Gegensatz)</td></tr>
+<tr><td class="fr">en plus / surtout</td><td>außerdem / vor allem (Steigerung)</td></tr>
+<tr><td class="fr">par exemple</td><td>zum Beispiel (Beleg)</td></tr>
+<tr><td class="fr">à mon avis / selon moi</td><td>meiner Meinung nach (Position)</td></tr>
+<tr><td class="fr">grâce à / à cause de</td><td>dank (positiv) / wegen (negativ)</td></tr>
+</table>`;
+
+EXPL.pronomen = () => `
+<p class="lead">Pronomen ersetzen etwas, das schon bekannt ist. Die ganze Schwierigkeit besteht aus zwei Fragen:
+<b>welches</b> Pronomen — und <b>wohin</b> damit.</p>
+
+<h3>Frage 1: Welches Pronomen?</h3>
+<p>Schau nicht auf das Deutsche, sondern auf das <b>französische Verb</b> und darauf, was dahinter steht:</p>
+<ol class="steps">
+<li>Steht das Objekt <b>direkt</b> hinter dem Verb, ohne Präposition? → <b>le, la, les</b><br>
+<i>Je vois Paul → Je <b>le</b> vois.</i> · <i>Je regarde la télé → Je <b>la</b> regarde.</i></li>
+<li>Steht <b>à + Person</b>? → <b>lui</b> (einer) oder <b>leur</b> (mehrere)<br>
+<i>Je téléphone à Paul → Je <b>lui</b> téléphone.</i> · <i>Je parle à mes amis → Je <b>leur</b> parle.</i></li>
+<li>Steht <b>à + Sache</b> oder ein Ort? → <b>y</b><br>
+<i>Je pense à mon test → J'<b>y</b> pense.</i> · <i>Je vais à Paris → J'<b>y</b> vais.</i></li>
+<li>Steht <b>de + Sache</b> oder eine Menge? → <b>en</b><br>
+<i>Je parle de mes vacances → J'<b>en</b> parle.</i> · <i>J'ai deux frères → J'<b>en</b> ai deux.</i></li>
+<li>Steht eine <b>Präposition + Person</b> (avec, pour, chez, sans, à cause de)? → betontes Pronomen
+<b>moi, toi, lui, elle, nous, vous, eux, elles</b><br>
+<i>Je pars avec <b>eux</b>. · C'est pour <b>toi</b>.</i></li>
+</ol>
+<div class="rule"><b>Der häufigste Fehler:</b> le/la/les auch dann zu nehmen, wenn im Französischen à steht.
+Deutsch „ich rufe <u>ihn</u> an“ klingt nach direktem Objekt — französisch heißt es aber <i>téléphoner <b>à</b> qn</i>,
+also <b>je lui téléphone</b>. Deshalb lohnt sich das Thema „Verben mit Präposition“ doppelt.</div>
+
+<h3>Frage 2: Wohin mit dem Pronomen?</h3>
+<p>Die Grundregel ist einfacher als im Deutschen: <b>vor das konjugierte Verb</b>. Immer.</p>
+<table class="tbl">
+<tr><td>einfaches Verb</td><td class="fr">Je <b>le</b> vois.</td></tr>
+<tr><td>Verneinung — ne umschließt Pronomen + Verb</td><td class="fr">Je ne <b>le</b> vois pas.</td></tr>
+<tr><td>passé composé — vor das Hilfsverb</td><td class="fr">Je <b>l'</b>ai vu. / Je ne <b>l'</b>ai pas vu.</td></tr>
+<tr><td>mit Infinitiv — vor den Infinitiv, denn der ist gemeint</td><td class="fr">Je vais <b>le</b> voir.</td></tr>
+<tr><td>bejahter Imperativ — die einzige Ausnahme: hinten mit Bindestrich</td><td class="fr">Regarde-<b>le</b> ! Donne-<b>moi</b> ça !</td></tr>
+<tr><td>verneinter Imperativ — wieder normal nach vorn</td><td class="fr">Ne <b>le</b> regarde pas !</td></tr>
+</table>
+
+<h3>Zwei Pronomen gleichzeitig</h3>
+<p>Dann gilt eine feste Reihenfolge — nicht die logische, sondern diese:</p>
+<div class="ex"><b>me / te / se / nous / vous</b> → <b>le / la / les</b> → <b>lui / leur</b> → <b>y</b> → <b>en</b></div>
+<div class="ex">Il <b>me le</b> donne. · Je <b>le lui</b> explique. · Il <b>y en</b> a trois.</div>
+<p>Merkhilfe: erst die Personen, die mit Buchstaben-Doppelung anfangen (me, te, se), dann die Sachen, dann lui/leur,
+und y und en machen immer den Schluss.</p>
+
+<h3>Die Angleichung im passé composé</h3>
+<ol class="steps">
+<li>Steht ein <b>direktes</b> Objekt <b>vor</b> dem Verb?</li>
+<li>Dann bekommt das Partizip die Endung des Objekts — wie ein Adjektiv.</li>
+</ol>
+<div class="ex">Les films ? Je <b>les</b> ai vu<b>s</b>. · La lettre ? Je <b>l'</b>ai écrit<b>e</b>.</div>
+<p>Bei <b>lui/leur</b> (indirekt) passiert nichts: <i>Je leur ai parlé.</i> Und bei être-Verben gleicht man
+sowieso ans Subjekt an.</p>
+
+<h3>Relativpronomen: qui, que, où, dont</h3>
+<p>Sie verbinden zwei Sätze zu einem. Welches du brauchst, hängt davon ab, welche Rolle das Wort im <b>Nebensatz</b> spielt:</p>
+<ol class="steps">
+<li>Fehlt im Nebensatz das <b>Subjekt</b>? → <b>qui</b>. Test: Nach qui kommt sofort ein Verb.<br>
+<i>C'est un ami <b>qui</b> habite à Lyon.</i></li>
+<li>Fehlt das <b>direkte Objekt</b>? → <b>que</b>. Test: Nach que kommt ein Subjekt.<br>
+<i>C'est le film <b>que</b> j'ai vu.</i></li>
+<li>Geht es um <b>Ort oder Zeit</b>? → <b>où</b>.<br>
+<i>La ville <b>où</b> je suis né · le jour <b>où</b> tu es parti</i></li>
+<li>Verlangt das Verb im Nebensatz ein <b>de</b>? → <b>dont</b>.<br>
+<i>parler <b>de</b> qc → le livre <b>dont</b> je t'ai parlé</i></li>
+</ol>
+<div class="rule"><b>qui oder que — der Zwei-Sekunden-Test:</b> Kommt danach ein Verb, ist es <b>qui</b>.
+Kommt danach ein Subjekt (je, tu, mon frère …), ist es <b>que</b>. Vor Vokal wird que zu qu' — qui nie.</div>`;
+
+EXPL.satzbau = () => `
+<p class="lead">Der französische Satz ist strenger gebaut als der deutsche: Das Verb steht fast immer an derselben Stelle,
+und was dazwischen darf, ist genau geregelt.</p>
+
+<h3>Die Grundstellung</h3>
+<div class="ex"><b>Subjekt – Verb – Objekt</b> · <i>Marie regarde un film.</i></div>
+<p>Anders als im Deutschen kann man das Verb nicht ans Ende schieben und auch nicht einfach umstellen.
+Zeit- und Ortsangaben stehen am <b>Anfang</b> oder am <b>Ende</b>, nicht mittendrin:</p>
+<div class="ex"><b>Hier</b>, nous sommes allés au cinéma. · Nous sommes allés au cinéma <b>hier</b>.
+<span style="color:var(--marge)">Nicht:</span> Nous sommes hier allés…</div>
+<p>Kurze Adverbien (bien, mal, déjà, souvent, toujours, beaucoup) stehen direkt hinter dem Verb —
+im passé composé zwischen Hilfsverb und Partizip:</p>
+<div class="ex">J'ai <b>bien</b> dormi. · Elle a <b>déjà</b> mangé.</div>
+
+<h3>Die Verneinung — eine Klammer um das Verb</h3>
+<p>Französisch verneint mit <b>zwei</b> Teilen, die das konjugierte Verb einklammern.</p>
+<ol class="steps">
+<li><b>ne</b> vor das Verb (vor Vokal: <b>n'</b>).</li>
+<li><b>pas</b> (oder plus, jamais, rien) dahinter.<br>
+<i>Je <b>ne</b> mange <b>pas</b>. · Je <b>n'</b>ai <b>pas</b> mangé.</i></li>
+<li>Im passé composé klammert man das <b>Hilfsverb</b> ein, nicht das Partizip.</li>
+<li><b>personne</b> und <b>que</b> sind zu schwer und rutschen ganz nach hinten:
+<i>Je n'ai vu <b>personne</b>. · Je n'ai bu <b>que</b> de l'eau.</i> (Vergleiche: <i>Je n'ai <b>rien</b> vu.</i>)</li>
+<li>Vor einem Infinitiv bleiben beide Teile zusammen: <i>Il m'a dit de <b>ne pas</b> venir.</i></li>
+</ol>
+<div class="rule"><b>Die pas-de-Regel:</b> Nach einer Verneinung wird aus un, une, du, de la, des einfach <b>de</b>.<br>
+<i>J'ai <b>un</b> frère → Je n'ai <b>pas de</b> frère. · Je bois <b>du</b> café → Je ne bois <b>pas de</b> café.</i><br>
+Ausnahmen: nach <i>être</i> (Ce n'est pas <b>un</b> problème) und nach <i>ne … que</i>, weil das keine echte Verneinung ist.</div>
+<p>Die wichtigsten Paare: ne … <b>pas</b> (nicht) · ne … <b>plus</b> (nicht mehr) · ne … <b>jamais</b> (nie) ·
+ne … <b>rien</b> (nichts) · ne … <b>personne</b> (niemand) · ne … <b>que</b> (nur) · ne … <b>ni … ni</b> (weder … noch).</p>
+
+<h3>Fragen stellen — drei Wege, ein Sinn</h3>
+<ol class="steps">
+<li><b>Intonation:</b> Aussagesatz, Stimme hoch. <i>Tu viens ?</i> — gesprochen, locker.</li>
+<li><b>est-ce que</b> davorsetzen, sonst ändert sich nichts. <i>Est-ce que tu viens ?</i> — immer richtig, immer sicher.</li>
+<li><b>Inversion:</b> Verb und Subjektpronomen tauschen, mit Bindestrich. <i>Viens-tu ?</i> — schriftlich, gehoben.</li>
+</ol>
+<div class="rule"><b>Das eingeschobene -t-:</b> Treffen bei der Inversion zwei Vokale aufeinander, schiebt man ein t dazwischen,
+damit es sprechbar bleibt: <i>A-<b>t</b>-il un vélo ? · Va-<b>t</b>-elle à Paris ? · Aime-<b>t</b>-on ça ?</i></div>
+<p>Mit Fragewort stellst du es einfach voran: <i>Quand est-ce que tu viens ? · Quand viens-tu ?</i></p>
+<table class="tbl">
+<tr><td class="fr">qui</td><td>wer</td><td class="fr">où / d'où</td><td>wo, wohin / woher</td></tr>
+<tr><td class="fr">qu'est-ce que</td><td>was (Objekt) — <i>Qu'est-ce que tu fais ?</i></td><td class="fr">quand</td><td>wann</td></tr>
+<tr><td class="fr">qu'est-ce qui</td><td>was (Subjekt) — <i>Qu'est-ce qui se passe ?</i></td><td class="fr">comment</td><td>wie</td></tr>
+<tr><td class="fr">combien (de)</td><td>wie viel(e)</td><td class="fr">pourquoi</td><td>warum</td></tr>
+<tr><td class="fr">quel / quelle / quels / quelles</td><td colspan="3">welcher — richtet sich nach dem Nomen: quel âge, quelle heure, quels films</td></tr>
+</table>
+
+<h3>Nebensätze anschließen</h3>
+<p>Gute Nachricht: Die Wortstellung ändert sich im Nebensatz <b>nicht</b> — kein Verb ans Ende wie im Deutschen.</p>
+<div class="ex">Je reste à la maison <b>parce que</b> je suis fatigué. — Ich bleibe zu Hause, weil ich müde <u>bin</u>.</div>
+<p>Achtung nur bei drei Anschlüssen, die den subjonctif verlangen: <b>bien que</b> (obwohl), <b>pour que</b> (damit),
+<b>avant que</b> (bevor).</p>
+<div class="rule"><b>Vor und nach:</b> <i>avant de</i> + Infinitiv (avant de partir = bevor ich gehe) ·
+<i>après</i> + avoir/être + Partizip (après avoir mangé = nachdem ich gegessen habe).
+Beides geht nur, wenn beide Satzteile dieselbe Person betreffen.</div>
+
+<h3>Etwas hervorheben</h3>
+<p>Weil man Wörter nicht einfach umstellen kann, benutzt Französisch eine Konstruktion mit <b>c'est … qui/que</b>:</p>
+<div class="ex">C'est Marie <b>qui</b> a gagné. (Das Hervorgehobene ist Subjekt)<br>
+C'est ce livre <b>que</b> je préfère. (Das Hervorgehobene ist Objekt)</div>`;
+
+EXPL.adjektive = () => `
+<p class="lead">Adjektive beschreiben ein Nomen — und richten sich in Geschlecht und Zahl danach.
+Adverbien beschreiben ein Verb und ändern sich nie. Das ist der ganze Unterschied.</p>
+
+<h3>Die Angleichung in vier Schritten</h3>
+<ol class="steps">
+<li>Grundform ist das <b>männliche Singular</b>: petit.</li>
+<li>Weiblich: <b>-e</b> anhängen — petit<b>e</b>. Endet das Adjektiv schon auf -e, passiert nichts: jeune → jeune.</li>
+<li>Plural: <b>-s</b> anhängen — petit<b>s</b>, petit<b>es</b>. Endet es schon auf -s oder -x, passiert nichts: gris → gris.</li>
+<li>Gemischte Gruppe (Männer und Frauen zusammen) → männlicher Plural.</li>
+</ol>
+<div class="rule"><b>Warum das laut wichtig ist:</b> Das angehängte -e macht den letzten Konsonanten hörbar.
+petit [pəti] → petite [pətit]. Das -s hört man dagegen nie.</div>
+<table class="tbl">
+<tr><th>Endung</th><th>weiblich</th><th>Beispiel</th></tr>
+<tr><td>-eux</td><td>-euse</td><td class="fr">heureux → heureuse</td></tr>
+<tr><td>-if</td><td>-ive</td><td class="fr">sportif → sportive</td></tr>
+<tr><td>-er</td><td>-ère</td><td class="fr">cher → chère, premier → première</td></tr>
+<tr><td>-el, -eil, -il, -on</td><td>Doppelkonsonant + e</td><td class="fr">naturel → naturelle, gentil → gentille, bon → bonne</td></tr>
+<tr><td>unregelmäßig</td><td></td><td class="fr">beau → belle · nouveau → nouvelle · vieux → vieille · blanc → blanche · long → longue</td></tr>
+</table>
+<div class="rule">Vor männlichen Nomen mit Vokal werden drei Adjektive weich gesprochen:
+un <b>bel</b> appartement, un <b>nouvel</b> ami, un <b>vieil</b> homme.</div>
+
+<h3>Vor oder hinter dem Nomen?</h3>
+<p>Im Deutschen steht das Adjektiv immer davor, im Französischen meistens <b>dahinter</b>:</p>
+<div class="ex">une voiture <b>rouge</b> · un livre <b>intéressant</b> · un film <b>français</b></div>
+<p>Davor stehen nur wenige, meist kurze und sehr häufige — sie beschreiben Größe, Alter, Schönheit oder eine Wertung:</p>
+<div class="ex">beau · joli · grand · petit · jeune · vieux · bon · mauvais · gros · nouveau · même · autre</div>
+<p>Ein paar ändern je nach Stellung die Bedeutung: un <b>grand</b> homme (ein bedeutender Mann) vs.
+un homme <b>grand</b> (ein großer Mann).</p>
+
+<h3>Adverbien bilden — drei Schritte</h3>
+<ol class="steps">
+<li>Adjektiv in die <b>weibliche</b> Form setzen: lent → lent<b>e</b>.</li>
+<li><b>-ment</b> anhängen: lente<b>ment</b>.</li>
+<li>Fertig — Adverbien werden nie angeglichen.</li>
+</ol>
+<table class="tbl">
+<tr><td>Normalfall</td><td class="fr">heureux → heureuse → heureusement</td></tr>
+<tr><td>Adjektiv endet auf Vokal → kein e</td><td class="fr">vrai → vraiment · poli → poliment</td></tr>
+<tr><td>Adjektiv auf -ent / -ant</td><td class="fr">prudent → prudemment · évident → évidemment · courant → couramment</td></tr>
+<tr><td>unregelmäßig</td><td class="fr">bon → bien · mauvais → mal · meilleur → mieux · petit → peu</td></tr>
+</table>
+<div class="rule"><b>Wann Adjektiv, wann Adverb?</b> Frage dich, was beschrieben wird.
+Ein <b>Nomen</b> → Adjektiv (Elle est <b>lente</b>). Ein <b>Verb</b> → Adverb (Elle parle <b>lentement</b>).</div>
+
+<h3>Der Vergleich — ein Baukasten</h3>
+<div class="ex"><b>plus / moins / aussi</b> + Adjektiv oder Adverb + <b>que</b></div>
+<table class="tbl">
+<tr><td>mehr</td><td class="fr">Marie est <b>plus</b> grande <b>que</b> Paul.</td></tr>
+<tr><td>weniger</td><td class="fr">Paul est <b>moins</b> grand <b>que</b> Marie.</td></tr>
+<tr><td>gleich</td><td class="fr">Léa est <b>aussi</b> grande <b>que</b> Marie.</td></tr>
+</table>
+<p>Vergleichst du <b>Mengen</b> (also Nomen), kommt ein <b>de</b> dazu:
+<i>J'ai <b>plus de</b> livres <b>que</b> toi. · <b>autant de</b> temps <b>que</b> toi.</i></p>
+<h4>Superlativ</h4>
+<ol class="steps">
+<li>Vergleichsform bilden: plus grand.</li>
+<li>Bestimmten Artikel davor, passend zum Nomen: <b>le</b> plus grand, <b>la</b> plus grande, <b>les</b> plus grands.</li>
+<li>Steht das Adjektiv hinter dem Nomen, wird der Artikel wiederholt:
+<i>le film <b>le</b> plus intéressant</i>.</li>
+<li>Der Bezug steht mit <b>de</b>: le plus intéressant <b>de</b> l'année.</li>
+</ol>
+<div class="rule"><b>Die zwei Unregelmäßigen, die immer geprüft werden:</b><br>
+Adjektiv: bon → <b>meilleur</b> → le meilleur. Nie „plus bon“.<br>
+Adverb: bien → <b>mieux</b> → le mieux. Nie „plus bien“.<br>
+Test: Beschreibt es ein Nomen (ein <i>besserer</i> Film) → meilleur. Beschreibt es ein Verb (sie singt <i>besser</i>) → mieux.</div>`;
+</script>
+
+<script>
+/* ============================================================
    5. APP — Modi, Auswertung, Navigation
    ============================================================ */
 
-const MODE_LABEL = {ref:"Merkblatt", conj:"Konjugationstrainer", num:"Zahlentrainer",
+const MODE_LABEL = {how:"Erklärung", ref:"Merkblatt", conj:"Konjugationstrainer", num:"Zahlentrainer",
   flash:"Karteikarten", mc:"Quiz", fill:"Eingabe", order:"Satzbau", match:"Zuordnen"};
 
 const $ = s => document.querySelector(s);
@@ -1447,6 +1995,7 @@ function buildQueue(){
 }
 function availableModes(t){
   return (t.modes || []).filter(m => {
+    if(m === "how")  return !!EXPL[t.id];
     if(m === "ref")  return !!REFS[t.ref];
     if(m === "conj" || m === "num") return true;
     return itemsOf(t, m === "flash" ? "card" : m).length > 0;
@@ -1511,6 +2060,10 @@ function joinWords(arr){
   }, "");
 }
 function render(){
+  if(S.mode === "how"){
+    stage.innerHTML = `<div class="sheet plain ref">${EXPL[S.topic.id]()}</div>`;
+    return;
+  }
   if(S.mode === "ref"){
     stage.innerHTML = `<div class="sheet plain ref">${REFS[S.topic.ref]()}</div>`;
     return;
