@@ -240,6 +240,12 @@ button{font:inherit;color:inherit}
 .vcard .foot{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink-2)}
 .warn{color:var(--marge);font-weight:700}
 
+.banner{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--rhodia);border:1px dashed rgba(242,107,33,.5);
+  border-radius:6px;padding:3px 9px;margin-bottom:12px}
+.topic.alert{border-color:rgba(224,64,95,.4);background:linear-gradient(180deg,rgba(224,64,95,.05),#fff 60%)}
+.topic.alert .num{color:var(--marge)}
+.topic.alert .page{border-style:solid}
 .progress{display:flex;align-items:center;gap:10px;margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
 .pbar{flex:1;height:4px;background:var(--seyes-soft);border-radius:99px;overflow:hidden}
 .pbar i{display:block;height:100%;background:var(--rhodia);width:0;transition:width .25s ease}
@@ -610,7 +616,7 @@ const TOPICS = [];
 TOPICS.push({
 id:"verben", title:"Verben & Konjugation", page:"S. 154–157",
 desc:"Hilfsverben, die drei Verbgruppen, Besonderheiten der Schreibung und alle unregelmäßigen Verben aus dem Buch.",
-modes:["how","ref","conj","flash","mc","fill"],
+modes:["how","ref","conj","mc","fill","trans","flash"],
 ref:"verbRef",
 items:[
  {t:"mc",q:"nous ___ (commencer) — présent",opts:["commencons","commençons","commencions","commençions"],a:1,
@@ -718,7 +724,7 @@ items:[
 TOPICS.push({
 id:"zeiten", title:"Zeiten & ihr Gebrauch", page:"Ergänzung",
 desc:"Wann passé composé, wann imparfait? Dazu futur, conditionnel, subjonctif, gérondif und die si-Sätze.",
-modes:["how","ref","mc","fill","flash"],
+modes:["how","ref","mc","fill","trans","flash"],
 ref:"tenseRef",
 items:[
  {t:"mc",q:"Quand j'étais petit, je ___ toujours chez ma grand-mère.",opts:["allais","suis allé","irai","aille"],a:0,
@@ -835,7 +841,7 @@ items:[
 TOPICS.push({
 id:"pronomen", title:"Pronomen", page:"Ergänzung",
 desc:"Objektpronomen, y und en, betonte Pronomen und Relativpronomen — samt ihrer Stellung im Satz.",
-modes:["how","ref","mc","order","fill","flash"],
+modes:["how","ref","mc","order","fill","trans","flash"],
 ref:"pronRef",
 items:[
  {t:"mc",q:"Tu vois Paul ? — Oui, je ___ vois.",opts:["lui","le","y","en"],a:1,
@@ -879,7 +885,7 @@ items:[
 TOPICS.push({
 id:"satzbau", title:"Satzbau, Negation & Fragen", page:"Ergänzung",
 desc:"Wortstellung, alle Verneinungen, drei Arten zu fragen — und wie man Nebensätze anschließt.",
-modes:["how","ref","order","mc","fill","flash"],
+modes:["how","ref","order","mc","fill","trans","flash"],
 ref:"synRef",
 items:[
  {t:"order",de:"Wir sind gestern nach Paris gefahren.",a:["Nous","sommes","allés","à","Paris","hier"],end:"."},
@@ -954,7 +960,7 @@ items:[
 TOPICS.push({
 id:"mix", title:"Alles gemischt", page:"Prüfungsmodus",
 desc:"Zufällige Aufgaben aus allen Themen — so wie es in der Klassenarbeit auch kommt.",
-modes:["mc","fill","flash","order","conj"],
+modes:["mc","fill","trans","flash","order","conj"],
 items:[]
 });
 </script>
@@ -1893,26 +1899,777 @@ Adjektiv: bon → <b>meilleur</b> → le meilleur. Nie „plus bon“.<br>
 Adverb: bien → <b>mieux</b> → le mieux. Nie „plus bien“.<br>
 Test: Beschreibt es ein Nomen (ein <i>besserer</i> Film) → meilleur. Beschreibt es ein Verb (sie singt <i>besser</i>) → mieux.</div>`;
 </script>
-
 <script>
 /* ============================================================
-   5. APP — Modi, Auswertung, Navigation
+   7. NEUE THEMEN
+   Aufgabentyp "trans" = Übersetzen (Deutsch → Französisch)
+   ============================================================ */
+
+/* ---------- ARTIKEL & BEGLEITER --------------------------- */
+TOPICS.push({
+id:"artikel", title:"Artikel & Begleiter", page:"Ergänzung",
+desc:"le, un oder du? Dazu mein/dein/sein, dieser/diese und der Unterschied zwischen c'est und il est.",
+modes:["how","ref","mc","fill","trans","flash"], ref:"artRef",
+items:[
+ {t:"mc",q:"Je mange ___ pain. (Ich esse Brot.)",opts:["le","un","du","de"],a:2,
+  why:"Eine unbestimmte Menge von etwas Unzählbarem → Teilungsartikel du. Le pain wäre ein ganz bestimmtes Brot, un pain ein ganzer Laib."},
+ {t:"mc",q:"J'aime ___ chocolat. (Ich mag Schokolade.)",opts:["du","le","un","de"],a:1,
+  why:"Nach aimer, adorer, détester, préférer steht immer der bestimmte Artikel — es geht um die Sache allgemein, nicht um eine Portion."},
+ {t:"mc",q:"Elle boit ___ eau.",opts:["du","de la","de l'","une"],a:2,
+  why:"eau ist weiblich, beginnt aber mit einem Vokal → de l'eau."},
+ {t:"mc",q:"Je ne mange pas ___ viande.",opts:["de la","du","de","des"],a:2,
+  why:"Nach einer Verneinung wird aus du, de la, des und un/une einfach de."},
+ {t:"mc",q:"Ce n'est pas ___ problème.",opts:["de","un","du","le"],a:1,
+  why:"Nach être bleibt der Artikel stehen — die pas-de-Regel gilt hier nicht."},
+ {t:"mc",q:"J'ai beaucoup ___ amis.",opts:["des","de","d'","du"],a:2,
+  why:"Nach Mengenangaben steht de ohne Artikel, vor Vokal d': beaucoup d'amis, un kilo de pommes, trop de travail."},
+ {t:"mc",q:"C'est ___ amie. (mein — weiblich)",opts:["ma","mon","mes","ma propre"],a:1,
+  why:"Vor einem Vokal steht mon statt ma, weil ma amie schwer auszusprechen wäre. Genauso: ton amie, son école."},
+ {t:"mc",q:"Paul cherche ___ vélo. (sein Fahrrad)",opts:["son","sa","ses","leur"],a:0,
+  why:"Der Begleiter richtet sich nach dem Ding, nicht nach dem Besitzer: vélo ist männlich → son. Deshalb heißt son vélo je nach Zusammenhang sein oder ihr Fahrrad."},
+ {t:"mc",q:"Marie cherche ___ voiture. (ihr Auto)",opts:["son","sa","ses","leurs"],a:1,
+  why:"voiture ist weiblich → sa voiture. Wieder gilt das Geschlecht des Dings."},
+ {t:"mc",q:"___ homme est mon voisin.",opts:["Ce","Cet","Cette","Ces"],a:1,
+  why:"Vor männlichen Nomen mit Vokal oder stummem h steht cet: cet homme, cet ami. Man hört es, geschrieben wird das t."},
+ {t:"mc",q:"___ un très bon film.",opts:["Il est","C'est","Ce sont","Elle est"],a:1,
+  why:"Vor einem Nomen mit Artikel steht immer c'est. Ohne Artikel dagegen il est: Il est prof."},
+ {t:"mc",q:"Mon frère ? ___ prof de maths.",opts:["C'est","Il est","C'est un","Ce sont"],a:1,
+  why:"Berufe stehen nach il/elle est ohne Artikel: Il est prof. Mit Artikel bräuchte man c'est: C'est un prof de maths."},
+ {t:"fill",q:"Tu veux ___ café ? (etwas Kaffee)",a:["du"],hint:"Teilungsartikel, männlich",why:"café ist männlich → du café."},
+ {t:"fill",q:"Il n'y a plus ___ lait.",a:["de","d'"],hint:"nach der Verneinung",why:"ne … plus ist eine Verneinung → de lait."},
+ {t:"trans",q:"Ich trinke jeden Morgen Kaffee.",a:["je bois du café tous les matins","je bois du café chaque matin"],
+  hint:"Teilungsartikel nicht vergessen",why:"Je bois du café tous les matins."},
+ {t:"trans",q:"Sie mag keinen Fisch.",a:["elle n'aime pas le poisson"],hint:"aimer + bestimmter Artikel",
+  why:"Elle n'aime pas le poisson. Nach aimer bleibt der bestimmte Artikel auch in der Verneinung stehen — die pas-de-Regel gilt hier nicht."},
+ {t:"trans",q:"Das ist meine Schwester. Sie ist Ärztin.",a:["c'est ma sœur. elle est médecin","c'est ma soeur. elle est médecin"],
+  hint:"c'est + Nomen, il/elle est + Beruf",why:"C'est ma sœur. Elle est médecin."},
+ {t:"card",front:"le / un / du — was wann?",back:"bestimmt · zählbar einzeln · unbestimmte Menge",
+  extra:"le pain = das Brot (ein bestimmtes) · un pain = ein Brot (ein ganzes) · du pain = Brot (etwas davon)."},
+ {t:"card",front:"Wann wird der Artikel zu de?",back:"nach Verneinung und nach Mengenangaben",
+  extra:"pas de pain, plus de lait, beaucoup de gens, un kilo de pommes. Ausnahmen: nach être und nach ne … que."},
+ {t:"card",front:"c'est oder il est?",back:"c'est + Artikel/Name/Pronomen · il est + Adjektiv/Beruf",
+  extra:"C'est un bon film. C'est Marie. C'est moi. — Il est intéressant. Elle est prof. Bei allgemeinen Aussagen: C'est intéressant."}
+]});
+
+/* ---------- INDIREKTE REDE -------------------------------- */
+TOPICS.push({
+id:"indirekt", title:"Indirekte Rede", page:"Ergänzung",
+desc:"Wiedergeben, was jemand gesagt, gefragt oder verlangt hat — mit Anschluss, Zeitverschiebung und Pronomenwechsel.",
+modes:["how","ref","mc","trans","order","flash"], ref:"indRef",
+items:[
+ {t:"mc",q:"« Je viens. » → Il dit ___ il vient.",opts:["que","qu'","si","ce que"],a:0,
+  why:"Aussagen werden mit que angeschlossen. Vor einem Vokal wird es zu qu': Il dit qu'il vient."},
+ {t:"mc",q:"« Tu viens ? » → Il demande ___ je viens.",opts:["que","si","ce que","qu'est-ce que"],a:1,
+  why:"Ja/Nein-Fragen werden mit si angeschlossen (= ob). Ein Fragezeichen steht nicht mehr."},
+ {t:"mc",q:"« Qu'est-ce que tu fais ? » → Il demande ___ je fais.",opts:["que","si","ce que","ce qui"],a:2,
+  why:"Aus qu'est-ce que wird ce que. Aus qu'est-ce qui wird ce qui."},
+ {t:"mc",q:"« Qu'est-ce qui se passe ? » → Il demande ___ se passe.",opts:["ce que","ce qui","si","que"],a:1,
+  why:"Hier fehlt das Subjekt im Nebensatz → ce qui."},
+ {t:"mc",q:"« Où habites-tu ? » → Il demande ___ j'habite.",opts:["où","si où","ce que","que où"],a:0,
+  why:"Andere Fragewörter bleiben einfach stehen — nur die Inversion verschwindet: où j'habite, nicht où habite-je."},
+ {t:"mc",q:"« Viens ! » → Il me dit ___ venir.",opts:["que","de","à","si"],a:1,
+  why:"Aufforderungen werden zu de + Infinitiv: Il me dit de venir. Verneint: Il me dit de ne pas venir."},
+ {t:"mc",q:"Il a dit : « Je suis fatigué. » → Il a dit qu'il ___ fatigué.",opts:["est","était","serait","a été"],a:1,
+  why:"Steht das einleitende Verb in der Vergangenheit, rutscht das Präsens in den imparfait."},
+ {t:"mc",q:"Elle a dit : « J'ai fini. » → Elle a dit qu'elle ___ fini.",opts:["a","avait","aurait","est"],a:1,
+  why:"passé composé wird zum plus-que-parfait: elle avait fini."},
+ {t:"mc",q:"Il a dit : « Je viendrai. » → Il a dit qu'il ___.",opts:["viendra","viendrait","venait","est venu"],a:1,
+  why:"Das futur wird zum conditionnel: il viendrait."},
+ {t:"mc",q:"Er sagte gestern: « Je pars demain. » → Il a dit qu'il partait ___.",opts:["demain","le lendemain","la veille","ce jour-là"],a:1,
+  why:"Zeitangaben wandern mit: demain → le lendemain, hier → la veille, aujourd'hui → ce jour-là."},
+ {t:"trans",q:"Er sagt, dass er keine Zeit hat.",a:["il dit qu'il n'a pas le temps"],hint:"que + Vokal",
+  why:"Il dit qu'il n'a pas le temps."},
+ {t:"trans",q:"Sie fragt, ob ich morgen komme.",a:["elle demande si je viens demain"],hint:"ob = si",
+  why:"Elle demande si je viens demain."},
+ {t:"trans",q:"Er hat mich gebeten, ihm zu helfen.",a:["il m'a demandé de l'aider"],hint:"demander à qn de faire qc",
+  why:"Il m'a demandé de l'aider."},
+ {t:"order",de:"Er fragt, was ich am Wochenende mache.",a:["Il","demande","ce","que","je","fais","le","week-end"],end:"."},
+ {t:"order",de:"Sie sagte, dass sie müde sei.",a:["Elle","a","dit","qu'","elle","était","fatiguée"],end:"."},
+ {t:"card",front:"Die vier Anschlüsse",back:"que (Aussage) · si (Ja/Nein-Frage) · ce que / ce qui (was) · de + Infinitiv (Aufforderung)",
+  extra:"Andere Fragewörter (où, quand, comment, pourquoi, combien) bleiben unverändert stehen."},
+ {t:"card",front:"Zeitverschiebung",back:"présent → imparfait · passé composé → plus-que-parfait · futur → conditionnel",
+  extra:"Nur nötig, wenn das einleitende Verb in der Vergangenheit steht. imparfait und conditionnel bleiben, wie sie sind."},
+ {t:"card",front:"Was sich sonst noch ändert",back:"Pronomen, Possessivbegleiter, Zeitangaben",
+  extra:"« Je prends mon vélo aujourd'hui » → Il a dit qu'il prenait son vélo ce jour-là. Und: keine Inversion, kein Fragezeichen."}
+]});
+
+/* ---------- PASSIV ---------------------------------------- */
+TOPICS.push({
+id:"passiv", title:"Das Passiv", page:"Ergänzung",
+desc:"Wenn nicht wichtig ist, wer etwas tut — Bildung mit être, Angleichung, par und die französische Lieblingslösung on.",
+modes:["how","ref","mc","fill","trans","flash"], ref:"pasRef",
+items:[
+ {t:"mc",q:"Le film ___ par Spielberg. (wird gedreht — présent)",opts:["est tourné","a tourné","est tournant","se tourne"],a:0,
+  why:"Passiv = être in der passenden Zeit + Partizip: est tourné."},
+ {t:"mc",q:"La maison ___ en 1920. (wurde gebaut)",opts:["est construite","a été construite","était construire","a construit"],a:1,
+  why:"Vergangenheit im Passiv: être im passé composé + Partizip — a été construite."},
+ {t:"mc",q:"Les lettres ___ hier.",opts:["ont été envoyé","ont été envoyées","sont envoyé","a été envoyées"],a:1,
+  why:"Das Partizip gleicht sich immer ans Subjekt an: les lettres (weiblich Plural) → envoyées."},
+ {t:"mc",q:"Wer der Urheber ist, steht mit …",opts:["de","par","pour","avec"],a:1,
+  why:"par + Urheber: Le tableau a été peint par Monet. Nur bei Gefühlen und Zuständen steht de: Il est aimé de tous."},
+ {t:"mc",q:"Aktiv: « Marie écrit la lettre. » → Passiv:",opts:["La lettre est écrite par Marie.","La lettre écrit Marie.","Marie est écrite la lettre.","La lettre a écrit par Marie."],a:0,
+  why:"Das Objekt (la lettre) wird zum Subjekt, das Verb wird être + Partizip, das alte Subjekt hängt mit par hinten dran."},
+ {t:"mc",q:"Welcher Satz kann NICHT ins Passiv?",opts:["On lit le livre.","Il aide sa sœur.","Il téléphone à Marie.","Elle mange la pomme."],a:2,
+  why:"Nur Verben mit direktem Objekt bilden ein Passiv. téléphoner à hat ein indirektes Objekt — deshalb geht es nicht."},
+ {t:"mc",q:"« Mir wurde geholfen. » heißt auf Französisch am besten:",opts:["Je suis aidé.","On m'a aidé.","Il m'est aidé.","J'ai été aidé à."],a:1,
+  why:"aider qn hat zwar ein direktes Objekt, aber im Deutschen steht ein Dativ. Sicher und typisch französisch ist hier on: On m'a aidé."},
+ {t:"mc",q:"Ici, ___ parle français.",opts:["il est parlé","on","se","c'est"],a:1,
+  why:"Statt eines Passivs nimmt Französisch sehr oft on: Ici, on parle français = Hier wird Französisch gesprochen."},
+ {t:"fill",q:"Passiv im futur: Le pont ___ ___ l'année prochaine. (construire)",a:["sera construit"],hint:"être im futur + Partizip",
+  why:"Le pont sera construit l'année prochaine."},
+ {t:"fill",q:"Passiv im imparfait: La porte ___ ___ chaque soir. (fermer)",a:["était fermée"],hint:"être im imparfait + Angleichung",
+  why:"La porte était fermée chaque soir — porte ist weiblich, also fermée."},
+ {t:"trans",q:"Das Haus wurde 1950 gebaut.",a:["la maison a été construite en 1950"],hint:"passé composé des Passivs",
+  why:"La maison a été construite en 1950."},
+ {t:"trans",q:"Hier wird viel gearbeitet.",a:["ici, on travaille beaucoup","ici on travaille beaucoup"],hint:"besser mit on",
+  why:"Ici, on travaille beaucoup. Ein deutsches Passiv ohne Urheber wird im Französischen fast immer zu on."},
+ {t:"card",front:"Passiv bilden",back:"être in der Zeit des Aktivsatzes + Partizip + Angleichung",
+  extra:"est fait · a été fait · était fait · sera fait · serait fait. Nur être wird konjugiert, das Partizip bleibt."},
+ {t:"card",front:"par oder de?",back:"par bei Handlungen · de bei Gefühlen und Zuständen",
+  extra:"détruit par la tempête — aber: aimé de tous, couvert de neige, connu de tout le monde."},
+ {t:"card",front:"Die on-Lösung",back:"Kein Urheber genannt? Dann lieber on + Aktiv.",
+  extra:"On m'a volé mon vélo = Mir wurde mein Fahrrad gestohlen. Klingt französischer als jedes Passiv."}
+]});
+
+/* ---------- UHRZEIT & DATUM ------------------------------- */
+TOPICS.push({
+id:"zeitdatum", title:"Uhrzeit & Datum", page:"Ergänzung",
+desc:"Wie spät ist es, wann ist es passiert, welcher Tag — mit Zufallstrainer für die Uhrzeit.",
+modes:["how","ref","clock","mc","fill","trans","flash"], ref:"timeRef",
+items:[
+ {t:"mc",q:"13:15 sagt man umgangssprachlich …",opts:["treize heures quinze","une heure et quart","un heure quinze","une heure quart"],a:1,
+  why:"Umgangssprachlich rechnet man auf 12 Stunden herunter: une heure et quart. Offiziell (Fahrplan, Radio): treize heures quinze."},
+ {t:"mc",q:"7:45 umgangssprachlich …",opts:["sept heures quarante-cinq","huit heures moins le quart","sept heures moins le quart","huit heures et quart"],a:1,
+  why:"Ab 31 Minuten zieht man von der nächsten vollen Stunde ab: huit heures moins le quart."},
+ {t:"mc",q:"Welche Form ist richtig?",opts:["Il est un heure.","Il est une heure.","Il est un heures.","Il est une heures."],a:1,
+  why:"heure ist weiblich → une heure. Und im Singular ohne -s."},
+ {t:"mc",q:"12:30 heißt …",opts:["midi et demie","midi et demi","douze heures et demie","midi trente et demie"],a:1,
+  why:"Nach midi und minuit steht demi ohne e, weil es sich auf ein männliches Wort bezieht. Sonst: une heure et demie."},
+ {t:"mc",q:"Der 1. Mai heißt …",opts:["le un mai","le premier mai","le première mai","le premier de mai"],a:1,
+  why:"Nur der Erste ist eine Ordnungszahl: le premier mai. Alle anderen sind Grundzahlen: le deux mai, le trois mai."},
+ {t:"mc",q:"Ich gehe montags immer schwimmen. → Je nage toujours ___ .",opts:["lundi","le lundi","au lundi","en lundi"],a:1,
+  why:"Mit Artikel = regelmäßig (le lundi = montags), ohne Artikel = einmalig (lundi = am Montag, also diesen)."},
+ {t:"mc",q:"___ 2026, j'irai en France.",opts:["Dans","En","À","Au"],a:1,why:"Jahreszahlen stehen mit en: en 2026, en mai, en été."},
+ {t:"mc",q:"Was ist richtig geschrieben?",opts:["le 3 Mai","le 3 mai","Le 3 Mai","le 3ème mai"],a:1,
+  why:"Monate und Wochentage werden im Französischen kleingeschrieben."},
+ {t:"fill",q:"Wann? — ___ huit heures. (um acht)",a:["à"],hint:"Zeitpunkt",why:"à huit heures. Frage dazu: À quelle heure ?"},
+ {t:"fill",q:"Le magasin est ouvert ___ 9 h ___ 18 h. (von … bis)",a:["de à","de … à","de a"],hint:"zwei Wörter",
+  why:"de 9 h à 18 h. Bei Tagen: du lundi au vendredi."},
+ {t:"trans",q:"Es ist Viertel vor neun.",a:["il est neuf heures moins le quart"],hint:"von der nächsten Stunde abziehen",
+  why:"Il est neuf heures moins le quart."},
+ {t:"trans",q:"Ich habe am Samstag Geburtstag.",a:["mon anniversaire est samedi","c'est mon anniversaire samedi","j'ai mon anniversaire samedi"],
+  hint:"einmalig, also ohne Artikel",why:"Mon anniversaire est samedi. Mit le wäre es jeden Samstag."},
+ {t:"card",front:"Umgangssprachlich oder offiziell?",back:"12-Stunden mit et quart / moins le quart · 24-Stunden mit Minuten",
+  extra:"Beim Freund: à huit heures et demie. Im Fahrplan: à vingt heures trente. Die offizielle Form benutzt nie et quart oder moins."},
+ {t:"card",front:"Datum aufbauen",back:"le + Zahl + Monat (+ Jahr)",
+  extra:"le 14 juillet 1789. Nur der Erste ist besonders: le 1er janvier. Welches Datum? — Quelle est la date d'aujourd'hui ? / On est le combien ?"},
+ {t:"card",front:"lundi oder le lundi?",back:"ohne Artikel = einmalig · mit Artikel = jede Woche",
+  extra:"Je pars lundi (diesen Montag). Le lundi, j'ai sport (montags immer)."}
+]});
+
+/* ---------- REDEMITTEL ------------------------------------ */
+TOPICS.push({
+id:"redemittel", title:"Redemittel & Schreiben", page:"Für Arbeiten",
+desc:"Fertige Bausteine für Meinung, E-Mail, Bildbeschreibung und Stellungnahme — das, was in der Arbeit Punkte bringt.",
+modes:["how","ref","match","flash","mc","trans"], ref:"redRef",
+items:[
+ {t:"match",title:"Meinung äußern",pairs:[
+  ["meiner Meinung nach","à mon avis"],["ich denke, dass","je pense que"],["ich finde, dass","je trouve que"],
+  ["mir scheint, dass","il me semble que"],["ich bin sicher, dass","je suis sûr/e que"],["ich glaube nicht, dass","je ne crois pas que"]]},
+ {t:"match",title:"Zustimmen und widersprechen",pairs:[
+  ["ich bin einverstanden","je suis d'accord"],["du hast recht","tu as raison"],["das stimmt","c'est vrai"],
+  ["ich bin nicht einverstanden","je ne suis pas d'accord"],["im Gegenteil","au contraire"],["das ist übertrieben","c'est exagéré"]]},
+ {t:"match",title:"Einen Text gliedern",pairs:[
+  ["zunächst einmal","tout d'abord"],["außerdem","de plus"],["einerseits","d'un côté"],
+  ["andererseits","de l'autre côté"],["dagegen","en revanche"],["zusammenfassend","pour conclure"]]},
+ {t:"match",title:"E-Mail und Brief",pairs:[
+  ["Hallo (an Freunde)","Salut"],["Liebe(r) …","Cher / Chère …"],["Ich hoffe, es geht dir gut","J'espère que tu vas bien"],
+  ["Antworte mir schnell","Réponds-moi vite"],["Liebe Grüße","Bises / Amitiés"],["Mit freundlichen Grüßen","Cordialement"]]},
+ {t:"match",title:"Bild und Text beschreiben",pairs:[
+  ["Auf dem Foto sieht man","Sur la photo, on voit"],["im Vordergrund","au premier plan"],["im Hintergrund","à l'arrière-plan"],
+  ["es geht um","il s'agit de"],["der Text handelt von","le texte parle de"],["der Autor zeigt, dass","l'auteur montre que"]]},
+ {t:"match",title:"Vorschlagen und nachfragen",pairs:[
+  ["wir könnten …","on pourrait …"],["hast du Lust auf …?","ça te dit de …?"],["was hältst du davon?","qu'est-ce que tu en penses ?"],
+  ["einverstanden!","d'accord !"],["das ist eine gute Idee","c'est une bonne idée"],["lieber nicht","plutôt pas"]]},
+ {t:"mc",q:"Welche Anrede passt in eine E-Mail an eine Lehrerin?",opts:["Salut Madame","Bonjour Madame","Coucou Madame","Cher Madame"],a:1,
+  why:"Salut und Coucou sind nur unter Freunden. Cher wird mit Namen kombiniert: Chère Madame Dupont."},
+ {t:"mc",q:"Nach je ne crois pas que steht …",opts:["der Indikativ","der subjonctif","der Infinitiv","das futur"],a:1,
+  why:"Verneinte Meinungsverben drücken Unsicherheit aus und verlangen den subjonctif: Je ne crois pas qu'il vienne."},
+ {t:"mc",q:"Wie leitest du eine Gegenposition ein?",opts:["de plus","en revanche","c'est-à-dire","par exemple"],a:1,
+  why:"en revanche und par contre führen einen Gegensatz ein. de plus steigert, par exemple belegt."},
+ {t:"trans",q:"Meiner Meinung nach ist das keine gute Idee.",a:["à mon avis, ce n'est pas une bonne idée","a mon avis, ce n'est pas une bonne idée","à mon avis ce n'est pas une bonne idée"],
+  hint:"c'est verneint",why:"À mon avis, ce n'est pas une bonne idée."},
+ {t:"trans",q:"Ich denke, dass die Jugendlichen zu viel Zeit am Handy verbringen.",
+  a:["je pense que les jeunes passent trop de temps sur leur portable","je pense que les jeunes passent trop de temps au portable"],
+  hint:"trop de + Nomen",why:"Je pense que les jeunes passent trop de temps sur leur portable."},
+ {t:"card",front:"Der Aufbau einer Stellungnahme",back:"Einleitung · Argumente · Gegenargument · Fazit",
+  extra:"Il s'agit de … / Tout d'abord … / De plus … / En revanche, certains pensent que … / Pour conclure, je pense que …"},
+ {t:"card",front:"Fünf Sätze, die fast immer passen",
+  back:"À mon avis … · Je trouve que … · C'est pourquoi … · Par exemple … · Pour conclure …",
+  extra:"Wer diese fünf sicher schreibt, hat in jedem Aufsatz eine Struktur — auch ohne große Vokabeln."}
+]});
+
+/* ---------- Übersetzungsaufgaben für bestehende Themen ----- */
+const addItems = (id, arr) => TOPICS.find(t => t.id === id).items.push(...arr);
+addItems("verben", [
+ {t:"trans",q:"Ich bin gestern um acht Uhr aufgestanden.",a:["je me suis levé à huit heures hier","je me suis levée à huit heures hier","hier, je me suis levé à huit heures"],
+  hint:"reflexiv + être",why:"Je me suis levé(e) à huit heures hier."},
+ {t:"trans",q:"Wir haben einen Film gesehen.",a:["nous avons vu un film","on a vu un film"],hint:"unregelmäßiges Partizip",why:"Nous avons vu un film."},
+ {t:"trans",q:"Sie ist nach Paris gefahren.",a:["elle est allée à paris"],hint:"être-Verb, Angleichung",why:"Elle est allée à Paris."}
+]);
+addItems("pronomen", [
+ {t:"trans",q:"Ich habe ihm gestern geschrieben.",a:["je lui ai écrit hier"],hint:"écrire à qn",why:"Je lui ai écrit hier."},
+ {t:"trans",q:"Ich denke oft daran.",a:["j'y pense souvent"],hint:"penser à + Sache",why:"J'y pense souvent."}
+]);
+addItems("satzbau", [
+ {t:"trans",q:"Ich habe nichts verstanden.",a:["je n'ai rien compris"],hint:"rien steht vor dem Partizip",why:"Je n'ai rien compris."},
+ {t:"trans",q:"Warum kommst du nicht?",a:["pourquoi tu ne viens pas","pourquoi est-ce que tu ne viens pas","pourquoi ne viens-tu pas"],
+  hint:"drei Möglichkeiten",why:"Pourquoi est-ce que tu ne viens pas ? — oder mit Inversion: Pourquoi ne viens-tu pas ?"}
+]);
+addItems("zeiten", [
+ {t:"trans",q:"Als ich klein war, wohnte ich in Berlin.",a:["quand j'étais petit, j'habitais à berlin","quand j'étais petite, j'habitais à berlin","quand j'etais petit, j'habitais à berlin"],
+  hint:"zweimal imparfait",why:"Quand j'étais petit(e), j'habitais à Berlin."},
+ {t:"trans",q:"Wenn ich Geld hätte, würde ich reisen.",a:["si j'avais de l'argent, je voyagerais","si j'avais de l'argent je voyagerais"],
+  hint:"si + imparfait → conditionnel",why:"Si j'avais de l'argent, je voyagerais."}
+]);
+
+/* ---------- Reihenfolge der Themen ------------------------- */
+const TOPIC_ORDER = ["verben","zeiten","verbpraep","artikel","pronomen","satzbau","adjektive",
+                     "praep","indirekt","passiv","zahlen","zeitdatum","redemittel","mix"];
+TOPICS.sort((a,b) => TOPIC_ORDER.indexOf(a.id) - TOPIC_ORDER.indexOf(b.id));
+</script>
+<script>
+/* ---------- Uhrzeit-Generator ----------------------------- */
+function hourOfficial(h){
+  if(h === 0) return "zéro heure";
+  return numFR(h).replace(/un$/, "une") + " heure" + (h > 1 ? "s" : "");
+}
+function hourCommon(h){
+  const r = h % 12;
+  if(h === 0)  return "minuit";
+  if(h === 12) return "midi";
+  return (r === 1 ? "une" : numFR(r)) + " heure" + (r > 1 ? "s" : "");
+}
+function timeFR(h, m){
+  const off = hourOfficial(h) + (m ? " " + numFR(m) : "");
+  let cour;
+  if(m <= 30){
+    const base = hourCommon(h);
+    if(m === 0)       cour = base;
+    else if(m === 15) cour = base + " et quart";
+    else if(m === 30) cour = base + " et demi" + ((h % 12 === 0) ? "" : "e");
+    else              cour = base + " " + numFR(m);
+  } else {
+    const nh = (h + 1) % 24, rest = 60 - m, base = hourCommon(nh);
+    cour = base + (rest === 15 ? " moins le quart" : " moins " + numFR(rest));
+  }
+  return {off, cour};
+}
+function makeClockTask(){
+  const h = Math.floor(Math.random()*24);
+  const m = [0,5,10,15,20,25,30,35,40,45,50,55][Math.floor(Math.random()*12)];
+  const {off, cour} = timeFR(h, m);
+  const acc = new Set();
+  [off, cour].forEach(f => { acc.add(f); acc.add("il est " + f); });
+  return {t:"clock", skill:"clock", q:`Wie sagt man ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")} ?`,
+          sub:"Umgangssprachlich oder offiziell — beides zählt.",
+          a:[...acc], full:`${cour}  ·  offiziell: ${off}`,
+          why:"Bis 30 Minuten zählt man dazu, ab 31 zieht man von der nächsten Stunde ab."};
+}
+
+/* ---------- ERKLÄRUNGEN ----------------------------------- */
+EXPL.artikel = () => `
+<p class="lead">Vor fast jedem französischen Nomen steht ein Begleiter — anders als im Deutschen, wo man einfach
+„Ich esse Brot" sagen kann. Die Frage ist nur: welcher?</p>
+
+<h3>Die drei Artikelsorten</h3>
+<table class="tbl">
+<tr><th></th><th>männlich</th><th>weiblich</th><th>vor Vokal</th><th>Plural</th></tr>
+<tr><td>bestimmt</td><td class="fr">le</td><td class="fr">la</td><td class="fr">l'</td><td class="fr">les</td></tr>
+<tr><td>unbestimmt</td><td class="fr">un</td><td class="fr">une</td><td class="fr">un / une</td><td class="fr">des</td></tr>
+<tr><td>Teilungsartikel</td><td class="fr">du</td><td class="fr">de la</td><td class="fr">de l'</td><td class="fr">des</td></tr>
+</table>
+
+<h3>Welcher wann? Drei Fragen</h3>
+<ol class="steps">
+<li><b>Weiß mein Gegenüber genau, welches Ding gemeint ist?</b> (schon erwähnt, einzigartig, oder allgemein die ganze Sorte)
+→ bestimmter Artikel. <i>Passe-moi <b>le</b> pain. · <b>Le</b> soleil brille.</i></li>
+<li><b>Ist es ein zählbares Einzelstück, das neu eingeführt wird?</b> → unbestimmter Artikel.
+<i>J'ai acheté <b>un</b> pain.</i></li>
+<li><b>Geht es um eine unbestimmte Menge von etwas, das man nicht zählt?</b> → Teilungsartikel.
+<i>Je mange <b>du</b> pain. · Je bois <b>de l'</b>eau. · Il a <b>de la</b> chance.</i></li>
+</ol>
+<div class="rule"><b>Der Trick:</b> Setz im Deutschen testweise „etwas" oder „ein bisschen" davor.
+Passt „ich esse <u>etwas</u> Brot"? Dann steht im Französischen der Teilungsartikel.
+Der Teilungsartikel ist also nicht exotisch — im Deutschen steht dort einfach gar nichts.</div>
+
+<h3>Die Ausnahme, die immer geprüft wird</h3>
+<div class="rule">Nach <b>aimer, adorer, détester, préférer</b> steht der <b>bestimmte</b> Artikel, weil es um die Sorte
+im Allgemeinen geht — nicht um eine Portion:<br>
+<i>J'aime <b>le</b> chocolat</i> (ich mag Schokolade) — aber <i>Je mange <b>du</b> chocolat</i> (ich esse Schokolade).<br>
+Und das bleibt auch in der Verneinung so: <i>Je n'aime pas <b>le</b> chocolat.</i></div>
+
+<h3>Wann der Artikel zu de wird</h3>
+<ol class="steps">
+<li><b>Nach einer Verneinung:</b> un, une, du, de la, des → <b>de</b> (vor Vokal d').<br>
+<i>J'ai <b>un</b> frère → Je n'ai <b>pas de</b> frère. · Je bois <b>du</b> café → Je ne bois <b>pas de</b> café.</i></li>
+<li><b>Nach Mengenangaben:</b> beaucoup <b>de</b>, peu <b>de</b>, trop <b>de</b>, assez <b>de</b>, un kilo <b>de</b>,
+une bouteille <b>d'</b>eau.</li>
+<li><b>Zwei Ausnahmen:</b> nach <i>être</i> (Ce n'est pas <b>un</b> problème) und nach <i>ne … que</i>
+(Je ne bois que <b>du</b> thé) — weil das keine echte Verneinung ist.</li>
+</ol>
+
+<h3>Possessivbegleiter — mein, dein, sein</h3>
+<table class="tbl">
+<tr><th></th><th>männlich</th><th>weiblich</th><th>Plural</th></tr>
+<tr><td>ich</td><td class="fr">mon</td><td class="fr">ma</td><td class="fr">mes</td></tr>
+<tr><td>du</td><td class="fr">ton</td><td class="fr">ta</td><td class="fr">tes</td></tr>
+<tr><td>er / sie</td><td class="fr">son</td><td class="fr">sa</td><td class="fr">ses</td></tr>
+<tr><td>wir</td><td class="fr">notre</td><td class="fr">notre</td><td class="fr">nos</td></tr>
+<tr><td>ihr</td><td class="fr">votre</td><td class="fr">votre</td><td class="fr">vos</td></tr>
+<tr><td>sie (Plural)</td><td class="fr">leur</td><td class="fr">leur</td><td class="fr">leurs</td></tr>
+</table>
+<div class="rule"><b>Der wichtigste Unterschied zum Deutschen:</b> Der Begleiter richtet sich nach dem <b>Ding</b>,
+nicht nach dem Besitzer. <i>son vélo</i> heißt sein <b>oder</b> ihr Fahrrad — man erkennt es nur am Zusammenhang.
+Wer besitzt, ist dem Französischen hier egal; wichtig ist nur, ob das Ding männlich, weiblich oder Plural ist.<br><br>
+<b>Und:</b> Vor einem Vokal steht immer die männliche Form — <i>mon amie, ton école, son histoire</i>.</div>
+
+<h3>Demonstrativbegleiter — dieser, diese</h3>
+<div class="ex"><b>ce</b> livre · <b>cet</b> homme (männlich vor Vokal/stummem h) · <b>cette</b> fille · <b>ces</b> enfants</div>
+<p>Wenn man unterscheiden will, hängt man <b>-ci</b> (hier) oder <b>-là</b> (dort) an:
+<i>ce livre-<b>ci</b> ou ce livre-<b>là</b> ?</i></p>
+
+<h3>c'est oder il est?</h3>
+<table class="tbl">
+<tr><th>c'est / ce sont</th><th>il est / elle est</th></tr>
+<tr><td>+ Artikel + Nomen: <i>C'est un bon film.</i></td><td>+ Adjektiv: <i>Il est intéressant.</i></td></tr>
+<tr><td>+ Name: <i>C'est Marie.</i></td><td>+ Beruf ohne Artikel: <i>Elle est prof.</i></td></tr>
+<tr><td>+ betontes Pronomen: <i>C'est moi.</i></td><td>+ Nationalität ohne Artikel: <i>Il est allemand.</i></td></tr>
+<tr><td>allgemeine Bewertung: <i>C'est difficile.</i></td><td>bezogen auf jemanden/etwas Konkretes: <i>Ce livre ? Il est difficile.</i></td></tr>
+</table>
+<div class="rule"><b>Faustregel:</b> Kommt ein <b>Artikel</b> hinterher, muss <b>c'est</b> davor.</div>`;
+
+EXPL.indirekt = () => `
+<p class="lead">Indirekte Rede heißt: Du gibst wieder, was jemand gesagt hat, ohne ihn wörtlich zu zitieren.
+Aus « Je viens » wird <i>Il dit qu'il vient</i>. Dabei ändern sich vier Dinge — und zwar immer in derselben Reihenfolge.</p>
+
+<h3>Schritt 1: Den richtigen Anschluss wählen</h3>
+<table class="tbl">
+<tr><th>Was war es?</th><th>Anschluss</th><th>Beispiel</th></tr>
+<tr><td>eine Aussage</td><td class="fr">que / qu'</td><td>« Je viens. » → Il dit <b>qu'</b>il vient.</td></tr>
+<tr><td>eine Ja/Nein-Frage</td><td class="fr">si</td><td>« Tu viens ? » → Il demande <b>si</b> je viens.</td></tr>
+<tr><td>Frage mit qu'est-ce que</td><td class="fr">ce que</td><td>« Qu'est-ce que tu fais ? » → Il demande <b>ce que</b> je fais.</td></tr>
+<tr><td>Frage mit qu'est-ce qui</td><td class="fr">ce qui</td><td>« Qu'est-ce qui se passe ? » → Il demande <b>ce qui</b> se passe.</td></tr>
+<tr><td>Frage mit Fragewort</td><td class="fr">bleibt</td><td>« Où habites-tu ? » → Il demande <b>où</b> j'habite.</td></tr>
+<tr><td>eine Aufforderung</td><td class="fr">de + Infinitiv</td><td>« Viens ! » → Il me dit <b>de venir</b>.</td></tr>
+</table>
+<div class="rule">Im Nebensatz gibt es <b>keine Inversion</b> und <b>kein Fragezeichen</b> mehr:
+nicht <i>où habite-je</i>, sondern <i>où j'habite</i>. Der Nebensatz ist ein normaler Aussagesatz.</div>
+
+<h3>Schritt 2: Die Person wechseln</h3>
+<p>Wer spricht, ändert sich — also ändern sich Pronomen und Possessivbegleiter:</p>
+<div class="ex">Paul : « <b>Je</b> prends <b>mon</b> vélo. » → Paul dit qu'<b>il</b> prend <b>son</b> vélo.</div>
+
+<h3>Schritt 3: Die Zeit verschieben — aber nur manchmal</h3>
+<p>Steht das einleitende Verb im <b>Präsens</b> (il dit, il demande), ändert sich an der Zeit <b>nichts</b>.
+Steht es in der <b>Vergangenheit</b> (il a dit, il a demandé), rutscht alles eine Stufe zurück:</p>
+<table class="tbl">
+<tr><th>direkte Rede</th><th>indirekte Rede</th></tr>
+<tr><td class="fr">présent</td><td class="fr">imparfait</td></tr>
+<tr><td class="fr">passé composé</td><td class="fr">plus-que-parfait</td></tr>
+<tr><td class="fr">futur</td><td class="fr">conditionnel</td></tr>
+<tr><td class="fr">imparfait</td><td class="fr">imparfait (bleibt)</td></tr>
+<tr><td class="fr">conditionnel</td><td class="fr">conditionnel (bleibt)</td></tr>
+</table>
+<div class="ex">Il a dit : « Je <b>suis</b> fatigué. » → Il a dit qu'il <b>était</b> fatigué.<br>
+Il a dit : « J'<b>ai fini</b>. » → Il a dit qu'il <b>avait fini</b>.<br>
+Il a dit : « Je <b>viendrai</b>. » → Il a dit qu'il <b>viendrait</b>.</div>
+<div class="rule"><b>Warum?</b> Weil der Moment des Sprechens vorbei ist. Was damals Gegenwart war, ist aus heutiger
+Sicht Vergangenheit — genau wie im Deutschen „Er sagte, er <u>sei</u> müde".</div>
+
+<h3>Schritt 4: Zeit- und Ortsangaben mitziehen</h3>
+<table class="tbl">
+<tr><td class="fr">aujourd'hui → ce jour-là</td><td class="fr">hier → la veille</td></tr>
+<tr><td class="fr">demain → le lendemain</td><td class="fr">maintenant → à ce moment-là</td></tr>
+<tr><td class="fr">la semaine prochaine → la semaine suivante</td><td class="fr">ici → là</td></tr>
+</table>
+<div class="rule">Auch das nur, wenn die Einleitung in der Vergangenheit steht — und nur, wenn der Zeitpunkt wirklich
+ein anderer ist. Erzählst du am selben Tag weiter, bleibt <i>aujourd'hui</i> stehen.</div>`;
+
+EXPL.passiv = () => `
+<p class="lead">Im Aktiv steht im Mittelpunkt, <b>wer</b> etwas tut. Im Passiv steht im Mittelpunkt, <b>was</b> mit
+etwas geschieht. Der Handelnde darf sogar ganz verschwinden — genau dafür gibt es das Passiv.</p>
+
+<h3>Die Bildung</h3>
+<div class="ex"><b>être</b> (in der Zeit des Aktivsatzes) + <b>Partizip</b> (angeglichen ans Subjekt)</div>
+<p>Nur <i>être</i> wird konjugiert. Das Partizip ändert sich nur nach Geschlecht und Zahl — wie ein Adjektiv.</p>
+<table class="tbl">
+<tr><th>Zeit</th><th>Aktiv</th><th>Passiv</th></tr>
+<tr><td>présent</td><td class="fr">On regarde le film.</td><td class="fr">Le film <b>est</b> regardé.</td></tr>
+<tr><td>passé composé</td><td class="fr">On a regardé le film.</td><td class="fr">Le film <b>a été</b> regardé.</td></tr>
+<tr><td>imparfait</td><td class="fr">On regardait le film.</td><td class="fr">Le film <b>était</b> regardé.</td></tr>
+<tr><td>futur</td><td class="fr">On regardera le film.</td><td class="fr">Le film <b>sera</b> regardé.</td></tr>
+<tr><td>conditionnel</td><td class="fr">On regarderait le film.</td><td class="fr">Le film <b>serait</b> regardé.</td></tr>
+</table>
+
+<h3>Vom Aktiv zum Passiv — drei Schritte</h3>
+<ol class="steps">
+<li>Das <b>direkte Objekt</b> wird zum neuen <b>Subjekt</b> und rückt nach vorn.</li>
+<li>Das Verb wird zu <b>être + Partizip</b> — in derselben Zeit wie vorher. Partizip ans neue Subjekt angleichen.</li>
+<li>Das alte Subjekt hängt mit <b>par</b> hinten dran — oder fällt weg, wenn es egal ist.</li>
+</ol>
+<div class="ex">Marie <b>écrit</b> <u>la lettre</u>. → <u>La lettre</u> <b>est écrite</b> par Marie.<br>
+Les élèves <b>ont planté</b> <u>les arbres</u>. → <u>Les arbres</u> <b>ont été plantés</b> par les élèves.</div>
+
+<h3>par oder de?</h3>
+<div class="rule"><b>par</b> bei einer echten Handlung: <i>Le toit a été détruit <b>par</b> la tempête.</i><br>
+<b>de</b> bei Gefühlen und Zuständen: <i>Il est aimé <b>de</b> tous. · Le sol était couvert <b>de</b> neige.</i></div>
+
+<h3>Die wichtigste Einschränkung</h3>
+<p>Nur Verben mit <b>direktem</b> Objekt können ins Passiv. Alles, was mit <b>à</b> angeschlossen wird
+(téléphoner à, parler à, répondre à, aider … im Deutschen mit Dativ), kann kein Passiv bilden.</p>
+<div class="rule">Deshalb gibt es im Französischen keine Entsprechung zu „Mir wurde geholfen".
+Man sagt stattdessen: <b>On m'a aidé.</b></div>
+
+<h3>on — die französische Lieblingslösung</h3>
+<p>Wo im Deutschen ein Passiv ohne Urheber steht, nimmt Französisch meistens einfach <b>on</b> + Aktiv.
+Das klingt natürlicher und ist kürzer:</p>
+<table class="tbl">
+<tr><td>Hier wird Französisch gesprochen.</td><td class="fr">Ici, <b>on</b> parle français.</td></tr>
+<tr><td>Mir wurde mein Fahrrad gestohlen.</td><td class="fr"><b>On</b> m'a volé mon vélo.</td></tr>
+<tr><td>Das macht man nicht.</td><td class="fr"><b>On</b> ne fait pas ça.</td></tr>
+</table>
+<div class="rule"><b>Faustregel für Aufsätze:</b> Steht kein Urheber im Satz, nimm <b>on</b>.
+Steht ein Urheber drin und soll das Ergebnis betont werden, nimm das Passiv mit <b>par</b>.</div>`;
+
+EXPL.zeitdatum = () => `
+<p class="lead">Für die Uhrzeit gibt es zwei Systeme nebeneinander: das lockere 12-Stunden-System für den Alltag und
+das offizielle 24-Stunden-System für Fahrpläne, Kino und Radio. Beide muss man verstehen, benutzen darf man, was passt.</p>
+
+<h3>Die Uhrzeit umgangssprachlich</h3>
+<ol class="steps">
+<li>Beginne mit <b>Il est</b> + Stundenzahl + <b>heure(s)</b>. Achtung: <i>une heure</i> (weiblich, ohne -s),
+ab zwei: <i>deux heures</i>. 12:00 = <b>midi</b>, 0:00 = <b>minuit</b> — dort steht nie „heures".</li>
+<li><b>Bis 30 Minuten wird dazugezählt:</b> huit heures dix · huit heures <b>et quart</b> (15) ·
+huit heures <b>et demie</b> (30).</li>
+<li><b>Ab 31 Minuten wird abgezogen</b> — von der <b>nächsten</b> Stunde:
+neuf heures <b>moins</b> vingt (8:40) · neuf heures <b>moins le quart</b> (8:45).</li>
+<li>Bei Bedarf präzisieren: <b>du matin</b> (morgens), <b>de l'après-midi</b> (nachmittags), <b>du soir</b> (abends).</li>
+</ol>
+<div class="rule"><b>Der eine Schreibfehler, der immer passiert:</b> <i>et demi<b>e</b></i> nach <i>heure</i> (weiblich),
+aber <i>et demi</i> nach <i>midi</i> und <i>minuit</i> (männlich). Also: <i>une heure et demie</i>, aber <i>midi et demi</i>.</div>
+
+<h3>Die Uhrzeit offiziell</h3>
+<p>Einfach durchzählen bis 23, dann die Minuten als normale Zahl — ohne <i>quart</i>, ohne <i>moins</i>, ohne <i>demie</i>:</p>
+<div class="ex">14:45 → <b>quatorze heures quarante-cinq</b> · 20:30 → <b>vingt heures trente</b> · 21:00 → <b>vingt et une heures</b></div>
+
+<h3>Danach fragen</h3>
+<div class="ex"><b>Quelle heure est-il ?</b> — Wie spät ist es?<br>
+<b>À quelle heure … ?</b> — Um wie viel Uhr …? Antwort mit <b>à</b>: <i>à huit heures et demie</i>.</div>
+
+<h3>Das Datum</h3>
+<ol class="steps">
+<li>Aufbau: <b>le</b> + Zahl + Monat (+ Jahr) — <i>le 14 juillet 1789</i>. Kein „von", kein Punkt.</li>
+<li>Nur der Erste ist eine Ordnungszahl: <b>le 1<sup>er</sup> mai</b>. Alle anderen sind normale Zahlen: le 2 mai, le 3 mai.</li>
+<li>Monate und Wochentage schreibt man <b>klein</b>: janvier, février … lundi, mardi …</li>
+<li>Fragen: <i>Quelle est la date d'aujourd'hui ?</i> oder umgangssprachlich <i>On est le combien ?</i></li>
+</ol>
+
+<h3>Wochentage: lundi oder le lundi?</h3>
+<div class="rule"><b>ohne Artikel</b> = ein einzelner, konkreter Tag: <i>Je pars <b>lundi</b></i> (diesen Montag).<br>
+<b>mit Artikel</b> = jede Woche, also eine Gewohnheit: <i><b>Le lundi</b>, j'ai sport</i> (montags).<br>
+Denselben Unterschied gibt es bei <i>le matin</i> (morgens) und <i>ce matin</i> (heute Morgen).</div>
+
+<h3>Zeitangaben rund um Monat und Jahr</h3>
+<table class="tbl">
+<tr><td class="fr">en janvier, en mai</td><td>im Januar, im Mai</td></tr>
+<tr><td class="fr">au printemps · en été, en automne, en hiver</td><td>im Frühling · im Sommer, Herbst, Winter</td></tr>
+<tr><td class="fr">en 2026</td><td>im Jahr 2026</td></tr>
+<tr><td class="fr">de … à … / du lundi au vendredi</td><td>von … bis … / von Montag bis Freitag</td></tr>
+<tr><td class="fr">à partir de … / jusqu'à …</td><td>ab … / bis …</td></tr>
+</table>`;
+
+EXPL.redemittel = () => `
+<p class="lead">In einer Klassenarbeit verlierst du selten Punkte, weil dir eine Vokabel fehlt — sondern weil der Text
+keine Struktur hat. Diese Bausteine kannst du auswendig einsetzen, egal um welches Thema es geht.</p>
+
+<h3>Eine Stellungnahme aufbauen</h3>
+<ol class="steps">
+<li><b>Einleitung:</b> Worum geht es? <i>Il s'agit de … / Le texte parle de … / Aujourd'hui, beaucoup de jeunes …</i></li>
+<li><b>Deine Position:</b> <i>À mon avis, … / Je pense que … / Je trouve que …</i></li>
+<li><b>Argumente mit Beispiel:</b> <i>Tout d'abord, … Par exemple, … De plus, …</i></li>
+<li><b>Gegenargument:</b> <i>En revanche, certains pensent que … / D'un côté … de l'autre côté …</i></li>
+<li><b>Fazit:</b> <i>Pour conclure, je pense que … / C'est pourquoi …</i></li>
+</ol>
+<div class="rule"><b>Vier bis fünf Sätze reichen.</b> Ein kurzer, klar gegliederter Text ist besser als ein langer
+ohne Struktur — und du machst darin weniger Fehler.</div>
+
+<h3>Eine E-Mail schreiben</h3>
+<table class="tbl">
+<tr><th></th><th>an Freunde</th><th>förmlich</th></tr>
+<tr><td>Anrede</td><td class="fr">Salut Léa, / Cher Paul,</td><td class="fr">Bonjour Madame, / Madame, Monsieur,</td></tr>
+<tr><td>Einstieg</td><td class="fr">J'espère que tu vas bien.</td><td class="fr">Je vous écris au sujet de …</td></tr>
+<tr><td>Bitte</td><td class="fr">Est-ce que tu peux …?</td><td class="fr">Pourriez-vous … ?</td></tr>
+<tr><td>Schluss</td><td class="fr">Réponds-moi vite ! Bises / Amitiés</td><td class="fr">Merci d'avance. Cordialement</td></tr>
+</table>
+<div class="rule">Im Förmlichen immer <b>vous</b> und der conditionnel: <i>Je voudrais …, Pourriez-vous …</i>
+Das ist der schnellste Weg, erwachsen zu klingen.</div>
+
+<h3>Ein Bild oder einen Text beschreiben</h3>
+<div class="ex"><b>Sur la photo, on voit</b> … · <b>Au premier plan</b>, il y a … · <b>À l'arrière-plan</b>, on voit … ·
+<b>Il s'agit de</b> … · <b>L'auteur montre que</b> … · <b>À mon avis, cette photo veut dire que</b> …</div>
+<p>Nützlich ist auch die Vorsichtsform, wenn du nicht sicher bist: <i>Il semble que … · On dirait que … ·
+Peut-être que …</i></p>
+
+<h3>Zwei Fallen</h3>
+<div class="rule"><b>1. Verneinte Meinungsverben verlangen den subjonctif:</b>
+<i>Je pense qu'il <b>vient</b></i> — aber <i>Je ne pense pas qu'il <b>vienne</b>.</i><br><br>
+<b>2. Deutsche Füllwörter lassen sich nicht übersetzen.</b> Für „ja, halt, eben, mal" gibt es keine Entsprechung —
+weglassen. Statt „ich finde das halt gut" einfach: <i>Je trouve ça bien.</i></div>`;
+
+/* ---------- MERKBLÄTTER ----------------------------------- */
+REFS.artRef = () => `
+<h3>Artikel</h3>
+<table class="tbl">
+<tr><th></th><th>m.</th><th>w.</th><th>vor Vokal</th><th>Plural</th><th>wofür</th></tr>
+<tr><td>bestimmt</td><td class="fr">le</td><td class="fr">la</td><td class="fr">l'</td><td class="fr">les</td><td>bekannt, einzigartig, allgemein</td></tr>
+<tr><td>unbestimmt</td><td class="fr">un</td><td class="fr">une</td><td class="fr">un/une</td><td class="fr">des</td><td>zählbares Einzelstück</td></tr>
+<tr><td>Teilungsartikel</td><td class="fr">du</td><td class="fr">de la</td><td class="fr">de l'</td><td class="fr">des</td><td>unbestimmte Menge</td></tr>
+</table>
+<div class="rule"><b>de statt Artikel:</b> nach Verneinung (pas <b>de</b> pain) und nach Mengenangaben
+(beaucoup <b>de</b>, un kilo <b>de</b>, trop <b>de</b>, assez <b>d'</b>).
+<b>Ausnahmen:</b> nach être und nach ne … que.<br>
+<b>Nach aimer, adorer, détester, préférer</b> steht immer der bestimmte Artikel: J'aime <b>le</b> chocolat.</div>
+
+<h3>Possessivbegleiter</h3>
+<table class="tbl">
+<tr><th></th><th>m.</th><th>w.</th><th>Plural</th></tr>
+<tr><td>mein</td><td class="fr">mon</td><td class="fr">ma</td><td class="fr">mes</td></tr>
+<tr><td>dein</td><td class="fr">ton</td><td class="fr">ta</td><td class="fr">tes</td></tr>
+<tr><td>sein / ihr</td><td class="fr">son</td><td class="fr">sa</td><td class="fr">ses</td></tr>
+<tr><td>unser</td><td class="fr">notre</td><td class="fr">notre</td><td class="fr">nos</td></tr>
+<tr><td>euer / Ihr</td><td class="fr">votre</td><td class="fr">votre</td><td class="fr">vos</td></tr>
+<tr><td>ihr (Plural)</td><td class="fr">leur</td><td class="fr">leur</td><td class="fr">leurs</td></tr>
+</table>
+<div class="rule">Richtet sich nach dem <b>Ding</b>, nicht nach dem Besitzer: son vélo = sein <i>oder</i> ihr Fahrrad.
+Vor Vokal immer die männliche Form: <b>mon</b> amie, <b>ton</b> école.</div>
+
+<h3>Demonstrativbegleiter</h3>
+<table class="tbl">
+<tr><td class="fr">ce</td><td>männlich: ce livre</td><td class="fr">cet</td><td>männlich vor Vokal/h: cet homme</td></tr>
+<tr><td class="fr">cette</td><td>weiblich: cette fille</td><td class="fr">ces</td><td>Plural: ces enfants</td></tr>
+</table>
+
+<h3>c'est / il est</h3>
+<table class="tbl">
+<tr><th>c'est · ce sont</th><th>il est · elle est</th></tr>
+<tr><td class="fr">C'est un bon film.</td><td class="fr">Il est intéressant.</td></tr>
+<tr><td class="fr">C'est Marie. · C'est moi.</td><td class="fr">Elle est prof. · Il est allemand.</td></tr>
+<tr><td class="fr">C'est difficile. (allgemein)</td><td class="fr">Ce livre ? Il est difficile. (konkret)</td></tr>
+</table>`;
+
+REFS.indRef = () => `
+<h3>Die Anschlüsse</h3>
+<table class="tbl">
+<tr><th>direkte Rede</th><th>indirekte Rede</th></tr>
+<tr><td class="fr">« Je viens. »</td><td class="fr">Il dit <b>qu'</b>il vient.</td></tr>
+<tr><td class="fr">« Tu viens ? »</td><td class="fr">Il demande <b>si</b> je viens.</td></tr>
+<tr><td class="fr">« Qu'est-ce que tu fais ? »</td><td class="fr">Il demande <b>ce que</b> je fais.</td></tr>
+<tr><td class="fr">« Qu'est-ce qui se passe ? »</td><td class="fr">Il demande <b>ce qui</b> se passe.</td></tr>
+<tr><td class="fr">« Où vas-tu ? »</td><td class="fr">Il demande <b>où</b> je vais.</td></tr>
+<tr><td class="fr">« Viens ! »</td><td class="fr">Il me dit <b>de venir</b>.</td></tr>
+<tr><td class="fr">« Ne viens pas ! »</td><td class="fr">Il me dit <b>de ne pas venir</b>.</td></tr>
+</table>
+
+<h3>Zeitverschiebung (nur bei Einleitung in der Vergangenheit)</h3>
+<table class="tbl">
+<tr><th>direkt</th><th>indirekt</th><th>Beispiel</th></tr>
+<tr><td class="fr">présent</td><td class="fr">imparfait</td><td>« Je suis fatigué » → qu'il était fatigué</td></tr>
+<tr><td class="fr">passé composé</td><td class="fr">plus-que-parfait</td><td>« J'ai fini » → qu'il avait fini</td></tr>
+<tr><td class="fr">futur simple</td><td class="fr">conditionnel</td><td>« Je viendrai » → qu'il viendrait</td></tr>
+<tr><td class="fr">futur composé</td><td class="fr">allait + Infinitiv</td><td>« Je vais partir » → qu'il allait partir</td></tr>
+<tr><td class="fr">imparfait / conditionnel</td><td class="fr">bleiben unverändert</td><td>—</td></tr>
+</table>
+
+<h3>Zeit- und Ortsangaben</h3>
+<table class="tbl">
+<tr><td class="fr">aujourd'hui → ce jour-là</td><td class="fr">hier → la veille</td></tr>
+<tr><td class="fr">demain → le lendemain</td><td class="fr">maintenant → à ce moment-là</td></tr>
+<tr><td class="fr">la semaine prochaine → la semaine suivante</td><td class="fr">ici → là</td></tr>
+</table>
+<div class="rule">Im Nebensatz gibt es keine Inversion und kein Fragezeichen. Pronomen und Possessivbegleiter
+wechseln mit der Person: « Je prends mon vélo » → qu'il prenait son vélo.</div>`;
+
+REFS.pasRef = () => `
+<h3>Das Passiv in allen Zeiten</h3>
+<table class="tbl">
+<tr><th>Zeit</th><th>Aktiv</th><th>Passiv</th></tr>
+<tr><td>présent</td><td class="fr">On regarde le film.</td><td class="fr">Le film est regardé.</td></tr>
+<tr><td>passé composé</td><td class="fr">On a regardé le film.</td><td class="fr">Le film a été regardé.</td></tr>
+<tr><td>imparfait</td><td class="fr">On regardait le film.</td><td class="fr">Le film était regardé.</td></tr>
+<tr><td>plus-que-parfait</td><td class="fr">On avait regardé le film.</td><td class="fr">Le film avait été regardé.</td></tr>
+<tr><td>futur simple</td><td class="fr">On regardera le film.</td><td class="fr">Le film sera regardé.</td></tr>
+<tr><td>conditionnel</td><td class="fr">On regarderait le film.</td><td class="fr">Le film serait regardé.</td></tr>
+</table>
+<div class="rule"><b>Angleichung:</b> Das Partizip richtet sich immer nach dem Subjekt —
+la lettre est écrit<b>e</b>, les arbres ont été planté<b>s</b>, les lettres sont envoyé<b>es</b>.</div>
+
+<h3>Der Urheber</h3>
+<table class="tbl">
+<tr><td class="fr">par</td><td>bei Handlungen: détruit <b>par</b> la tempête, écrit <b>par</b> Zola</td></tr>
+<tr><td class="fr">de</td><td>bei Gefühlen und Zuständen: aimé <b>de</b> tous, couvert <b>de</b> neige, connu <b>de</b> tout le monde</td></tr>
+</table>
+
+<h3>Wann kein Passiv?</h3>
+<div class="rule">Nur Verben mit direktem Objekt können ins Passiv. Verben mit <b>à</b>
+(téléphoner à, parler à, répondre à, demander à) können es nicht.<br>
+Ist kein Urheber im Spiel, nimmt Französisch lieber <b>on</b> + Aktiv:
+<i>Ici, on parle français. · On m'a volé mon vélo. · On ne fait pas ça.</i></div>`;
+
+REFS.timeRef = () => {
+  const rows = [[8,0],[8,5],[8,15],[8,30],[8,40],[8,45],[13,15],[14,45],[12,30],[0,30],[21,0]];
+  const body = rows.map(([h,m]) => {
+    const t = timeFR(h,m);
+    return `<tr><td class="ipa">${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}</td>
+      <td class="fr">${t.cour}</td><td>${t.off}</td></tr>`;
+  }).join("");
+  return `
+<h3>Die Uhrzeit</h3>
+<table class="tbl"><tr><th>digital</th><th>umgangssprachlich</th><th>offiziell</th></tr>${body}</table>
+<div class="rule"><b>Bis 30 Minuten</b> zählt man dazu, <b>ab 31</b> zieht man von der nächsten Stunde ab.
+<b>et quart</b> (15), <b>et demie</b> (30), <b>moins le quart</b> (45).<br>
+<i>une heure</i> ist weiblich und steht im Singular. <b>midi</b> und <b>minuit</b> stehen nie mit „heures" —
+und dahinter <i>et demi</i> ohne e.<br>
+Die offizielle Form kennt kein quart, kein demie und kein moins.</div>
+<div class="rule"><b>Fragen:</b> Quelle heure est-il ? · À quelle heure … ? — Antwort mit <b>à</b>: à huit heures.<br>
+<b>Genauer:</b> du matin · de l'après-midi · du soir.</div>
+
+<h3>Das Datum</h3>
+<table class="tbl">
+<tr><td class="fr">le 3 mai</td><td>der 3. Mai — normale Zahl, Monat klein</td></tr>
+<tr><td class="fr">le 1<sup>er</sup> janvier</td><td>nur der Erste ist eine Ordnungszahl</td></tr>
+<tr><td class="fr">le 14 juillet 1789</td><td>Tag, Monat, Jahr — ohne Komma</td></tr>
+<tr><td class="fr">Quelle est la date d'aujourd'hui ?</td><td>Welches Datum haben wir heute?</td></tr>
+</table>
+
+<h3>Wochentage, Monate, Jahreszeiten</h3>
+<table class="tbl">
+<tr><td class="fr">lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche</td><td>ohne Artikel = einmalig</td></tr>
+<tr><td class="fr">le lundi</td><td>mit Artikel = jeden Montag</td></tr>
+<tr><td class="fr">janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre</td><td>en janvier …</td></tr>
+<tr><td class="fr">au printemps · en été · en automne · en hiver</td><td>Jahreszeiten</td></tr>
+<tr><td class="fr">en 2026 · du lundi au vendredi · à partir de · jusqu'à</td><td>Jahr · Zeitraum · ab · bis</td></tr>
+</table>`;
+};
+
+REFS.redRef = () => `
+<h3>Meinung äußern</h3>
+<table class="tbl">
+<tr><td class="fr">À mon avis, … / Selon moi, …</td><td>Meiner Meinung nach …</td></tr>
+<tr><td class="fr">Je pense / crois / trouve que …</td><td>Ich denke / glaube / finde, dass …</td></tr>
+<tr><td class="fr">Il me semble que …</td><td>Mir scheint, dass …</td></tr>
+<tr><td class="fr">Je suis sûr/e que …</td><td>Ich bin sicher, dass …</td></tr>
+<tr><td class="fr">Je ne pense pas que + subjonctif</td><td>Ich denke nicht, dass …</td></tr>
+</table>
+
+<h3>Zustimmen und widersprechen</h3>
+<table class="tbl">
+<tr><td class="fr">Je suis (tout à fait) d'accord.</td><td>Ich bin (völlig) einverstanden.</td></tr>
+<tr><td class="fr">Tu as raison. / C'est vrai.</td><td>Du hast recht. / Das stimmt.</td></tr>
+<tr><td class="fr">Je ne suis pas d'accord.</td><td>Ich bin nicht einverstanden.</td></tr>
+<tr><td class="fr">Au contraire, …</td><td>Im Gegenteil, …</td></tr>
+<tr><td class="fr">C'est exagéré. / Ça dépend.</td><td>Das ist übertrieben. / Das kommt darauf an.</td></tr>
+</table>
+
+<h3>Einen Text gliedern</h3>
+<table class="tbl">
+<tr><td class="fr">Tout d'abord … / Premièrement …</td><td>Zunächst einmal …</td></tr>
+<tr><td class="fr">De plus … / En plus …</td><td>Außerdem …</td></tr>
+<tr><td class="fr">D'un côté … de l'autre côté …</td><td>Einerseits … andererseits …</td></tr>
+<tr><td class="fr">En revanche … / Par contre …</td><td>Dagegen …</td></tr>
+<tr><td class="fr">Par exemple … / C'est-à-dire …</td><td>Zum Beispiel … / Das heißt …</td></tr>
+<tr><td class="fr">Pour conclure … / En résumé …</td><td>Zusammenfassend …</td></tr>
+</table>
+
+<h3>E-Mail und Brief</h3>
+<table class="tbl">
+<tr><th></th><th>an Freunde</th><th>förmlich</th></tr>
+<tr><td>Anrede</td><td class="fr">Salut Léa, / Cher Paul,</td><td class="fr">Bonjour Madame, / Madame, Monsieur,</td></tr>
+<tr><td>Einstieg</td><td class="fr">J'espère que tu vas bien.</td><td class="fr">Je vous écris au sujet de …</td></tr>
+<tr><td>Bitte</td><td class="fr">Est-ce que tu peux … ?</td><td class="fr">Pourriez-vous … ?</td></tr>
+<tr><td>Schluss</td><td class="fr">Réponds-moi vite ! Bises / Amitiés</td><td class="fr">Merci d'avance. Cordialement</td></tr>
+</table>
+
+<h3>Bild und Text beschreiben</h3>
+<table class="tbl">
+<tr><td class="fr">Sur la photo, on voit …</td><td>Auf dem Foto sieht man …</td></tr>
+<tr><td class="fr">Au premier plan / À l'arrière-plan</td><td>Im Vordergrund / Im Hintergrund</td></tr>
+<tr><td class="fr">Il s'agit de … / Le texte parle de …</td><td>Es geht um … / Der Text handelt von …</td></tr>
+<tr><td class="fr">L'auteur montre que … / veut dire que …</td><td>Der Autor zeigt / will sagen, dass …</td></tr>
+<tr><td class="fr">On dirait que … / Peut-être que …</td><td>Es sieht aus, als ob … / Vielleicht …</td></tr>
+</table>
+
+<h3>Vorschlagen und reagieren</h3>
+<table class="tbl">
+<tr><td class="fr">On pourrait … / Ça te dit de … ?</td><td>Wir könnten … / Hast du Lust auf …?</td></tr>
+<tr><td class="fr">Qu'est-ce que tu en penses ?</td><td>Was hältst du davon?</td></tr>
+<tr><td class="fr">D'accord ! / C'est une bonne idée.</td><td>Einverstanden! / Gute Idee.</td></tr>
+<tr><td class="fr">Désolé/e, je ne peux pas.</td><td>Tut mir leid, ich kann nicht.</td></tr>
+</table>`;
+</script>
+<script>
+/* ============================================================
+   8. APP — Modi, Auswertung, Fehlerspeicher
    ============================================================ */
 
 const MODE_LABEL = {how:"Erklärung", ref:"Merkblatt", conj:"Konjugationstrainer", num:"Zahlentrainer",
-  flash:"Karteikarten", mc:"Quiz", fill:"Eingabe", order:"Satzbau", match:"Zuordnen"};
+  clock:"Uhrzeit-Trainer", flash:"Karteikarten", mc:"Quiz", fill:"Eingabe", trans:"Übersetzen",
+  order:"Satzbau", match:"Zuordnen", fehler:"Fehlerliste"};
 
 const $ = s => document.querySelector(s);
 const stage = $("#stage");
-const stats = {ok:0, all:0, streak:0};
-let S = {topic:null, mode:null, queue:[], idx:0, done:false};
-
 const pick = a => a[Math.floor(Math.random()*a.length)];
 const shuffle = a => a.map(v => [Math.random(), v]).sort((x,y) => x[0]-y[0]).map(p => p[1]);
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const gap = s => esc(s).replace(/___/g, '<span class="gap">&nbsp;&nbsp;&nbsp;</span>');
 
-/* ---------- Antwortprüfung ---------- */
+/* ---------- Schlüssel für jede Aufgabe ---------------------
+   Der Schlüssel merkt sich, was du falsch hattest. Er hängt an
+   der Position im Thema — wenn du später Aufgaben einfügst,
+   hänge sie hinten an, sonst verschiebt sich der Lernstand.  */
+const ITEM_BY_KEY = {};
+TOPICS.forEach(t => t.items.forEach((it, i) => {
+  if(!it.key) it.key = t.id + "#" + i;
+  if(!ITEM_BY_KEY[it.key]) ITEM_BY_KEY[it.key] = it;
+}));
+
+/* ---------- Speicher --------------------------------------
+   Läuft über localStorage, gekapselt: Wenn der Browser das
+   blockiert (z. B. in einer Vorschau im iframe), lebt der
+   Lernstand einfach nur bis zum Neuladen weiter.            */
+const SKEY = "cahier-fr-v1";
+const Store = {
+  load(){ try { return JSON.parse(localStorage.getItem(SKEY)) || null; } catch(e){ return null; } },
+  save(d){ try { localStorage.setItem(SKEY, JSON.stringify(d)); } catch(e){} }
+};
+const MEM = Object.assign({items:{}, skills:{}, ok:0, all:0}, Store.load() || {});
+const saveMEM = () => Store.save(MEM);
+const rec = (store, key) => store[key] || (store[key] = {r:0, w:0, s:0});
+function mark(key, ok, isSkill){
+  if(!key) return;
+  const e = rec(isSkill ? MEM.skills : MEM.items, key);
+  if(ok){ e.r++; e.s++; } else { e.w++; e.s = 0; }
+}
+/* Alles, was du falsch hattest und noch nicht dreimal sicher konntest */
+const openErrors = () => [
+  ...Object.keys(MEM.items ).filter(k => MEM.items[k].w  > 0 && MEM.items[k].s  < 3 && ITEM_BY_KEY[k]),
+  ...Object.keys(MEM.skills).filter(k => MEM.skills[k].w > 0 && MEM.skills[k].s < 3)
+];
+
+const stats = {ok:0, all:0, streak:0};
+let S = {topic:null, mode:null, queue:[], idx:0, retry:[], round:1, runOk:0, runAll:0};
+
+/* ---------- Antwortprüfung -------------------------------- */
 const stripAcc = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 function norm(s){
   return (s||"").toLowerCase()
@@ -1928,7 +2685,7 @@ function judge(input, accepted){
   return "no";
 }
 
-/* ---------- Generatoren ---------- */
+/* ---------- Generatoren ----------------------------------- */
 function acceptedForms(v, t, i){
   const full = conj(v, t, i);
   const out = new Set();
@@ -1944,69 +2701,109 @@ function acceptedForms(v, t, i){
   });
   return [...out];
 }
-function makeConjTask(){
+function makeConjTask(verb, tense){
   for(let n = 0; n < 40; n++){
-    const v = pick(VERBS);
-    const t = pick(TENSES);
+    const v = verb || pick(VERBS);
+    const t = tense || pick(TENSES);
     const i = v.imp ? 2 : Math.floor(Math.random()*6);
     const full = conj(v, t.id, i);
     if(!full) continue;
-    return {t:"conj", q:`${v.inf} · ${t.label} · ${PERSONS[i]}`, sub:v.de,
+    return {t:"conj", skill:`conj:${v.inf}:${t.id}`, q:`${v.inf} · ${t.label} · ${PERSONS[i]}`, sub:v.de,
             a:acceptedForms(v, t.id, i), full, why: v.note || `${t.label} — ${t.de}`};
   }
-  return {t:"conj", q:"être · présent · je", sub:"sein", a:["je suis","suis"], full:"je suis", why:""};
+  return makeConjTask(VMAP["être"], TENSES[0]);
 }
 function numVariants(n){
   const b = numFR(n);
   return [...new Set([b, b.replace(/vingts/g,"vingt"), b.replace(/cents/g,"cent"),
                       b.replace(/vingts/g,"vingt").replace(/cents/g,"cent")])];
 }
-function makeNumTask(){
-  if(Math.random() < 0.22){
+function makeNumTask(bucket){
+  const b = bucket || (() => {
+    const r = Math.random();
+    if(r < .22) return "ordinal";
+    if(r < .55) return "60-99";
+    if(r < .72) return "0-59";
+    if(r < .88) return "100-999";
+    return "gross";
+  })();
+  if(b === "ordinal"){
     const n = pick([1,2,3,4,5,6,7,8,9,10,11,12,20,21,30,40,100]);
     const o = ordinalFR(n);
-    const full = n === 1 ? "le premier / la première" : "le/la " + o;
-    return {t:"num", q:`Ordnungszahl: die ${n}.`, sub:"le / la …",
-            a: n===1 ? ["premier","le premier","la première","première","premier / première"] : [o, "le "+o, "la "+o, "le/la "+o],
-            full, why:"Ab 2 gilt: Zahl + -ième."};
+    return {t:"num", skill:"num:ordinal", q:`Ordnungszahl: die ${n}.`, sub:"le / la …",
+            a: n === 1 ? ["premier","le premier","la première","première"] : [o, "le "+o, "la "+o, "le/la "+o],
+            full: n === 1 ? "le premier / la première" : "le/la " + o,
+            why:"Ab 2 gilt: Zahl + -ième."};
   }
-  const r = Math.random();
-  let n;
-  if(r < .38)      n = 60 + Math.floor(Math.random()*40);
-  else if(r < .60) n = Math.floor(Math.random()*60);
-  else if(r < .82) n = 100 + Math.floor(Math.random()*900);
-  else             n = pick([1789,1950,1998,2000,2026,1515,1200,3400,10000,1000000,2000000]);
-  return {t:"num", q:`Schreibe auf Französisch: ${n.toLocaleString("de-DE")}`, sub:"",
+  const n = b === "60-99"   ? 60 + Math.floor(Math.random()*40)
+          : b === "0-59"    ? Math.floor(Math.random()*60)
+          : b === "100-999" ? 100 + Math.floor(Math.random()*900)
+          : pick([1789,1950,1998,2000,2026,1515,1200,3400,10000,1000000,2000000]);
+  return {t:"num", skill:"num:"+b, q:`Schreibe auf Französisch: ${n.toLocaleString("de-DE")}`, sub:"",
           a:numVariants(n), full:numFR(n), why:""};
 }
+function taskFromSkill(key){
+  const p = key.split(":");
+  if(p[0] === "conj")  return makeConjTask(VMAP[p[1]], TENSES.find(t => t.id === p[2]));
+  if(p[0] === "num")   return makeNumTask(p[1]);
+  if(p[0] === "clock") return makeClockTask();
+  return null;
+}
 
-/* ---------- Aufgabenliste bauen ---------- */
+/* ---------- Aufgabenliste bauen --------------------------- */
 function itemsOf(topic, type){
-  let src = topic.items;
+  let src = topic.items || [];
   if(topic.id === "mix") src = TOPICS.filter(t => t.id !== "mix").flatMap(t => t.items);
   return src.filter(it => it.t === type);
 }
+/* Was wackelt, kommt öfter; was dreimal saß, seltener. */
+function weight(it){
+  const e = MEM.items[it.key];
+  if(!e) return 2;
+  if(e.s >= 3)   return 0.4;
+  if(e.w > e.r)  return 4;
+  return e.w > 0 ? 3 : 1.2;
+}
+function weighted(list){
+  return list.map(it => [weight(it) * (0.4 + Math.random()), it])
+             .sort((a,b) => b[0]-a[0]).map(p => p[1]);
+}
 function buildQueue(){
   const t = S.topic, m = S.mode;
-  if(m === "conj") S.queue = Array.from({length:15}, makeConjTask);
-  else if(m === "num") S.queue = Array.from({length:15}, makeNumTask);
-  else S.queue = shuffle(itemsOf(t, m === "flash" ? "card" : m));
-  S.idx = 0;
+  S.retry = []; S.round = 1; S.runOk = 0; S.runAll = 0; S.idx = 0;
+  if(m === "conj")       S.queue = Array.from({length:15}, () => makeConjTask());
+  else if(m === "num")   S.queue = Array.from({length:15}, () => makeNumTask());
+  else if(m === "clock") S.queue = Array.from({length:15}, () => makeClockTask());
+  else if(m === "fehler"){
+    S.queue = shuffle(openErrors()).slice(0,20)
+      .map(k => ITEM_BY_KEY[k] || taskFromSkill(k)).filter(Boolean);
+  }
+  else S.queue = weighted(itemsOf(t, m === "flash" ? "card" : m));
 }
 function availableModes(t){
   return (t.modes || []).filter(m => {
-    if(m === "how")  return !!EXPL[t.id];
-    if(m === "ref")  return !!REFS[t.ref];
-    if(m === "conj" || m === "num") return true;
+    if(m === "how") return !!EXPL[t.id];
+    if(m === "ref") return !!REFS[t.ref];
+    if(m === "conj" || m === "num" || m === "clock" || m === "fehler") return true;
     return itemsOf(t, m === "flash" ? "card" : m).length > 0;
   });
 }
 
-/* ---------- Navigation ---------- */
+/* ---------- Navigation ------------------------------------ */
+const ERR_TOPIC = {id:"fehler", title:"Deine Fehler", modes:["fehler"], items:[]};
+
 function renderHome(){
   $("#home").hidden = false;
   $("#drill").hidden = true;
-  $("#topicGrid").innerHTML = TOPICS.map((t, i) => `
+  const n = openErrors().length;
+  const errCard = n ? `
+    <button class="topic alert" data-act="topic" data-id="fehler">
+      <span class="num">✗</span>
+      <span class="tname">Deine Fehler (${n})</span>
+      <span class="tdesc">Alles, was du falsch hattest und noch nicht dreimal sicher konntest — quer durch alle Themen.</span>
+      <span class="page">Wiederholen</span>
+    </button>` : "";
+  $("#topicGrid").innerHTML = errCard + TOPICS.map((t, i) => `
     <button class="topic" data-act="topic" data-id="${t.id}">
       <span class="num">${String(i+1).padStart(2,"0")}</span>
       <span class="tname">${t.title}</span>
@@ -2016,14 +2813,14 @@ function renderHome(){
   window.scrollTo({top:0, behavior:"instant"});
 }
 function openTopic(id){
-  S.topic = TOPICS.find(t => t.id === id);
+  S.topic = id === "fehler" ? ERR_TOPIC : TOPICS.find(t => t.id === id);
   const modes = availableModes(S.topic);
   S.mode = modes[0];
   $("#home").hidden = true;
   $("#drill").hidden = false;
   $("#drillTitle").textContent = S.topic.title;
-  $("#modeTabs").innerHTML = modes.map(m =>
-    `<button class="mode" role="tab" data-act="mode" data-m="${m}" aria-selected="${m===S.mode}">${MODE_LABEL[m]}</button>`).join("");
+  $("#modeTabs").innerHTML = modes.length > 1 ? modes.map(m =>
+    `<button class="mode" role="tab" data-act="mode" data-m="${m}" aria-selected="${m===S.mode}">${MODE_LABEL[m]}</button>`).join("") : "";
   buildQueue();
   render();
   window.scrollTo({top:0, behavior:"instant"});
@@ -2040,13 +2837,19 @@ function updateStats(){
   $("#statAll").textContent = stats.all;
   $("#statStreak").textContent = stats.streak;
 }
-function score(ok){
-  stats.all++;
-  if(ok){ stats.ok++; stats.streak++; } else { stats.streak = 0; }
+function score(ok, it){
+  stats.all++; S.runAll++;
+  if(ok){ stats.ok++; S.runOk++; stats.streak++; } else { stats.streak = 0; }
+  if(it){
+    if(it.skill) mark(it.skill, ok, true);
+    else if(it.key) mark(it.key, ok, false);
+    if(!ok) S.retry.push(it);
+  }
+  saveMEM();
   updateStats();
 }
 
-/* ---------- Rendering ---------- */
+/* ---------- Rendering ------------------------------------- */
 function progressBar(){
   const p = S.queue.length ? Math.round(S.idx / S.queue.length * 100) : 0;
   return `<div class="progress"><span>${Math.min(S.idx+1, S.queue.length)} / ${S.queue.length}</span>
@@ -2059,29 +2862,41 @@ function joinWords(arr){
     return s + " " + w;
   }, "");
 }
+const banner = () => S.round > 1 ? `<div class="banner">Nachholrunde — nur deine Fehler</div>` : "";
+
 function render(){
-  if(S.mode === "how"){
-    stage.innerHTML = `<div class="sheet plain ref">${EXPL[S.topic.id]()}</div>`;
-    return;
-  }
-  if(S.mode === "ref"){
-    stage.innerHTML = `<div class="sheet plain ref">${REFS[S.topic.ref]()}</div>`;
-    return;
-  }
+  if(S.mode === "how"){ stage.innerHTML = `<div class="sheet plain ref">${EXPL[S.topic.id]()}</div>`; return; }
+  if(S.mode === "ref"){ stage.innerHTML = `<div class="sheet plain ref">${REFS[S.topic.ref]()}</div>`; return; }
+
   if(S.idx >= S.queue.length){
-    stage.innerHTML = `<div class="sheet"><div class="qmeta">Fertig</div>
-      <div class="qtext">Durch! ${S.queue.length} Aufgaben in diesem Durchgang.</div>
-      <p class="qsub">Ein neuer Durchgang mischt die Aufgaben neu — beim Konjugations- und Zahlentrainer kommen komplett neue.</p>
+    if(S.retry.length){                       // Fehler direkt noch einmal
+      S.queue = shuffle(S.retry); S.retry = []; S.idx = 0; S.round++;
+      return render();
+    }
+    if(!S.queue.length){
+      stage.innerHTML = `<div class="sheet"><div class="qmeta">Nichts zu tun</div>
+        <div class="qtext">Hier ist gerade nichts offen.</div>
+        <p class="qsub">Deine Fehlerliste ist leer — alles, was du falsch hattest, konntest du danach dreimal richtig.</p>
+        <div class="inputrow"><button class="btn accent" data-act="home">Zu den Themen</button></div></div>`;
+      return;
+    }
+    const quote = S.runAll && S.runOk === S.runAll ? "Alles richtig." : `${S.runOk} von ${S.runAll} richtig.`;
+    stage.innerHTML = `<div class="sheet"><div class="qmeta">Durchgang beendet</div>
+      <div class="qtext">${quote}</div>
+      <p class="qsub">Was du falsch hattest, liegt jetzt in deiner Fehlerliste auf der Startseite und kommt
+      in neuen Durchgängen häufiger dran.</p>
       <div class="inputrow"><button class="btn accent" data-act="restart">Noch ein Durchgang</button>
       <button class="btn ghost" data-act="home">Anderes Thema</button></div></div>`;
     return;
   }
+
   const it = S.queue[S.idx];
-  const type = S.mode === "flash" ? "card" : (it.t === "conj" || it.t === "num" ? it.t : it.t);
+  const type = S.mode === "flash" ? "card" : it.t;
   const meta = `${S.topic.title} · ${MODE_LABEL[S.mode]}`;
+  const extra = S.mode === "fehler" ? `<div class="inputrow"><button class="btn ghost" data-act="clearerrors">Fehlerliste leeren</button></div>` : "";
 
   if(type === "card"){
-    stage.innerHTML = `<div class="sheet"><div class="qmeta">${meta}</div>
+    stage.innerHTML = `<div class="sheet">${banner()}<div class="qmeta">${meta}</div>
       <div class="flash" data-act="flip">
         <div class="hint">Karte antippen zum Umdrehen</div>
         <div class="front">${esc(it.front)}</div>
@@ -2095,25 +2910,27 @@ function render(){
     return;
   }
   if(type === "mc"){
-    stage.innerHTML = `<div class="sheet"><span class="mark" id="mark"></span>
+    stage.innerHTML = `<div class="sheet"><span class="mark" id="mark"></span>${banner()}
       <div class="qmeta">${meta}</div>
       <div class="qtext">${gap(it.q)}</div>
       <div class="answers">${it.opts.map((o,i) =>
         `<button class="opt" data-act="opt" data-i="${i}">${esc(o)}</button>`).join("")}</div>
-      <div class="verdict" id="verdict"></div>${progressBar()}</div>`;
+      <div class="verdict" id="verdict"></div>${progressBar()}${extra}</div>`;
     return;
   }
-  if(type === "fill" || type === "conj" || type === "num"){
-    stage.innerHTML = `<div class="sheet"><span class="mark" id="mark"></span>
+  if(type === "fill" || type === "trans" || type === "conj" || type === "num" || type === "clock"){
+    const label = type === "trans" ? "Übersetze ins Französische" : "";
+    stage.innerHTML = `<div class="sheet"><span class="mark" id="mark"></span>${banner()}
       <div class="qmeta">${meta}</div>
+      ${label ? `<div class="qsub" style="margin:0 0 8px">${label}</div>` : ""}
       <div class="qtext">${gap(it.q)}</div>
-      ${it.sub ? `<div class="qsub"><span class="de">${esc(it.sub)}</span></div>` : ""}
+      ${it.sub  ? `<div class="qsub"><span class="de">${esc(it.sub)}</span></div>` : ""}
       ${it.hint ? `<div class="qsub">Tipp: ${esc(it.hint)}</div>` : ""}
       <div class="inputrow">
         <input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Antwort eintragen">
         <button class="btn" data-act="check">Prüfen</button>
       </div>
-      <div class="verdict" id="verdict"></div>${progressBar()}</div>`;
+      <div class="verdict" id="verdict"></div>${progressBar()}${extra}</div>`;
     const inp = $("#ans"); inp.focus();
     inp.addEventListener("keydown", e => {
       if(e.key === "Enter"){ e.preventDefault(); $("#verdict").classList.contains("show") ? next() : checkInput(); }
@@ -2121,7 +2938,7 @@ function render(){
     return;
   }
   if(type === "order"){
-    stage.innerHTML = `<div class="sheet"><span class="mark" id="mark"></span>
+    stage.innerHTML = `<div class="sheet"><span class="mark" id="mark"></span>${banner()}
       <div class="qmeta">${meta}</div>
       <div class="qtext">${esc(it.de)}</div>
       <div class="qsub">Setze die Wörter in die richtige Reihenfolge.</div>
@@ -2129,14 +2946,14 @@ function render(){
       <div class="pool" id="pool">${shuffle(it.a.map((w,i) => ({w,i})))
         .map(o => `<button class="word" data-act="word" data-i="${o.i}">${esc(o.w)}</button>`).join("")}</div>
       <div class="inputrow"><button class="btn" data-act="checkorder">Prüfen</button></div>
-      <div class="verdict" id="verdict"></div>${progressBar()}</div>`;
+      <div class="verdict" id="verdict"></div>${progressBar()}${extra}</div>`;
     S.picked = [];
     return;
   }
   if(type === "match"){
-    const left = it.pairs.map((p,i) => ({t:p[0], i}));
+    const left  = it.pairs.map((p,i) => ({t:p[0], i}));
     const right = shuffle(it.pairs.map((p,i) => ({t:p[1], i})));
-    stage.innerHTML = `<div class="sheet"><div class="qmeta">${meta}</div>
+    stage.innerHTML = `<div class="sheet">${banner()}<div class="qmeta">${meta}</div>
       <div class="qtext">${esc(it.title)}</div>
       <div class="qsub">Tippe links auf einen Ausdruck und dann rechts auf die passende Übersetzung.</div>
       <div class="match">
@@ -2144,12 +2961,12 @@ function render(){
         <div class="col">${right.map(o => `<button class="mitem" data-act="m" data-side="r" data-i="${o.i}">${esc(o.t)}</button>`).join("")}</div>
       </div>
       <div class="verdict" id="verdict"></div>${progressBar()}</div>`;
-    S.sel = null; S.left = it.pairs.length;
+    S.sel = null; S.left = it.pairs.length; S.missed = false;
     return;
   }
 }
 
-/* ---------- Auswertung ---------- */
+/* ---------- Auswertung ------------------------------------ */
 function showVerdict(kind, html){
   const v = $("#verdict");
   v.className = "verdict show " + kind;
@@ -2157,49 +2974,52 @@ function showVerdict(kind, html){
   const m = $("#mark");
   if(m){ m.textContent = kind === "ok" ? "✓" : "✗"; m.className = "mark on " + (kind === "ok" ? "ok" : ""); }
 }
-function nextBtn(){ return `<div class="inputrow"><button class="btn accent" data-act="next">Weiter</button></div>`; }
+const nextBtn = () => `<div class="inputrow"><button class="btn accent" data-act="next">Weiter</button></div>`;
 
 function checkInput(){
   const it = S.queue[S.idx];
-  const val = $("#ans").value;
-  const r = judge(val, it.a);
-  score(r === "ok");
+  const r = judge($("#ans").value, it.a);
+  score(r === "ok", it);
   const why = it.why ? `<span class="why">${esc(it.why)}</span>` : "";
-  if(r === "ok")      showVerdict("ok", `Richtig: <b>${esc(it.full || it.a[0])}</b>${why}`);
-  else if(r === "almost") showVerdict("almost", `Fast — achte auf die Akzente: <b>${esc(it.full || it.a[0])}</b>${why}`);
-  else                showVerdict("no", `Richtig wäre: <b>${esc(it.full || it.a[0])}</b>${why}`);
+  const sol = esc(it.full || it.a[0]);
+  if(r === "ok")          showVerdict("ok", `Richtig: <b>${sol}</b>${why}`);
+  else if(r === "almost") showVerdict("almost", `Fast — achte auf die Akzente: <b>${sol}</b>${why}`);
+  else                    showVerdict("no", `Richtig wäre: <b>${sol}</b>${why}`);
   $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
 }
 function checkOrder(){
   const it = S.queue[S.idx];
   const mine = S.picked.map(i => it.a[i]);
   const ok = mine.length === it.a.length && mine.every((w,k) => w === it.a[k]);
-  score(ok);
+  score(ok, it);
   const sol = joinWords(it.a) + (it.end || "");
   showVerdict(ok ? "ok" : "no", (ok ? "Richtig: " : "Richtig wäre: ") + `<b>${esc(sol)}</b>`);
   $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
 }
 function next(){ S.idx++; render(); }
 
-/* ---------- Klicks ---------- */
+/* ---------- Klicks ---------------------------------------- */
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-act]");
   if(!el) return;
   const act = el.dataset.act;
 
-  if(act === "topic") return openTopic(el.dataset.id);
-  if(act === "mode")  return setMode(el.dataset.m);
-  if(act === "home")  return renderHome();
+  if(act === "topic")   return openTopic(el.dataset.id);
+  if(act === "mode")    return setMode(el.dataset.m);
+  if(act === "home")    return renderHome();
   if(act === "restart"){ buildQueue(); return render(); }
-  if(act === "next")  return next();
-
+  if(act === "next")    return next();
+  if(act === "clearerrors"){
+    MEM.items = {}; MEM.skills = {}; saveMEM();
+    return renderHome();
+  }
   if(act === "flip"){
     const b = $("#cardBack");
     if(b && b.hidden){ b.hidden = false; $("#cardBtns").hidden = false; }
     return;
   }
-  if(act === "know"){ score(true);  return next(); }
-  if(act === "again"){ score(false); S.queue.push(S.queue[S.idx]); return next(); }
+  if(act === "know"){  score(true,  S.queue[S.idx]); return next(); }
+  if(act === "again"){ score(false, S.queue[S.idx]); return next(); }
 
   if(act === "opt"){
     const it = S.queue[S.idx], i = +el.dataset.i;
@@ -2209,7 +3029,7 @@ document.addEventListener("click", e => {
       if(k === it.a) b.classList.add("right");
       else if(k === i) b.classList.add("wrong");
     });
-    score(ok);
+    score(ok, it);
     showVerdict(ok ? "ok" : "no", (ok ? "Richtig." : `Richtig ist: <b>${esc(it.opts[it.a])}</b>`) +
       (it.why ? `<span class="why">${esc(it.why)}</span>` : ""));
     $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
@@ -2241,12 +3061,19 @@ document.addEventListener("click", e => {
     }
     if(S.sel.side === side){ S.sel.el.removeAttribute("data-state"); el.dataset.state = "sel"; S.sel = {side, i, el}; return; }
     const ok = S.sel.i === i;
-    score(ok);
+    stats.all++; S.runAll++;
+    if(ok){ stats.ok++; S.runOk++; stats.streak++; } else { stats.streak = 0; S.missed = true; }
+    updateStats();
     if(ok){
       S.sel.el.dataset.state = "done"; el.dataset.state = "done";
       S.sel = null; S.left--;
       if(S.left === 0){
-        showVerdict("ok", "Alle Paare gefunden.");
+        const it = S.queue[S.idx];
+        mark(it.key, !S.missed, false);
+        if(S.missed) S.retry.push(it);
+        saveMEM();
+        showVerdict("ok", S.missed ? "Alle Paare gefunden — die Karte kommt gleich noch einmal."
+                                   : "Alle Paare auf Anhieb gefunden.");
         $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
       }
     } else {
@@ -2264,23 +3091,21 @@ renderHome();
 updateStats();
 
 /* ============================================================
-   Punktestand speichern (optional)
+   Lernstand über mehrere Geräte (optional)
    ------------------------------------------------------------
-   Der Punktestand lebt aktuell nur im Arbeitsspeicher.
-   Wenn du ihn behalten willst, reichen zwei Stellen:
+   MEM liegt im localStorage des Browsers. Wenn du zwischen
+   Handy und Laptop wechseln willst, ersetze Store durch
+   Supabase — Tabelle z. B. progress(user_id, data jsonb):
 
-   1) Lokal im Browser — in score() ergänzen:
-        localStorage.setItem("cahier", JSON.stringify(stats));
-      und beim Start:
-        Object.assign(stats, JSON.parse(localStorage.getItem("cahier") || "{}"));
+     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+     const sb = createClient(URL, ANON_KEY);
+     // laden:
+     const { data } = await sb.from("progress").select("data").single();
+     // speichern (in saveMEM):
+     await sb.from("progress").upsert({ user_id: uid, data: MEM });
 
-   2) Mit Supabase — Tabelle z.B. results(id, topic, mode, correct, total, created_at):
-        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-        const sb = createClient(URL, ANON_KEY);
-        // am Ende eines Durchgangs (im "Fertig"-Zweig von render()):
-        await sb.from("results").insert({ topic: S.topic.id, mode: S.mode,
-                                          correct: stats.ok, total: stats.all });
-      Dann brauchst du Row Level Security + Auth, sonst kann jeder schreiben.
+   Dazu brauchst du Auth und Row Level Security, sonst kann
+   jeder deinen Lernstand lesen und überschreiben.
    ============================================================ */
 </script>
 </body>
