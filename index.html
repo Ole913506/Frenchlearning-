@@ -105,6 +105,11 @@ button{font:inherit;color:inherit}
 .mode:hover{border-color:var(--ink-3)}
 .mode[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 
+.subs{display:flex;gap:6px;flex-wrap:wrap;margin:-8px 0 20px;padding-left:2px}
+.sub{cursor:pointer;background:transparent;border:1px solid var(--line);border-radius:8px;
+  padding:5px 11px;font-size:12.5px;color:var(--ink-2);transition:.12s}
+.sub:hover{border-color:var(--ink-3);color:var(--ink)}
+.sub[aria-selected="true"]{background:var(--paper);border-color:var(--rhodia);color:var(--rhodia);font-weight:700}
 .sheet{
   position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:26px 26px 26px 54px;
@@ -278,6 +283,7 @@ button{font:inherit;color:inherit}
       <span class="chip">Richtig <b id="statOk">0</b></span>
       <span class="chip">Versuche <b id="statAll">0</b></span>
       <span class="chip">Serie <b id="statStreak">0</b></span>
+      <span class="chip" id="errChip" hidden>Fehler <b id="statErr">0</b></span>
     </div>
   </header>
 
@@ -291,6 +297,7 @@ button{font:inherit;color:inherit}
       <h2 class="drill-title" id="drillTitle"></h2>
     </div>
     <div class="modes" id="modeTabs" role="tablist"></div>
+    <div class="subs" id="subTabs" hidden></div>
     <div id="stage"></div>
   </section>
 
@@ -2619,6 +2626,100 @@ REFS.redRef = () => `
 </script>
 <script>
 /* ============================================================
+   9. UNTERTHEMEN
+   Jede Aufgabe bekommt ein Unterthema. Die Reihenfolge der
+   Schlüssel unten ist auch die Reihenfolge der Chips.
+   ============================================================ */
+const SUBS = {
+verben:{
+ "Präsens":[3,4,8],
+ "Schreibbesonderheiten":[0,1,6,17],
+ "passé composé":[2,7,9,12,14,19,20],
+ "imparfait":[11,15],
+ "subjonctif":[5,10,16],
+ "Reflexive Verben":[13,18]},
+zeiten:{
+ "passé composé vs. imparfait":[0,1,2,13,16],
+ "plus-que-parfait":[8,12],
+ "futur & conditionnel":[9,10,11],
+ "si-Sätze":[3,4,14,17],
+ "subjonctif":[5,6,15],
+ "gérondif":[7]},
+verbpraep:{
+ "Objekt mit de":[0,1,14,19],
+ "Objekt mit à":[2,3,4,7,16,20],
+ "Infinitiv mit de":[5,10,13,18],
+ "Infinitiv mit à":[6,11,12,15],
+ "Stolperfallen":[8,9,17,21,22]},
+artikel:{
+ "le, un oder du":[0,1,2,12,14,15,17],
+ "pas de & Mengenangaben":[3,4,5,13,18],
+ "Possessivbegleiter":[6,7,8],
+ "Demonstrativbegleiter":[9],
+ "c'est / il est":[10,11,16,19]},
+pronomen:{
+ "Objektpronomen":[0,1,6,21],
+ "y und en":[2,3,4,19,22],
+ "Stellung & Reihenfolge":[5,7,13,14,15,16,17,18],
+ "Betonte Pronomen":[12],
+ "Relativpronomen":[8,9,10,11,20]},
+satzbau:{
+ "Wortstellung":[0,1,4,6],
+ "Negation":[2,7,8,9,10,11,15,16,19],
+ "Fragen":[3,12,13,14,17,20],
+ "Nebensätze":[5,18]},
+adjektive:{
+ "Angleichung":[0,1,2,12],
+ "Stellung":[3,13],
+ "Adverbien":[4,5,14],
+ "Vergleich & Superlativ":[6,7,8,9,10,11,15]},
+praep:{
+ "au, du, aux":[0,1,20],
+ "Länder & Orte":[2,3,4,9,15,16,21],
+ "Zeitangaben":[5,6,7,8,12,17,22],
+ "Weitere Präpositionen":[10,11,13,14],
+ "Bindewörter":[18,19]},
+indirekt:{
+ "Anschluss: que, si, ce que":[0,1,2,3,4,5,10,11,12,13,15],
+ "Zeitverschiebung":[6,7,8,14,16],
+ "Person & Zeitangaben":[9,17]},
+passiv:{
+ "Bildung & Angleichung":[0,1,2,8,9,10,12],
+ "par oder de":[3,13],
+ "Aktiv → Passiv":[4,5],
+ "on statt Passiv":[6,7,11,14]},
+zahlen:{
+ "Zahlen bis 100":[0,1,2,8,9],
+ "Hunderter & Tausender":[3],
+ "Jahres-, Dezimal- & Millionenzahlen":[4,5,6],
+ "Ordnungszahlen":[7,10]},
+zeitdatum:{
+ "Uhrzeit":[0,1,2,3,8,10,12],
+ "Datum":[4,7,13],
+ "Wochentage, Monate & Jahr":[5,6,9,11,14]},
+redemittel:{
+ "Meinung & Diskussion":[0,1,7,8,9,10,12],
+ "Text gliedern":[2,11],
+ "E-Mail & Brief":[3,6],
+ "Bild & Text beschreiben":[4],
+ "Vorschlagen & reagieren":[5]}
+};
+Object.keys(SUBS).forEach(id => {
+  const t = TOPICS.find(x => x.id === id); if(!t) return;
+  Object.keys(SUBS[id]).forEach(name => SUBS[id][name].forEach(i => { if(t.items[i]) t.items[i].sub = name; }));
+});
+
+/* Unterthemen der Zufallstrainer */
+const NUM_SUBS = [
+  {id:"0-59",    label:"0 bis 59"},
+  {id:"60-99",   label:"60 bis 99"},
+  {id:"100-999", label:"Hunderter"},
+  {id:"gross",   label:"Große Zahlen"},
+  {id:"ordinal", label:"Ordnungszahlen"}
+];
+</script>
+<script>
+/* ============================================================
    8. APP — Modi, Auswertung, Fehlerspeicher
    ============================================================ */
 
@@ -2656,18 +2757,21 @@ const MEM = Object.assign({items:{}, skills:{}, ok:0, all:0}, Store.load() || {}
 const saveMEM = () => Store.save(MEM);
 const rec = (store, key) => store[key] || (store[key] = {r:0, w:0, s:0});
 function mark(key, ok, isSkill){
-  if(!key) return;
+  if(!key) return false;
   const e = rec(isSkill ? MEM.skills : MEM.items, key);
-  if(ok){ e.r++; e.s++; } else { e.w++; e.s = 0; }
+  if(!ok){ e.w++; e.s = 0; return false; }
+  e.r++; e.s++;
+  if(e.s >= 2 && e.w > 0){ e.w = 0; return true; }   // zweimal richtig → erledigt
+  return false;
 }
-/* Alles, was du falsch hattest und noch nicht dreimal sicher konntest */
+/* Alles, was du falsch hattest und seitdem noch nicht zweimal konntest */
 const openErrors = () => [
-  ...Object.keys(MEM.items ).filter(k => MEM.items[k].w  > 0 && MEM.items[k].s  < 3 && ITEM_BY_KEY[k]),
-  ...Object.keys(MEM.skills).filter(k => MEM.skills[k].w > 0 && MEM.skills[k].s < 3)
+  ...Object.keys(MEM.items ).filter(k => MEM.items[k].w  > 0 && ITEM_BY_KEY[k]),
+  ...Object.keys(MEM.skills).filter(k => MEM.skills[k].w > 0)
 ];
 
 const stats = {ok:0, all:0, streak:0};
-let S = {topic:null, mode:null, queue:[], idx:0, retry:[], round:1, runOk:0, runAll:0};
+let S = {topic:null, mode:null, sub:null, queue:[], idx:0, retry:[], round:1, runOk:0, runAll:0};
 
 /* ---------- Antwortprüfung -------------------------------- */
 const stripAcc = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
@@ -2760,7 +2864,7 @@ function itemsOf(topic, type){
 function weight(it){
   const e = MEM.items[it.key];
   if(!e) return 2;
-  if(e.s >= 3)   return 0.4;
+  if(e.w === 0 && e.r >= 2) return 0.5;   // sitzt
   if(e.w > e.r)  return 4;
   return e.w > 0 ? 3 : 1.2;
 }
@@ -2771,14 +2875,39 @@ function weighted(list){
 function buildQueue(){
   const t = S.topic, m = S.mode;
   S.retry = []; S.round = 1; S.runOk = 0; S.runAll = 0; S.idx = 0;
-  if(m === "conj")       S.queue = Array.from({length:15}, () => makeConjTask());
-  else if(m === "num")   S.queue = Array.from({length:15}, () => makeNumTask());
+  if(m === "conj"){
+    const t2 = S.sub ? TENSES.find(x => x.id === S.sub) : null;
+    S.queue = Array.from({length:15}, () => makeConjTask(null, t2));
+  }
+  else if(m === "num")   S.queue = Array.from({length:15}, () => makeNumTask(S.sub || null));
   else if(m === "clock") S.queue = Array.from({length:15}, () => makeClockTask());
   else if(m === "fehler"){
     S.queue = shuffle(openErrors()).slice(0,20)
       .map(k => ITEM_BY_KEY[k] || taskFromSkill(k)).filter(Boolean);
   }
-  else S.queue = weighted(itemsOf(t, m === "flash" ? "card" : m));
+  else {
+    let list = itemsOf(t, m === "flash" ? "card" : m);
+    if(S.sub) list = list.filter(it => it.sub === S.sub);
+    S.queue = weighted(list);
+  }
+}
+/* Welche Unterthemen gibt es im aktuellen Modus? */
+function subsFor(t, m){
+  if(m === "conj") return TENSES.map(x => ({id:x.id, label:x.label}));
+  if(m === "num")  return NUM_SUBS;
+  if(["how","ref","clock","fehler"].includes(m) || t.id === "mix") return [];
+  const list = itemsOf(t, m === "flash" ? "card" : m);
+  const order = SUBS[t.id] ? Object.keys(SUBS[t.id]) : [];
+  const seen = [...new Set(list.map(it => it.sub).filter(Boolean))]
+    .sort((a,b) => order.indexOf(a) - order.indexOf(b));
+  return seen.length > 1 ? seen.map(x => ({id:x, label:x})) : [];
+}
+function renderSubTabs(){
+  const el = $("#subTabs"), subs = subsFor(S.topic, S.mode);
+  if(!subs.length){ el.innerHTML = ""; el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<button class="sub" data-act="sub" data-s="" aria-selected="${!S.sub}">Alle Übungen</button>` +
+    subs.map(x => `<button class="sub" data-act="sub" data-s="${x.id}" aria-selected="${S.sub === x.id}">${x.label}</button>`).join("");
 }
 function availableModes(t){
   return (t.modes || []).filter(m => {
@@ -2795,6 +2924,7 @@ const ERR_TOPIC = {id:"fehler", title:"Deine Fehler", modes:["fehler"], items:[]
 function renderHome(){
   $("#home").hidden = false;
   $("#drill").hidden = true;
+  $("#subTabs").hidden = true;
   const n = openErrors().length;
   const errCard = n ? `
     <button class="topic alert" data-act="topic" data-id="fehler">
@@ -2816,19 +2946,28 @@ function openTopic(id){
   S.topic = id === "fehler" ? ERR_TOPIC : TOPICS.find(t => t.id === id);
   const modes = availableModes(S.topic);
   S.mode = modes[0];
+  S.sub = null;
   $("#home").hidden = true;
   $("#drill").hidden = false;
   $("#drillTitle").textContent = S.topic.title;
   $("#modeTabs").innerHTML = modes.length > 1 ? modes.map(m =>
     `<button class="mode" role="tab" data-act="mode" data-m="${m}" aria-selected="${m===S.mode}">${MODE_LABEL[m]}</button>`).join("") : "";
+  renderSubTabs();
   buildQueue();
   render();
   window.scrollTo({top:0, behavior:"instant"});
 }
 function setMode(m){
-  S.mode = m;
+  S.mode = m; S.sub = null;
   [...document.querySelectorAll("#modeTabs .mode")].forEach(b =>
     b.setAttribute("aria-selected", b.dataset.m === m));
+  renderSubTabs();
+  buildQueue();
+  render();
+}
+function setSub(v){
+  S.sub = v || null;
+  renderSubTabs();
   buildQueue();
   render();
 }
@@ -2836,13 +2975,24 @@ function updateStats(){
   $("#statOk").textContent = stats.ok;
   $("#statAll").textContent = stats.all;
   $("#statStreak").textContent = stats.streak;
+  const n = openErrors().length;
+  $("#statErr").textContent = n;
+  $("#errChip").hidden = !n;
+}
+/* Rückmeldung in der Fehlerliste: Wie weit ist diese Aufgabe? */
+function errNote(it, ok){
+  if(S.mode !== "fehler") return "";
+  if(!ok) return `<span class="why">Bleibt in der Fehlerliste.</span>`;
+  if(S.cleared) return `<span class="why">Aus der Fehlerliste gestrichen.</span>`;
+  return `<span class="why">Noch einmal richtig, dann ist die Aufgabe raus.</span>`;
 }
 function score(ok, it){
   stats.all++; S.runAll++;
   if(ok){ stats.ok++; S.runOk++; stats.streak++; } else { stats.streak = 0; }
+  S.cleared = false;
   if(it){
-    if(it.skill) mark(it.skill, ok, true);
-    else if(it.key) mark(it.key, ok, false);
+    if(it.skill)    S.cleared = mark(it.skill, ok, true);
+    else if(it.key) S.cleared = mark(it.key, ok, false);
     if(!ok) S.retry.push(it);
   }
   saveMEM();
@@ -2892,7 +3042,7 @@ function render(){
 
   const it = S.queue[S.idx];
   const type = S.mode === "flash" ? "card" : it.t;
-  const meta = `${S.topic.title} · ${MODE_LABEL[S.mode]}`;
+  const meta = `${S.topic.title} · ${MODE_LABEL[S.mode]}${S.sub ? " · " + S.sub : ""}`;
   const extra = S.mode === "fehler" ? `<div class="inputrow"><button class="btn ghost" data-act="clearerrors">Fehlerliste leeren</button></div>` : "";
 
   if(type === "card"){
@@ -2982,9 +3132,10 @@ function checkInput(){
   score(r === "ok", it);
   const why = it.why ? `<span class="why">${esc(it.why)}</span>` : "";
   const sol = esc(it.full || it.a[0]);
-  if(r === "ok")          showVerdict("ok", `Richtig: <b>${sol}</b>${why}`);
-  else if(r === "almost") showVerdict("almost", `Fast — achte auf die Akzente: <b>${sol}</b>${why}`);
-  else                    showVerdict("no", `Richtig wäre: <b>${sol}</b>${why}`);
+  const note = errNote(it, r === "ok");
+  if(r === "ok")          showVerdict("ok", `Richtig: <b>${sol}</b>${why}${note}`);
+  else if(r === "almost") showVerdict("almost", `Fast — achte auf die Akzente: <b>${sol}</b>${why}${note}`);
+  else                    showVerdict("no", `Richtig wäre: <b>${sol}</b>${why}${note}`);
   $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
 }
 function checkOrder(){
@@ -2993,7 +3144,7 @@ function checkOrder(){
   const ok = mine.length === it.a.length && mine.every((w,k) => w === it.a[k]);
   score(ok, it);
   const sol = joinWords(it.a) + (it.end || "");
-  showVerdict(ok ? "ok" : "no", (ok ? "Richtig: " : "Richtig wäre: ") + `<b>${esc(sol)}</b>`);
+  showVerdict(ok ? "ok" : "no", (ok ? "Richtig: " : "Richtig wäre: ") + `<b>${esc(sol)}</b>` + errNote(it, ok));
   $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
 }
 function next(){ S.idx++; render(); }
@@ -3006,6 +3157,7 @@ document.addEventListener("click", e => {
 
   if(act === "topic")   return openTopic(el.dataset.id);
   if(act === "mode")    return setMode(el.dataset.m);
+  if(act === "sub")     return setSub(el.dataset.s);
   if(act === "home")    return renderHome();
   if(act === "restart"){ buildQueue(); return render(); }
   if(act === "next")    return next();
@@ -3031,7 +3183,7 @@ document.addEventListener("click", e => {
     });
     score(ok, it);
     showVerdict(ok ? "ok" : "no", (ok ? "Richtig." : `Richtig ist: <b>${esc(it.opts[it.a])}</b>`) +
-      (it.why ? `<span class="why">${esc(it.why)}</span>` : ""));
+      (it.why ? `<span class="why">${esc(it.why)}</span>` : "") + errNote(it, ok));
     $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
     return;
   }
