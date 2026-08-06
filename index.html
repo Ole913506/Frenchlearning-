@@ -251,6 +251,14 @@ button{font:inherit;color:inherit}
 .topic.alert{border-color:rgba(224,64,95,.4);background:linear-gradient(180deg,rgba(224,64,95,.05),#fff 60%)}
 .topic.alert .num{color:var(--marge)}
 .topic.alert .page{border-style:solid}
+.ctable{display:grid;gap:9px;margin-top:20px;max-width:470px}
+.crow{display:grid;grid-template-columns:104px 1fr;align-items:center;gap:12px}
+.crow label{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.04em}
+.crow input{font:inherit;font-size:18px;color:var(--ink);background:transparent;border:none;
+  border-bottom:2px solid var(--seyes);padding:6px 2px;width:100%}
+.crow input:focus{outline:none;border-bottom-color:var(--rhodia)}
+.crow.ok input{border-bottom-color:var(--juste);color:var(--juste)}
+.crow.no input{border-bottom-color:var(--marge)}
 .progress{display:flex;align-items:center;gap:10px;margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
 .pbar{flex:1;height:4px;background:var(--seyes-soft);border-radius:99px;overflow:hidden}
 .pbar i{display:block;height:100%;background:var(--rhodia);width:0;transition:width .25s ease}
@@ -2720,10 +2728,123 @@ const NUM_SUBS = [
 </script>
 <script>
 /* ============================================================
+   10. EIGENES THEMA: DIE KONJUGATION DER VERBEN
+   Vier Übungsformen, die alle auf demselben Motor laufen:
+   ganze Tabellen, Einzelformen, Zeit erkennen, Infinitiv finden.
+   ============================================================ */
+
+/* Filter aus der Chip-Auswahl lesen: "t:present" oder "g:irr" */
+function subTense(){
+  if(!S.sub) return null;
+  const id = S.sub.startsWith("t:") ? S.sub.slice(2) : S.sub;
+  return TENSES.find(t => t.id === id) || null;
+}
+function subVerbs(){
+  if(!S.sub || !S.sub.startsWith("g:")) return null;
+  const g = S.sub.slice(2);
+  if(g === "irr")  return VERBS.filter(v => v.grp === "irr" && !v.refl);
+  if(g === "refl") return VERBS.filter(v => v.refl);
+  if(g === "reg")  return VERBS.filter(v => v.grp !== "irr" && !v.refl);
+  return null;
+}
+
+/* Ganze Tabelle ausfüllen */
+function makeTableTask(verb, tense){
+  const pool = (subVerbs() || VERBS).filter(v => !v.imp);
+  const v = verb || pick(pool);
+  const t = tense || subTense() || pick(TENSES);
+  const fields = PERSONS.map((p,i) => ({label:p, a:acceptedForms(v, t.id, i), disp:conj(v, t.id, i)}));
+  return {t:"table", skill:`conj:${v.inf}:${t.id}`,
+    q:`${v.inf} — ${t.label}`, sub:`${v.de}${v.aux === "être" ? " · être-Verb" : ""}`,
+    fields, why:v.note || `${t.label} — ${t.de}`};
+}
+/* Zeit erkennen */
+function makeFormTask(){
+  const pool = (subVerbs() || VERBS).filter(v => !v.imp);
+  const v = pick(pool);
+  const t = subTense() || pick(TENSES);
+  const i = Math.floor(Math.random()*6);
+  const form = conj(v, t.id, i);
+  const others = shuffle(TENSES.filter(x => x.id !== t.id)).slice(0,3);
+  const opts = shuffle([t, ...others]);
+  return {t:"mc", skill:"form:"+t.id, q:`In welcher Zeit steht „${form}“?`,
+    opts:opts.map(x => x.label), a:opts.indexOf(t),
+    why:`${form} ist ${v.inf} im ${t.label} (${PERSONS[i]}).`};
+}
+/* Infinitiv finden */
+function makeInfTask(){
+  const pool = subVerbs() || VERBS;
+  const v = pick(pool);
+  const t = subTense() || pick(TENSES);
+  const i = v.imp ? 2 : Math.floor(Math.random()*6);
+  const form = conj(v, t.id, i);
+  const a = [v.inf];
+  if(v.refl) a.push(v.inf.replace(/^s[e']\s*/, ""));
+  return {t:"fill", skill:"inf:"+v.inf, q:`Wie lautet der Infinitiv von „${form}“?`,
+    label:"Infinitiv", hint:"Grundform, bei reflexiven Verben mit se/s'",
+    a, full:v.inf, why:`${form} → <b>${v.inf}</b> (${v.de}), hier im ${t.label}.`};
+}
+
+EXPL.konjugation = () => `
+<p class="lead">Konjugieren heißt: den richtigen <b>Stamm</b> finden und die passende <b>Endung</b> anhängen.
+Wer drei Stämme sicher bilden kann, beherrscht damit alle Zeiten — auch bei Verben, die er noch nie gesehen hat.</p>
+
+<h3>Die drei Stämme</h3>
+<ol class="steps">
+<li><b>nous-Form im Präsens</b> ohne -ons → daraus entstehen <b>imparfait</b> und der <b>gérondif</b>.<br>
+nous fais<u>ons</u> → fais- → je fais<b>ais</b>, en fais<b>ant</b></li>
+<li><b>ils-Form im Präsens</b> ohne -ent → daraus entsteht der <b>subjonctif</b>.<br>
+ils prenn<u>ent</u> → prenn- → que je prenn<b>e</b></li>
+<li><b>Infinitiv</b> (bei -re ohne e) → daraus entstehen <b>futur</b> und <b>conditionnel</b>.<br>
+attendre → attendr- → j'attendr<b>ai</b>, j'attendr<b>ais</b></li>
+</ol>
+<div class="rule">Nur das <b>Präsens</b> muss man wirklich lernen. Alles andere hängt daran — deshalb lohnt es sich,
+zuerst die Präsensformen sicher zu können.</div>
+
+<h3>Die Endungen auf einen Blick</h3>
+<table class="tbl">
+<tr><th></th><th>imparfait</th><th>futur</th><th>conditionnel</th><th>subjonctif</th></tr>
+<tr><td>je</td><td class="fr">-ais</td><td class="fr">-ai</td><td class="fr">-ais</td><td class="fr">-e</td></tr>
+<tr><td>tu</td><td class="fr">-ais</td><td class="fr">-as</td><td class="fr">-ais</td><td class="fr">-es</td></tr>
+<tr><td>il/elle/on</td><td class="fr">-ait</td><td class="fr">-a</td><td class="fr">-ait</td><td class="fr">-e</td></tr>
+<tr><td>nous</td><td class="fr">-ions</td><td class="fr">-ons</td><td class="fr">-ions</td><td class="fr">-ions</td></tr>
+<tr><td>vous</td><td class="fr">-iez</td><td class="fr">-ez</td><td class="fr">-iez</td><td class="fr">-iez</td></tr>
+<tr><td>ils/elles</td><td class="fr">-aient</td><td class="fr">-ont</td><td class="fr">-aient</td><td class="fr">-ent</td></tr>
+</table>
+<div class="rule"><b>Zwei Beobachtungen, die viel Arbeit sparen:</b><br>
+· Die Futur-Endungen sind genau die Präsensformen von <i>avoir</i> (ai, as, a, avons → ons, avez → ez, ont).<br>
+· Der conditionnel besteht aus Futurstamm + imparfait-Endungen — eine eigene Form muss man gar nicht lernen.</div>
+
+<h3>Die zusammengesetzten Zeiten</h3>
+<div class="rule">passé composé, plus-que-parfait und futur composé bestehen immer aus <b>zwei Teilen</b>:
+Nur das Hilfsverb wird konjugiert, das Partizip bleibt gleich.<br>
+<b>passé composé:</b> avoir/être im Präsens + Partizip · <b>plus-que-parfait:</b> avoir/être im imparfait + Partizip ·
+<b>futur composé:</b> aller im Präsens + Infinitiv</div>
+
+<h3>So übst du hier</h3>
+<table class="tbl">
+<tr><td class="fr">Tabelle ausfüllen</td><td>Alle sechs Formen eines Verbs in einer Zeit — wie im Test.</td></tr>
+<tr><td class="fr">Einzelformen</td><td>Eine Form, gemischt aus allen Verben und Zeiten.</td></tr>
+<tr><td class="fr">Zeit erkennen</td><td>Du siehst eine Form und ordnest sie der Zeit zu.</td></tr>
+<tr><td class="fr">Infinitiv finden</td><td>Rückwärts: von der konjugierten Form zur Grundform.</td></tr>
+</table>
+<p>Über die Auswahl darunter kannst du gezielt eine einzelne Zeit üben oder nur die regelmäßigen,
+die unregelmäßigen oder die reflexiven Verben.</p>`;
+
+/* Thema direkt hinter "Verben & Konjugation" einsortieren */
+TOPICS.splice(TOPICS.findIndex(t => t.id === "verben") + 1, 0, {
+  id:"konjugation", title:"Konjugation üben", page:"S. 154–159",
+  desc:"Nur Verbformen: ganze Tabellen ausfüllen, Einzelformen, Zeit erkennen, Infinitiv finden — nach Zeit und Verbgruppe filterbar.",
+  modes:["how","ref","table","conj","form","inf"], ref:"verbRef", items:[]
+});
+</script>
+<script>
+/* ============================================================
    8. APP — Modi, Auswertung, Fehlerspeicher
    ============================================================ */
 
-const MODE_LABEL = {how:"Erklärung", ref:"Merkblatt", conj:"Konjugationstrainer", num:"Zahlentrainer",
+const MODE_LABEL = {how:"Erklärung", ref:"Merkblatt", conj:"Einzelformen", num:"Zahlentrainer",
+  table:"Tabelle ausfüllen", form:"Zeit erkennen", inf:"Infinitiv finden",
   clock:"Uhrzeit-Trainer", flash:"Karteikarten", mc:"Quiz", fill:"Eingabe", trans:"Übersetzen",
   order:"Satzbau", match:"Zuordnen", fehler:"Fehlerliste"};
 
@@ -2851,6 +2972,8 @@ function taskFromSkill(key){
   if(p[0] === "conj")  return makeConjTask(VMAP[p[1]], TENSES.find(t => t.id === p[2]));
   if(p[0] === "num")   return makeNumTask(p[1]);
   if(p[0] === "clock") return makeClockTask();
+  if(p[0] === "form")  return makeFormTask();
+  if(p[0] === "inf")   return VMAP[p[1]] ? makeInfTask() : null;
   return null;
 }
 
@@ -2876,9 +2999,12 @@ function buildQueue(){
   const t = S.topic, m = S.mode;
   S.retry = []; S.round = 1; S.runOk = 0; S.runAll = 0; S.idx = 0;
   if(m === "conj"){
-    const t2 = S.sub ? TENSES.find(x => x.id === S.sub) : null;
-    S.queue = Array.from({length:15}, () => makeConjTask(null, t2));
+    const t2 = subTense(), vp = subVerbs();
+    S.queue = Array.from({length:15}, () => makeConjTask(vp ? pick(vp) : null, t2));
   }
+  else if(m === "table") S.queue = Array.from({length:8},  () => makeTableTask());
+  else if(m === "form")  S.queue = Array.from({length:12}, () => makeFormTask());
+  else if(m === "inf")   S.queue = Array.from({length:12}, () => makeInfTask());
   else if(m === "num")   S.queue = Array.from({length:15}, () => makeNumTask(S.sub || null));
   else if(m === "clock") S.queue = Array.from({length:15}, () => makeClockTask());
   else if(m === "fehler"){
@@ -2893,6 +3019,13 @@ function buildQueue(){
 }
 /* Welche Unterthemen gibt es im aktuellen Modus? */
 function subsFor(t, m){
+  if(t.id === "konjugation"){
+    if(!["conj","table","form","inf"].includes(m)) return [];
+    return TENSES.map(x => ({id:"t:"+x.id, label:x.label})).concat([
+      {id:"g:reg",  label:"nur regelmäßige"},
+      {id:"g:irr",  label:"nur unregelmäßige"},
+      {id:"g:refl", label:"nur reflexive"}]);
+  }
   if(m === "conj") return TENSES.map(x => ({id:x.id, label:x.label}));
   if(m === "num")  return NUM_SUBS;
   if(["how","ref","clock","fehler"].includes(m) || t.id === "mix") return [];
@@ -2913,7 +3046,7 @@ function availableModes(t){
   return (t.modes || []).filter(m => {
     if(m === "how") return !!EXPL[t.id];
     if(m === "ref") return !!REFS[t.ref];
-    if(m === "conj" || m === "num" || m === "clock" || m === "fehler") return true;
+    if(["conj","num","clock","fehler","table","form","inf"].includes(m)) return true;
     return itemsOf(t, m === "flash" ? "card" : m).length > 0;
   });
 }
@@ -3068,6 +3201,26 @@ function render(){
       <div class="verdict" id="verdict"></div>${progressBar()}${extra}</div>`;
     return;
   }
+  if(type === "table"){
+    stage.innerHTML = `<div class="sheet"><span class="mark" id="mark"></span>${banner()}
+      <div class="qmeta">${meta}</div>
+      <div class="qtext">${esc(it.q)}</div>
+      <div class="qsub">${esc(it.sub)}</div>
+      <div class="ctable">${it.fields.map((f,i) => `
+        <div class="crow"><label>${esc(f.label)}</label>
+          <input id="in${i}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`).join("")}</div>
+      <div class="inputrow"><button class="btn" data-act="checktable">Prüfen</button></div>
+      <div class="verdict" id="verdict"></div>${progressBar()}${extra}</div>`;
+    const ins = [...document.querySelectorAll(".crow input")];
+    ins.forEach((el,i) => el.addEventListener("keydown", e => {
+      if(e.key !== "Enter") return;
+      e.preventDefault();
+      if($("#verdict").classList.contains("show")) return next();
+      if(i < ins.length-1) ins[i+1].focus(); else checkTable();
+    }));
+    if(ins[0]) ins[0].focus();
+    return;
+  }
   if(type === "fill" || type === "trans" || type === "conj" || type === "num" || type === "clock"){
     const label = type === "trans" ? "Übersetze ins Französische" : "";
     stage.innerHTML = `<div class="sheet"><span class="mark" id="mark"></span>${banner()}
@@ -3138,6 +3291,24 @@ function checkInput(){
   else                    showVerdict("no", `Richtig wäre: <b>${sol}</b>${why}${note}`);
   $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
 }
+function checkTable(){
+  const it = S.queue[S.idx];
+  if($("#verdict").classList.contains("show")) return;
+  const rows = [...document.querySelectorAll(".crow")];
+  let bad = 0, near = 0;
+  it.fields.forEach((f,i) => {
+    const r = judge(($("#in"+i) || {}).value, f.a);
+    rows[i].classList.add(r === "ok" ? "ok" : "no");
+    if(r === "no") bad++; else if(r === "almost") near++;
+  });
+  const ok = bad === 0 && near === 0;
+  score(ok, it);
+  const tab = it.fields.map(f => `<b>${esc(f.disp)}</b>`).join(" · ");
+  showVerdict(ok ? "ok" : (bad === 0 ? "almost" : "no"),
+    (ok ? "Alle sechs Formen richtig." : bad === 0 ? "Fast — achte auf die Akzente." : "So heißt die Tabelle:") +
+    `<span class="why">${tab}${it.why ? "<br>" + esc(it.why) : ""}</span>`);
+  $("#verdict").insertAdjacentHTML("beforeend", nextBtn());
+}
 function checkOrder(){
   const it = S.queue[S.idx];
   const mine = S.picked.map(i => it.a[i]);
@@ -3189,6 +3360,7 @@ document.addEventListener("click", e => {
   }
   if(act === "check")      return checkInput();
   if(act === "checkorder") return checkOrder();
+  if(act === "checktable") return checkTable();
 
   if(act === "word"){
     const i = +el.dataset.i, slots = $("#slots");
