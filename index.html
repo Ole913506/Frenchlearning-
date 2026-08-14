@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cahier — Französisch üben (À plus ! 3)</title>
+<title>Cahier — Französisch üben</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Karla:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -70,19 +70,24 @@ button{font:inherit;color:inherit}
 .chip b{font-weight:500;color:var(--rhodia)}
 
 /* ---------- Themenübersicht ---------- */
+.sect{margin:30px 0 12px;display:flex;align-items:baseline;gap:12px}
+.sect:first-child{margin-top:6px}
+.sect h2{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.02em}
+.sect span{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase}
+.sect i{flex:1;height:1px;background:var(--line)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .topic{
   position:relative;text-align:left;cursor:pointer;
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:20px 20px 18px 34px;box-shadow:var(--shadow);
+  padding:17px 18px 17px 32px;box-shadow:var(--shadow);
   transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
 .topic::before{
-  content:"";position:absolute;left:20px;top:0;bottom:0;width:1px;background:var(--marge);opacity:.55;
+  content:"";position:absolute;left:18px;top:0;bottom:0;width:1px;background:var(--marge);opacity:.5;
 }
 .topic:hover{transform:translateY(-2px);border-color:#C9CFE4;box-shadow:0 2px 4px rgba(23,35,90,.07),0 16px 30px -16px rgba(23,35,90,.3)}
 .topic .num{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.1em}
-.topic .tname{display:block;font-family:var(--display);font-size:19px;margin:6px 0 6px;font-weight:700;letter-spacing:-.02em}
+.topic .tname{display:block;font-family:var(--display);font-size:18px;margin:5px 0 5px;font-weight:700;letter-spacing:-.02em}
 .topic .tdesc{display:block;font-size:13.5px;color:var(--ink-2)}
 .topic .page{
   display:inline-block;margin-top:12px;font-family:var(--mono);font-size:11px;
@@ -286,9 +291,22 @@ button{font:inherit;color:inherit}
 .vx{position:absolute;right:4px;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--rhodia);
   color:#fff;font-size:14px;line-height:22px;text-align:center;cursor:pointer;z-index:3}
 
+.vtag2{left:auto;right:6px}
+.vsens{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0 4px;
+  background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.vsens label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.vsens .vsl{font-size:12px;color:var(--ink-2)}
+.vsens input[type=range]{flex:1 1 150px;min-width:120px;accent-color:var(--rhodia)}
+.vsens b{font-family:var(--mono);font-size:12.5px;color:var(--rhodia);white-space:nowrap}
+.vnum{font-family:var(--mono);font-size:11px;color:var(--ink-3);width:22px;text-align:right}
+.vrb{display:flex;flex-direction:column;gap:4px}
+.vmini{cursor:pointer;width:28px;height:26px;border:1px solid var(--line);background:#fff;border-radius:6px;
+  font-size:14px;line-height:1;color:var(--ink-2)}
+.vmini:hover{border-color:var(--rhodia);color:var(--rhodia)}
+.vprow{display:grid;gap:8px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:5px}
+.vprow.c2{grid-template-columns:22px 1fr 1fr 32px}
+.vprow.c3{grid-template-columns:22px 1fr 1fr 1fr 32px}
 .vpreview{display:grid;gap:5px;margin-top:14px}
-.vprow{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;
-  border-bottom:1px dashed var(--line);padding-bottom:5px}
 .vpc{overflow:hidden;min-width:0}
 .vpc canvas{max-width:100%;display:block}
 
@@ -307,7 +325,9 @@ button{font:inherit;color:inherit}
 .vlab{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--juste)}
 label.btn{display:inline-block;cursor:pointer}
 @media (max-width:640px){
-  .vprow,.vtrow{grid-template-columns:1fr}
+  .vprow.c2{grid-template-columns:20px 1fr 30px}
+  .vprow.c3{grid-template-columns:20px 1fr 30px}
+  .vtrow{grid-template-columns:1fr}
   .vtrow{gap:8px}
 }
 .progress{display:flex;align-items:center;gap:10px;margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
@@ -334,9 +354,9 @@ label.btn{display:inline-block;cursor:pointer}
 
   <header class="masthead">
     <div>
-      <p class="eyebrow">Cahier d'exercices · À plus ! 3</p>
+      <p class="eyebrow">Cahier d'exercices</p>
       <h1>Französisch üben</h1>
-      <p class="sub">Merkblätter aus dem Grammatikteil, dazu Karteikarten, Quiz, Lückentexte, Satzbau und ein Konjugationstrainer.</p>
+      <p class="sub">Erklärungen, Merkblätter und Übungen zu Grammatik, Zeitformen und Vokabeln.</p>
     </div>
     <div class="scorebox">
       <span class="chip">Richtig <b id="statOk">0</b></span>
@@ -347,7 +367,7 @@ label.btn{display:inline-block;cursor:pointer}
   </header>
 
   <section id="home">
-    <div class="grid" id="topicGrid"></div>
+    <div id="topicGrid"></div>
   </section>
 
   <section id="drill" hidden>
@@ -360,7 +380,7 @@ label.btn{display:inline-block;cursor:pointer}
     <div id="stage"></div>
   </section>
 
-  <p class="foot">Grundlage: Grammatikteil À plus ! 3 (S. 154–160) + Ergänzungen</p>
+  <p class="foot">Erklärungen und Merkblätter auf Deutsch · Übungen auf Französisch</p>
 </div>
 <script>
 /* ============================================================
@@ -424,7 +444,7 @@ const VERBS = [
  pres:["essaie","essaies","essaie","essayons","essayez","essaient"],fut:"essaier",
  note:"y wird zu i: j'essaie, aber nous essayons. Ebenso: payer."},
 
-/* --- Unregelmäßige Verben (S. 156–159) --- */
+/* --- Unregelmäßige Verben --- */
 {inf:"aller",de:"gehen, fahren",grp:"irr",aux:"être",pp:"allé",
  pres:["vais","vas","va","allons","allez","vont"],fut:"ir",
  subj:["aille","ailles","aille","allions","alliez","aillent"],imper:["va","allons","allez"],
@@ -615,7 +635,7 @@ const TENSES = [
 ];
 
 /* ============================================================
-   2. ZAHLEN — Generator (S. 160)
+   2. ZAHLEN — Generator
    ============================================================ */
 const U = ["zéro","un","deux","trois","quatre","cinq","six","sept","huit","neuf",
            "dix","onze","douze","treize","quatorze","quinze","seize"];
@@ -680,8 +700,8 @@ const TOPICS = [];
 
 /* ---------- 1 · VERBEN & KONJUGATION ---------------------- */
 TOPICS.push({
-id:"verben", title:"Verben & Konjugation", page:"S. 154–157",
-desc:"Hilfsverben, die drei Verbgruppen, Besonderheiten der Schreibung und alle unregelmäßigen Verben aus dem Buch.",
+id:"verben", title:"Verben & Konjugation", kat:"Verben & Zeiten",
+desc:"Hilfsverben, die drei Verbgruppen, Besonderheiten der Schreibung und alle unregelmäßigen Verben.",
 modes:["how","ref","conj","mc","fill","trans","flash"],
 ref:"verbRef",
 items:[
@@ -729,7 +749,7 @@ items:[
 
 /* ---------- 2 · VERBEN MIT PRÄPOSITION -------------------- */
 TOPICS.push({
-id:"verbpraep", title:"Verben mit Präposition", page:"S. 158–159",
+id:"verbpraep", title:"Verben mit Präposition", kat:"Verben & Zeiten",
 desc:"Verben mit indirektem Objekt (de / à) und Verben mit Infinitivergänzung. Der häufigste Fehlerquell im Test.",
 modes:["how","ref","match","mc","flash"],
 ref:"verbPrepRef",
@@ -788,7 +808,7 @@ items:[
 
 /* ---------- 3 · ZEITEN ------------------------------------ */
 TOPICS.push({
-id:"zeiten", title:"Zeiten & ihr Gebrauch", page:"Ergänzung",
+id:"zeiten", title:"Zeiten & ihr Gebrauch", kat:"Verben & Zeiten",
 desc:"Wann passé composé, wann imparfait? Dazu futur, conditionnel, subjonctif, gérondif und die si-Sätze.",
 modes:["how","ref","mc","fill","trans","flash"],
 ref:"tenseRef",
@@ -831,7 +851,7 @@ items:[
 
 /* ---------- 4 · ZAHLEN ------------------------------------ */
 TOPICS.push({
-id:"zahlen", title:"Zahlen", page:"S. 160",
+id:"zahlen", title:"Zahlen", kat:"Zahlen & Alltag",
 desc:"Grundzahlen, Ordnungszahlen, Jahres- und Dezimalzahlen — mit unendlich vielen Zufallsaufgaben.",
 modes:["how","ref","num","mc","flash"],
 ref:"numRef",
@@ -863,7 +883,7 @@ items:[
 <script>
 /* ---------- 5 · PRÄPOSITIONEN & KLEINE WÖRTER ------------- */
 TOPICS.push({
-id:"praep", title:"Präpositionen & kleine Wörter", page:"Ergänzung",
+id:"praep", title:"Präpositionen & kleine Wörter", kat:"Wortarten",
 desc:"à, de, en, chez, depuis, pendant … dazu Länder, Verkehrsmittel und die Bindewörter, die Texte zusammenhalten.",
 modes:["how","ref","mc","fill","match","flash"],
 ref:"prepRef",
@@ -905,7 +925,7 @@ items:[
 
 /* ---------- 6 · PRONOMEN ---------------------------------- */
 TOPICS.push({
-id:"pronomen", title:"Pronomen", page:"Ergänzung",
+id:"pronomen", title:"Pronomen", kat:"Wortarten",
 desc:"Objektpronomen, y und en, betonte Pronomen und Relativpronomen — samt ihrer Stellung im Satz.",
 modes:["how","ref","mc","order","fill","trans","flash"],
 ref:"pronRef",
@@ -949,7 +969,7 @@ items:[
 
 /* ---------- 7 · SATZBAU, NEGATION & FRAGEN ---------------- */
 TOPICS.push({
-id:"satzbau", title:"Satzbau, Negation & Fragen", page:"Ergänzung",
+id:"satzbau", title:"Satzbau, Negation & Fragen", kat:"Sätze bauen",
 desc:"Wortstellung, alle Verneinungen, drei Arten zu fragen — und wie man Nebensätze anschließt.",
 modes:["how","ref","order","mc","fill","trans","flash"],
 ref:"synRef",
@@ -989,7 +1009,7 @@ items:[
 
 /* ---------- 8 · ADJEKTIVE, ADVERBIEN & VERGLEICH ---------- */
 TOPICS.push({
-id:"adjektive", title:"Adjektive, Adverbien & Vergleich", page:"Ergänzung",
+id:"adjektive", title:"Adjektive, Adverbien & Vergleich", kat:"Wortarten",
 desc:"Angleichung, Stellung vor oder nach dem Nomen, Adverbien auf -ment und alle Vergleichsformen.",
 modes:["how","ref","mc","fill","flash"],
 ref:"adjRef",
@@ -1024,7 +1044,7 @@ items:[
 
 /* ---------- 9 · GEMISCHT ---------------------------------- */
 TOPICS.push({
-id:"mix", title:"Alles gemischt", page:"Prüfungsmodus",
+id:"mix", title:"Alles gemischt", kat:"Üben & Wiederholen",
 desc:"Zufällige Aufgaben aus allen Themen — so wie es in der Klassenarbeit auch kommt.",
 modes:["mc","fill","trans","flash","order","conj"],
 items:[]
@@ -1032,7 +1052,7 @@ items:[]
 </script>
 <script>
 /* ============================================================
-   4. MERKBLÄTTER — Der Buchinhalt, aufbereitet
+   4. MERKBLÄTTER — Tabellen zum Nachschlagen
    ============================================================ */
 
 function verbCard(v){
@@ -1511,7 +1531,7 @@ Ein einziger Buchstabe.</div>
 <li><b>-ent</b> abschneiden: <b>prenn-</b></li>
 <li>Endungen: <b>-e, -es, -e, -ions, -iez, -ent</b> → que je prenne, qu'ils prennent.</li>
 <li><b>Achtung bei nous und vous:</b> die sehen aus wie der imparfait — que nous <b>prenions</b>, que vous <b>preniez</b>.
-Genau dort steckt der rote Warnpunkt im Buch.</li>
+Genau dort passieren die meisten Fehler.</li>
 </ol>
 <p>Eigene Stämme haben nur: être (sois), avoir (aie), aller (aille), faire (fasse), pouvoir (puisse),
 savoir (sache), vouloir (veuille), falloir (faille).</p>
@@ -1973,7 +1993,7 @@ Test: Beschreibt es ein Nomen (ein <i>besserer</i> Film) → meilleur. Beschreib
 
 /* ---------- ARTIKEL & BEGLEITER --------------------------- */
 TOPICS.push({
-id:"artikel", title:"Artikel & Begleiter", page:"Ergänzung",
+id:"artikel", title:"Artikel & Begleiter", kat:"Wortarten",
 desc:"le, un oder du? Dazu mein/dein/sein, dieser/diese und der Unterschied zwischen c'est und il est.",
 modes:["how","ref","mc","fill","trans","flash"], ref:"artRef",
 items:[
@@ -2019,7 +2039,7 @@ items:[
 
 /* ---------- INDIREKTE REDE -------------------------------- */
 TOPICS.push({
-id:"indirekt", title:"Indirekte Rede", page:"Ergänzung",
+id:"indirekt", title:"Indirekte Rede", kat:"Sätze bauen",
 desc:"Wiedergeben, was jemand gesagt, gefragt oder verlangt hat — mit Anschluss, Zeitverschiebung und Pronomenwechsel.",
 modes:["how","ref","mc","trans","order","flash"], ref:"indRef",
 items:[
@@ -2061,7 +2081,7 @@ items:[
 
 /* ---------- PASSIV ---------------------------------------- */
 TOPICS.push({
-id:"passiv", title:"Das Passiv", page:"Ergänzung",
+id:"passiv", title:"Das Passiv", kat:"Sätze bauen",
 desc:"Wenn nicht wichtig ist, wer etwas tut — Bildung mit être, Angleichung, par und die französische Lieblingslösung on.",
 modes:["how","ref","mc","fill","trans","flash"], ref:"pasRef",
 items:[
@@ -2099,7 +2119,7 @@ items:[
 
 /* ---------- UHRZEIT & DATUM ------------------------------- */
 TOPICS.push({
-id:"zeitdatum", title:"Uhrzeit & Datum", page:"Ergänzung",
+id:"zeitdatum", title:"Uhrzeit & Datum", kat:"Zahlen & Alltag",
 desc:"Wie spät ist es, wann ist es passiert, welcher Tag — mit Zufallstrainer für die Uhrzeit.",
 modes:["how","ref","clock","mc","fill","trans","flash"], ref:"timeRef",
 items:[
@@ -2135,7 +2155,7 @@ items:[
 
 /* ---------- REDEMITTEL ------------------------------------ */
 TOPICS.push({
-id:"redemittel", title:"Redemittel & Schreiben", page:"Für Arbeiten",
+id:"redemittel", title:"Redemittel & Schreiben", kat:"Sätze bauen",
 desc:"Fertige Bausteine für Meinung, E-Mail, Bildbeschreibung und Stellungnahme — das, was in der Arbeit Punkte bringt.",
 modes:["how","ref","match","flash","mc","trans"], ref:"redRef",
 items:[
@@ -2884,14 +2904,14 @@ die unregelmäßigen oder die reflexiven Verben.</p>`;
 
 /* Thema direkt hinter "Verben & Konjugation" einsortieren */
 TOPICS.splice(TOPICS.findIndex(t => t.id === "verben") + 1, 0, {
-  id:"konjugation", title:"Konjugation üben", page:"S. 154–159",
+  id:"konjugation", title:"Konjugation üben", kat:"Verben & Zeiten",
   desc:"Nur Verbformen: ganze Tabellen ausfüllen, Einzelformen, Zeit erkennen, Infinitiv finden — nach Zeit und Verbgruppe filterbar.",
   modes:["how","ref","table","conj","form","inf"], ref:"verbRef", items:[]
 });
 </script>
 <script>
 /* ============================================================
-   11. VOKABELN — Fotos von Buchseiten
+   11. VOKABELN — Fotos deiner Vokabelseiten
    Ablauf: Foto aufnehmen → senkrechte Linie zwischen die
    Sprachspalten → waagerechte Linien zwischen die Vokabeln →
    üben, indem eine Spalte abgedeckt wird.
@@ -2926,7 +2946,8 @@ const VDB = {
 let VSETS = [];              // alle Seiten
 let VLOADED = false;         // schon aus der Datenbank gelesen?
 let VFAIL = false;           // Datenbank nicht verfügbar
-const VIMG = {};             // id → geladenes Bild
+const VIMG  = {};            // id → geladenes Bild
+const VGAPS = {};            // id → gefundene Lücken (nur im Arbeitsspeicher)
 let VEDIT = null;            // gerade bearbeitete Seite
 let VQ = [], VI = 0, VDIR = "fr-de", VSET = null, VSHOWN = false, VRUN = {ok:0, all:0};
 
@@ -2939,6 +2960,7 @@ async function vLoad(){
   const all = await VDB.all();
   if(all === null){ VFAIL = true; VSETS = []; }
   else VSETS = all.sort((a,b) => (a.created||0) - (b.created||0));
+  VSETS.forEach(x => { if(x.cols == null) x.cols = 2; if(x.split2 == null) x.split2 = .75; if(x.sens == null) x.sens = .5; });
   VLOADED = true;
 }
 function vImage(set){
@@ -2978,55 +3000,129 @@ async function vRotate(set){
   ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2);
   set.data = c.toDataURL("image/jpeg", 0.85);
   set.w = c.width; set.h = c.height;
-  delete VIMG[set.id];
-  set.rows = []; set.top = .04; set.bottom = .96; set.split = .5;
+  delete VIMG[set.id]; delete VGAPS[set.id];
+  set.rows = []; set.top = .04; set.bottom = .96; set.split = .5; set.split2 = .75;
   syncPairs(set); await saveSet(set); renderVocab();
 }
 
-/* ---------- Zeilen automatisch vorschlagen ----------
-   Schaut, wo in der linken Spalte Text steht, und setzt die
-   Trennlinien in die Lücken dazwischen.                     */
-async function vDetectRows(set){
-  const img = await vImage(set); if(!img) return;
-  const W = 420, H = Math.max(1, Math.round(img.naturalHeight * W / img.naturalWidth));
+/* ============================================================
+   Zeilenerkennung
+   Für jede Bildzeile wird die Papierhelligkeit dieser Zeile
+   selbst bestimmt. Dadurch stören Schatten und schiefes Licht
+   kaum noch — anders als bei einem festen Schwellenwert.
+   ============================================================ */
+async function vScan(set){
+  const img = await vImage(set); if(!img) return null;
+  const W = 480, H = Math.max(1, Math.round(img.naturalHeight * W / img.naturalWidth));
   const c = document.createElement("canvas"); c.width = W; c.height = H;
-  const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0, W, H);
-  const x0 = Math.round(W * (set.split * 0.08)), x1 = Math.round(W * (set.split - 0.02));
-  const y0 = Math.round(H * set.top), y1 = Math.round(H * set.bottom);
-  if(x1 - x0 < 8 || y1 - y0 < 20) return;
-  const d = ctx.getImageData(x0, y0, x1-x0, y1-y0).data;
+  const ctx = c.getContext("2d"); ctx.drawImage(img, 0, 0, W, H);
+  const y0 = Math.round(H*set.top), y1 = Math.round(H*set.bottom);
+  const x0 = Math.round(W*0.015), x1 = Math.round(W*0.985);
   const w = x1-x0, h = y1-y0;
-  const dark = new Array(h).fill(0);
-  let min = 255, max = 0;
-  const grey = new Array(h*w);
-  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
-    const p = (y*w+x)*4;
-    const g = (d[p]*0.3 + d[p+1]*0.59 + d[p+2]*0.11);
-    grey[y*w+x] = g; if(g < min) min = g; if(g > max) max = g;
-  }
-  const thr = min + (max-min) * 0.55;
-  for(let y = 0; y < h; y++){ let n = 0; for(let x = 0; x < w; x++) if(grey[y*w+x] < thr) n++; dark[y] = n; }
-  const peak = Math.max(...dark);
-  if(peak < 3) return;
-  const isText = dark.map(v => v > peak * 0.10);
-  const bands = [];
-  let s = -1;
+  if(w < 20 || h < 20) return null;
+  const d = ctx.getImageData(x0, y0, w, h).data;
+
+  const prof = new Float64Array(h);
+  const row = new Float64Array(w), tmp = new Float64Array(w);
   for(let y = 0; y < h; y++){
-    if(isText[y] && s < 0) s = y;
-    if((!isText[y] || y === h-1) && s >= 0){ bands.push([s, y]); s = -1; }
+    for(let x = 0; x < w; x++){
+      const p = (y*w+x)*4;
+      row[x] = d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114;
+    }
+    tmp.set(row); tmp.sort();
+    const papier = tmp[Math.floor(w*0.9)];      // helle Mehrheit = Papier
+    const thr = papier * 0.78;                   // deutlich dunkler = Druck
+    let n = 0; for(let x = 0; x < w; x++) if(row[x] < thr) n++;
+    prof[y] = n;
   }
-  const good = bands.filter(b => b[1]-b[0] >= 3);
-  if(good.length < 2) return;
+  const sm = new Float64Array(h);                // glätten
+  for(let y = 0; y < h; y++){
+    let a = 0, k = 0;
+    for(let j = -1; j <= 1; j++){ const q = y+j; if(q >= 0 && q < h){ a += prof[q]; k++; } }
+    sm[y] = a/k;
+  }
+  let peak = 0; for(let y = 0; y < h; y++) if(sm[y] > peak) peak = sm[y];
+  if(peak < 2) return null;
+
+  const bands = []; let s0 = -1;
+  for(let y = 0; y < h; y++){
+    const isText = sm[y] > peak*0.07;
+    if(isText && s0 < 0) s0 = y;
+    if((!isText || y === h-1) && s0 >= 0){ if(y - s0 >= 2) bands.push([s0, y]); s0 = -1; }
+  }
+  if(bands.length < 2) return null;
   const gaps = [];
-  for(let i = 1; i < good.length; i++) gaps.push([good[i-1][1], good[i][0], good[i][0]-good[i-1][1]]);
-  const med = [...gaps].sort((a,b) => a[2]-b[2])[Math.floor(gaps.length/2)][2];
-  /* Lückenmitte zurück in einen Anteil der Bildhöhe rechnen */
-  set.rows = gaps.filter(g => g[2] >= Math.max(2, med * 0.55))
-                 .map(g => (y0 + (g[0]+g[1])/2) / H)
-                 .filter(v => v > set.top + .005 && v < set.bottom - .005);
-  set.rows.sort((a,b) => a-b);
-  syncPairs(set); await saveSet(set); renderVocab();
+  for(let i = 1; i < bands.length; i++)
+    gaps.push([y0 + bands[i-1][1], y0 + bands[i][0], bands[i][0] - bands[i-1][1]]);
+
+  /* Vokabellisten haben zwei Sorten Lücken: kleine innerhalb eines
+     Eintrags (Zeilenumbruch) und große zwischen den Einträgen.
+     Der größte Sprung in der sortierten Liste trennt beide. */
+  const sizes = gaps.map(g => g[2]).sort((a,b) => b-a);
+  let auto = sizes.length, best = 1;
+  for(let i = 0; i < sizes.length-1; i++){
+    const r = (sizes[i]+1) / (sizes[i+1]+1);
+    if(r > best && sizes[i] >= 2){ best = r; auto = i+1; }
+  }
+  if(best < 1.35) auto = sizes.length;
+  VGAPS[set.id] = {gaps, H, auto};
+  return VGAPS[set.id];
+}
+/* Der Regler steuert, wie viele der größten Lücken zu Trennlinien
+   werden. In der Mitte steht der automatisch gefundene Wert. */
+function vRowsFromGaps(set, cache){
+  if(!cache || !cache.gaps.length) return [];
+  const N = cache.gaps.length, auto = clamp(cache.auto || N, 1, N);
+  const sens = set.sens == null ? .5 : set.sens;
+  const n = sens <= .5
+    ? Math.round(auto + (.5 - sens)/.5 * (N - auto))
+    : Math.round(auto - (sens - .5)/.5 * (auto - 1));
+  return [...cache.gaps].sort((a,b) => b[2]-a[2]).slice(0, clamp(n, 1, N))
+    .map(g => (g[0]+g[1]) / 2 / cache.H)
+    .filter(v => v > set.top + .004 && v < set.bottom - .004)
+    .sort((a,b) => a-b);
+}
+async function vDetect(set){
+  const cache = await vScan(set);
+  set.rows = vRowsFromGaps(set, cache);
+  syncPairs(set); await saveSet(set); vEditor();
+}
+function vApplySens(set, val){
+  set.sens = val;
+  set.rows = vRowsFromGaps(set, VGAPS[set.id]);
+  syncPairs(set); saveSet(set);
+  const box = $("#vedit");
+  if(box){
+    box.querySelectorAll(".vrow").forEach(el => el.remove());
+    set.rows.forEach((y,i) => box.insertAdjacentHTML("beforeend",
+      `<div class="vline vrow" data-drag="row" data-i="${i}" style="top:${y*100}%"><span class="vx" data-x="${i}">\u00d7</span></div>`));
+  }
+  const lab = $("#vsenslab"); if(lab) lab.textContent = (set.rows.length+1) + " Vokabeln";
+}
+/* Eine Zeile teilen — an der größten Lücke darin */
+function vSplitRow(set, i){
+  const [a, b] = rowBounds(set, i);
+  const cache = VGAPS[set.id];
+  let y = (a+b)/2;
+  if(cache){
+    const drin = cache.gaps.filter(g => (g[0]/cache.H) > a + .004 && (g[1]/cache.H) < b - .004);
+    if(drin.length){
+      const big = drin.reduce((m,g) => g[2] > m[2] ? g : m, drin[0]);
+      y = (big[0]+big[1])/2/cache.H;
+    }
+  }
+  set.rows.push(y); set.rows.sort((x,z) => x-z);
+  syncPairs(set); saveSet(set); vEditor();
+}
+function vMergeRow(set, i){
+  if(i >= set.rows.length) return;
+  set.rows.splice(i, 1); syncPairs(set); saveSet(set); vEditor();
+}
+function vEvenRows(set, n){
+  n = clamp(Math.round(n), 1, 60);
+  set.rows = [];
+  for(let i = 1; i < n; i++) set.rows.push(set.top + (set.bottom-set.top) * i/n);
+  syncPairs(set); saveSet(set); vEditor();
 }
 
 function syncPairs(set){
@@ -3039,7 +3135,14 @@ function rowBounds(set, i){
   const ys = [set.top, ...set.rows, set.bottom];
   return [ys[i], ys[i+1]];
 }
-const sideX = (set, lang) => (set.left === lang) ? [0, set.split] : [set.split, 1];
+/* Waagerechte Grenzen einer Spalte. lang: "fr" | "de" | "ex" */
+function sideX(set, lang){
+  const a = set.split;
+  if(set.cols !== 3) return (set.left === lang) ? [0, a] : [a, 1];
+  const b = Math.max(a + .02, set.split2);
+  if(lang === "ex") return [a, b];
+  return (set.left === lang) ? [0, a] : [b, 1];
+}
 
 /* ---------- Ausschnitt zeichnen ---------- */
 function drawCrop(cv, img, xr, yr, maxW){
@@ -3088,7 +3191,7 @@ function vList(){
       <img src="${s.data}" alt="">
       <div class="vmeta">
         <b>${esc(s.name || "Ohne Namen")}</b>
-        <span>${n} Vokabel${n===1?"":"n"} · ${gelernt} sitzen${(s.pairs||[]).some(p=>p.fr||p.de) ? " · abgetippt" : ""}</span>
+        <span>${n} Vokabel${n===1?"":"n"} · ${gelernt} sitzen · ${s.cols===3?3:2} Spalten</span>
       </div>
       <div class="vbtns">
         <button class="btn ghost sm" data-act="vopen" data-id="${s.id}">Zuschnitt</button>
@@ -3098,7 +3201,7 @@ function vList(){
   stage.innerHTML = `<div class="sheet plain">
     <div class="qmeta">Vokabeln · Seiten</div>
     <div class="qtext">Fotos deiner Vokabelseiten</div>
-    <p class="qsub">Fotografiere eine Seite aus dem Buch oder wähle ein Bild aus. Danach ziehst du eine
+    <p class="qsub">Fotografiere eine Vokabelseite oder wähle ein Bild aus. Danach ziehst du eine
     Linie zwischen die beiden Sprachspalten und Linien zwischen die einzelnen Vokabeln.</p>
     <div class="inputrow">
       <label class="btn accent" for="vfile">Foto hinzufügen</label>
@@ -3120,14 +3223,15 @@ function vList(){
       try {
         const im = await vImport(f);
         const set = {id:vid(), created:Date.now(), name:"Seite " + (VSETS.length+1),
-          data:im.data, w:im.w, h:im.h, split:.5, top:.04, bottom:.96, left:"fr", rows:[], pairs:[]};
+          data:im.data, w:im.w, h:im.h, cols:2, split:.5, split2:.75, top:.04, bottom:.96,
+          left:"fr", sens:.5, rows:[], pairs:[]};
         syncPairs(set);
         VSETS.push(set); await saveSet(set);
       } catch(err){ /* Datei übersprungen */ }
     }
-    VEDIT = VSETS[VSETS.length-1] ? VSETS[VSETS.length-1].id : null;
-    renderVocab();
-    if(VEDIT){ const s = VSETS.find(x => x.id === VEDIT); if(s && !s.rows.length) vDetectRows(s); }
+    const last = VSETS[VSETS.length-1];
+    VEDIT = last ? last.id : null;
+    if(last && !last.rows.length) await vDetect(last); else renderVocab();
   });
 }
 
@@ -3135,49 +3239,86 @@ function vList(){
 function vEditor(){
   const set = VSETS.find(s => s.id === VEDIT);
   if(!set){ VEDIT = null; return vList(); }
-  const lines = set.rows.map((y,i) =>
-    `<div class="vline vrow" data-drag="row" data-i="${i}" style="top:${y*100}%">
-       <span class="vx" data-x="${i}">×</span></div>`).join("");
+  const rows = set.rows.map((y,i) =>
+    `<div class="vline vrow" data-drag="row" data-i="${i}" style="top:${y*100}%"><span class="vx" data-x="${i}">\u00d7</span></div>`).join("");
+  const nameOf = k => k === "fr" ? "français" : k === "de" ? "Deutsch" : "Beispiel";
+  const other  = set.left === "fr" ? "de" : "fr";
+  const order  = set.cols === 3 ? [set.left, "ex", other] : [set.left, other];
+  const cache  = VGAPS[set.id];
+
   stage.innerHTML = `<div class="sheet plain">
     <div class="qmeta">Vokabeln · Zuschnitt</div>
     <div class="inputrow" style="margin-top:0">
       <input id="vname" value="${esc(set.name || "")}" placeholder="Name, z. B. Unité 3, S. 142"
-        style="flex:1 1 240px;font:inherit;border:none;border-bottom:2px solid var(--seyes);background:transparent;padding:7px 2px">
+        style="flex:1 1 220px;font:inherit;border:none;border-bottom:2px solid var(--seyes);background:transparent;padding:7px 2px">
       <button class="btn ghost" data-act="vback">Fertig</button>
     </div>
-    <p class="qsub">Die <b>senkrechte</b> Linie trennt die Sprachen, die <b>waagerechten</b> trennen die Vokabeln.
-    Linien lassen sich ziehen. Tippe auf das Bild, um eine Linie zu setzen, auf das × einer Linie, um sie zu entfernen.</p>
+    <p class="qsub">Die <b>senkrechten</b> Linien trennen die Spalten, die <b>waagerechten</b> die Vokabeln.
+    Alle lassen sich ziehen. Tippe aufs Bild, um eine Linie zu setzen, aufs \u00d7, um sie zu entfernen.</p>
+
     <div class="vedit" id="vedit">
       <img src="${set.data}" alt="" draggable="false">
       <div class="vshade vshade-t" style="height:${set.top*100}%"></div>
       <div class="vshade vshade-b" style="height:${(1-set.bottom)*100}%"></div>
-      <div class="vline vsplit" data-drag="split" style="left:${set.split*100}%"><span class="vtag">${set.left==="fr"?"français":"Deutsch"} | ${set.left==="fr"?"Deutsch":"français"}</span></div>
+      <div class="vline vsplit" data-drag="split" style="left:${set.split*100}%">
+        <span class="vtag">${nameOf(order[0])} | ${nameOf(order[1])}</span></div>
+      ${set.cols === 3 ? `<div class="vline vsplit" data-drag="split2" style="left:${set.split2*100}%">
+        <span class="vtag vtag2">${nameOf(order[1])} | ${nameOf(order[2])}</span></div>` : ""}
       <div class="vline vh" data-drag="top" style="top:${set.top*100}%"></div>
       <div class="vline vh" data-drag="bottom" style="top:${set.bottom*100}%"></div>
-      ${lines}
+      ${rows}
     </div>
+
     <div class="inputrow">
       <button class="btn" data-act="vauto">Zeilen automatisch finden</button>
+      <button class="btn ghost" data-act="vcols">${set.cols === 3 ? "auf 2 Spalten" : "auf 3 Spalten"}</button>
       <button class="btn ghost" data-act="vflip">Sprachen tauschen</button>
       <button class="btn ghost" data-act="vrot">Drehen</button>
       <button class="btn ghost" data-act="vclear">Linien löschen</button>
     </div>
-    <p class="qsub">${set.rows.length+1} Vokabel${set.rows.length?"n":""} erkannt.
-    Kontrolliere unten, ob die Ausschnitte stimmen.</p>
+
+    ${cache ? `<div class="vsens">
+      <label>Empfindlichkeit</label><span class="vsl">mehr Linien</span>
+      <input id="vsens" type="range" min="0" max="100" value="${Math.round((set.sens==null?.5:set.sens)*100)}">
+      <span class="vsl">weniger</span><b id="vsenslab">${set.rows.length+1} Vokabeln</b>
+    </div>` : ""}
+
+    <div class="inputrow" style="align-items:baseline">
+      <span class="qsub" style="margin:0">Oder gleichmäßig aufteilen in</span>
+      <input id="veven" type="number" min="1" max="60" value="${set.rows.length+1}"
+        style="width:70px;font:inherit;font-family:var(--mono);border:none;border-bottom:2px solid var(--seyes);background:transparent;padding:6px 2px;text-align:center">
+      <button class="btn ghost" data-act="veven">Aufteilen</button>
+    </div>
+
+    <p class="qsub" style="margin-top:18px"><b>${set.rows.length+1} Vokabeln.</b>
+    Prüfe unten die Ausschnitte: <b>\u00f7</b> teilt eine Zeile, <b>\u222a</b> verbindet sie mit der nächsten.</p>
     <div class="vpreview">${(set.pairs||[]).map((p,i) => `
-      <div class="vprow"><div class="vpc"><canvas data-set="${set.id}" data-row="${i}" data-lang="fr"></canvas></div>
-        <div class="vpc"><canvas data-set="${set.id}" data-row="${i}" data-lang="de"></canvas></div></div>`).join("")}</div>
+      <div class="vprow ${set.cols===3?"c3":"c2"}">
+        <span class="vnum">${i+1}</span>
+        ${order.map(k => `<div class="vpc"><canvas data-set="${set.id}" data-row="${i}" data-lang="${k}"></canvas></div>`).join("")}
+        <span class="vrb">
+          <button class="vmini" data-act="vsplitrow" data-i="${i}" title="Zeile teilen">\u00f7</button>
+          ${i < set.rows.length ? `<button class="vmini" data-act="vmergerow" data-i="${i}" title="Mit der nächsten verbinden">\u222a</button>` : ""}
+        </span>
+      </div>`).join("")}</div>
   </div>`;
   bindEditor(set);
   paintCrops();
   const nm = $("#vname");
   if(nm) nm.addEventListener("change", () => { set.name = nm.value.trim(); saveSet(set); });
+  const sl = $("#vsens");
+  if(sl){
+    sl.addEventListener("input",  () => vApplySens(set, +sl.value/100));
+    sl.addEventListener("change", () => vEditor());
+  }
 }
 function applyLines(set){
   const box = $("#vedit"); if(!box) return;
-  box.querySelector(".vsplit").style.left = set.split*100 + "%";
-  box.querySelectorAll('[data-drag="top"]')[0].style.top = set.top*100 + "%";
-  box.querySelectorAll('[data-drag="bottom"]')[0].style.top = set.bottom*100 + "%";
+  const sp = box.querySelectorAll(".vsplit");
+  if(sp[0]) sp[0].style.left = set.split*100 + "%";
+  if(sp[1]) sp[1].style.left = set.split2*100 + "%";
+  box.querySelector('[data-drag="top"]').style.top = set.top*100 + "%";
+  box.querySelector('[data-drag="bottom"]').style.top = set.bottom*100 + "%";
   box.querySelector(".vshade-t").style.height = set.top*100 + "%";
   box.querySelector(".vshade-b").style.height = (1-set.bottom)*100 + "%";
   box.querySelectorAll(".vrow").forEach(el => { el.style.top = set.rows[+el.dataset.i]*100 + "%"; });
@@ -3203,7 +3344,9 @@ function bindEditor(set){
     e.preventDefault(); moved = true;
     const r = rect();
     const y = clamp((e.clientY - r.top) / r.height, 0, 1);
-    if(drag.kind === "split")       set.split  = clamp((e.clientX - r.left)/r.width, .08, .92);
+    const x = clamp((e.clientX - r.left)/r.width, 0, 1);
+    if(drag.kind === "split")       set.split  = clamp(x, .06, set.cols === 3 ? set.split2 - .04 : .94);
+    else if(drag.kind === "split2") set.split2 = clamp(x, set.split + .04, .96);
     else if(drag.kind === "top")    set.top    = clamp(y, 0, set.bottom - .03);
     else if(drag.kind === "bottom") set.bottom = clamp(y, set.top + .03, 1);
     else if(drag.kind === "row")    set.rows[drag.i] = clamp(y, set.top + .004, set.bottom - .004);
@@ -3334,7 +3477,9 @@ function vDrill(){
     </div>
     <div id="vsol" hidden>
       <div class="vsolbox"><span class="vlab">Lösung</span>
-        <canvas data-set="${set.id}" data-row="${cur.i}" data-lang="${to}"></canvas></div>
+        <canvas data-set="${set.id}" data-row="${cur.i}" data-lang="${to}"></canvas>
+        ${set.cols === 3 ? `<span class="vlab">Beispiel</span>
+          <canvas data-set="${set.id}" data-row="${cur.i}" data-lang="ex"></canvas>` : ""}</div>
       <div class="verdict show" id="vverdict"></div>
     </div>
     <div class="progress"><span>${VI+1} / ${VQ.length}</span>
@@ -3386,21 +3531,26 @@ function vNext(){ VI++; VSHOWN = false; vDrill(); }
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-act]"); if(!el) return;
   const a = el.dataset.act;
-  const set = () => VSETS.find(s => s.id === el.dataset.id);
   if(a === "vopen"){ VEDIT = el.dataset.id; return renderVocab(); }
   if(a === "vback"){ VEDIT = null; return renderVocab(); }
   if(a === "vdel"){
-    const s = set(); if(!s) return;
+    const s = VSETS.find(x => x.id === el.dataset.id); if(!s) return;
     if(!confirm(`„${s.name || "Seite"}“ mit ${(s.pairs||[]).length} Vokabeln wirklich löschen?`)) return;
-    VDB.del(s.id); VSETS = VSETS.filter(x => x.id !== s.id); delete VIMG[s.id];
+    VDB.del(s.id); VSETS = VSETS.filter(x => x.id !== s.id); delete VIMG[s.id]; delete VGAPS[s.id];
     if(VEDIT === s.id) VEDIT = null;
     if(VSET === s.id) VSET = null;
     VQ = []; return renderVocab();
   }
-  if(a === "vauto"){ const s = VSETS.find(x => x.id === VEDIT); if(s) vDetectRows(s); return; }
+  if(a === "vauto"){ const s = VSETS.find(x => x.id === VEDIT); if(s) vDetect(s); return; }
+  if(a === "vcols"){ const s = VSETS.find(x => x.id === VEDIT); if(s){ s.cols = s.cols === 3 ? 2 : 3;
+    if(s.cols === 3 && s.split2 <= s.split + .04) s.split2 = Math.min(.96, s.split + .25);
+    saveSet(s); vEditor(); } return; }
+  if(a === "veven"){ const s = VSETS.find(x => x.id === VEDIT), n = +(($("#veven")||{}).value); if(s && n >= 1) vEvenRows(s, n); return; }
+  if(a === "vsplitrow"){ const s = VSETS.find(x => x.id === VEDIT); if(s) vSplitRow(s, +el.dataset.i); return; }
+  if(a === "vmergerow"){ const s = VSETS.find(x => x.id === VEDIT); if(s) vMergeRow(s, +el.dataset.i); return; }
   if(a === "vrot"){  const s = VSETS.find(x => x.id === VEDIT); if(s) vRotate(s); return; }
-  if(a === "vflip"){ const s = VSETS.find(x => x.id === VEDIT); if(s){ s.left = s.left === "fr" ? "de" : "fr"; saveSet(s); renderVocab(); } return; }
-  if(a === "vclear"){ const s = VSETS.find(x => x.id === VEDIT); if(s){ s.rows = []; syncPairs(s); saveSet(s); renderVocab(); } return; }
+  if(a === "vflip"){ const s = VSETS.find(x => x.id === VEDIT); if(s){ s.left = s.left === "fr" ? "de" : "fr"; saveSet(s); vEditor(); } return; }
+  if(a === "vclear"){ const s = VSETS.find(x => x.id === VEDIT); if(s){ s.rows = []; syncPairs(s); saveSet(s); vEditor(); } return; }
   if(a === "vpick"){ VEDIT = el.dataset.id; return renderVocab(); }
   if(a === "vgoseiten"){ return setMode("seiten"); }
   if(a === "vset"){ VSET = el.dataset.id || null; VQ = []; return vDrill(); }
@@ -3413,8 +3563,8 @@ window.addEventListener("resize", () => { if(S.topic && S.topic.id === "vokabeln
 
 /* ---------- Thema eintragen ---------- */
 TOPICS.splice(TOPICS.findIndex(t => t.id === "mix"), 0, {
-  id:"vokabeln", title:"Vokabeln", page:"Deine Fotos",
-  desc:"Fotografiere die Vokabelseiten aus deinem Buch, trenne die Sprachspalten und übe mit abgedeckter Seite.",
+  id:"vokabeln", title:"Vokabeln", kat:"Üben & Wiederholen",
+  desc:"Eigene Vokabellisten fotografieren, Spalten trennen und mit abgedeckter Seite üben.",
   modes:["seiten","ueben","liste"], items:[]
 });
 </script>
@@ -3637,25 +3787,31 @@ function availableModes(t){
 /* ---------- Navigation ------------------------------------ */
 const ERR_TOPIC = {id:"fehler", title:"Deine Fehler", modes:["fehler"], items:[]};
 
+const KATS = ["Verben & Zeiten","Wortarten","Sätze bauen","Zahlen & Alltag","Üben & Wiederholen"];
 function renderHome(){
   $("#home").hidden = false;
   $("#drill").hidden = true;
   $("#subTabs").hidden = true;
   const n = openErrors().length;
-  const errCard = n ? `
-    <button class="topic alert" data-act="topic" data-id="fehler">
+  let html = "";
+  if(n) html += `<div class="sect"><h2>Wiederholen</h2><span>${n} offene Fehler</span><i></i></div>
+    <div class="grid"><button class="topic alert" data-act="topic" data-id="fehler">
       <span class="num">✗</span>
       <span class="tname">Deine Fehler (${n})</span>
-      <span class="tdesc">Alles, was du falsch hattest und noch nicht dreimal sicher konntest — quer durch alle Themen.</span>
-      <span class="page">Wiederholen</span>
-    </button>` : "";
-  $("#topicGrid").innerHTML = errCard + TOPICS.map((t, i) => `
-    <button class="topic" data-act="topic" data-id="${t.id}">
-      <span class="num">${String(i+1).padStart(2,"0")}</span>
-      <span class="tname">${t.title}</span>
-      <span class="tdesc">${t.desc}</span>
-      <span class="page">${t.page}</span>
-    </button>`).join("");
+      <span class="tdesc">Alles, was du falsch hattest und noch nicht zweimal konntest — quer durch alle Themen.</span>
+    </button></div>`;
+  let nr = 0;
+  KATS.forEach(k => {
+    const ts = TOPICS.filter(t => t.kat === k);
+    if(!ts.length) return;
+    html += `<div class="sect"><h2>${k}</h2><span>${ts.length} Themen</span><i></i></div><div class="grid">` +
+      ts.map(t => `<button class="topic" data-act="topic" data-id="${t.id}">
+        <span class="num">${String(++nr).padStart(2,"0")}</span>
+        <span class="tname">${t.title}</span>
+        <span class="tdesc">${t.desc}</span>
+      </button>`).join("") + `</div>`;
+  });
+  $("#topicGrid").innerHTML = html;
   window.scrollTo({top:0, behavior:"instant"});
 }
 function openTopic(id){
