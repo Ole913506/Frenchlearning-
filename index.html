@@ -259,6 +259,57 @@ button{font:inherit;color:inherit}
 .crow input:focus{outline:none;border-bottom-color:var(--rhodia)}
 .crow.ok input{border-bottom-color:var(--juste);color:var(--juste)}
 .crow.no input{border-bottom-color:var(--marge)}
+/* ---------- Vokabelmodul ---------- */
+.btn.sm{padding:7px 13px;font-size:13px}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:22px}
+.vcard2{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper);display:flex;flex-direction:column}
+.vcard2 img{width:100%;height:140px;object-fit:cover;object-position:top;display:block;background:#fff}
+.vmeta{padding:10px 12px 4px}
+.vmeta b{display:block;font-family:var(--display);font-size:15px}
+.vmeta span{font-size:12px;color:var(--ink-2)}
+.vbtns{display:flex;gap:6px;padding:8px 12px 12px;margin-top:auto}
+
+.vedit{position:relative;margin:16px 0;user-select:none;touch-action:none;line-height:0;
+  border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.vedit img{width:100%;display:block;pointer-events:none}
+.vshade{position:absolute;left:0;right:0;background:rgba(23,35,90,.34);pointer-events:none}
+.vshade-t{top:0}.vshade-b{bottom:0}
+.vline{position:absolute;background:var(--rhodia);touch-action:none}
+.vline.vsplit{top:0;bottom:0;width:3px;margin-left:-1.5px;cursor:ew-resize;z-index:4}
+.vline.vsplit::after{content:"";position:absolute;top:0;bottom:0;left:-15px;right:-15px}
+.vline.vh,.vline.vrow{left:0;right:0;height:3px;margin-top:-1.5px;cursor:ns-resize;z-index:2}
+.vline.vh{background:var(--ink)}
+.vline.vh::after,.vline.vrow::after{content:"";position:absolute;left:0;right:0;top:-9px;bottom:-9px}
+.vline.vrow{background:rgba(242,107,33,.85)}
+.vtag{position:absolute;top:4px;left:6px;font-family:var(--mono);font-size:10px;line-height:1.6;
+  background:var(--rhodia);color:#fff;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.vx{position:absolute;right:4px;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--rhodia);
+  color:#fff;font-size:14px;line-height:22px;text-align:center;cursor:pointer;z-index:3}
+
+.vpreview{display:grid;gap:5px;margin-top:14px}
+.vprow{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;
+  border-bottom:1px dashed var(--line);padding-bottom:5px}
+.vpc{overflow:hidden;min-width:0}
+.vpc canvas{max-width:100%;display:block}
+
+.vtype{display:grid;gap:14px}
+.vtrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.vtc{min-width:0}
+.vtc canvas{max-width:100%;display:block;margin-bottom:5px}
+.vtc input{width:100%;font:inherit;font-size:15px;background:transparent;border:none;
+  border-bottom:2px solid var(--seyes);padding:5px 2px}
+.vtc input:focus{outline:none;border-bottom-color:var(--rhodia)}
+
+.vshow{margin:18px 0 6px;padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+  display:flex;justify-content:center;overflow:auto}
+.vsolbox{margin-top:16px;padding:14px 16px;border:1px dashed var(--juste);border-radius:10px;
+  background:rgba(18,133,90,.05);display:flex;flex-direction:column;gap:8px;align-items:flex-start;overflow:auto}
+.vlab{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--juste)}
+label.btn{display:inline-block;cursor:pointer}
+@media (max-width:640px){
+  .vprow,.vtrow{grid-template-columns:1fr}
+  .vtrow{gap:8px}
+}
 .progress{display:flex;align-items:center;gap:10px;margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
 .pbar{flex:1;height:4px;background:var(--seyes-soft);border-radius:99px;overflow:hidden}
 .pbar i{display:block;height:100%;background:var(--rhodia);width:0;transition:width .25s ease}
@@ -2840,11 +2891,541 @@ TOPICS.splice(TOPICS.findIndex(t => t.id === "verben") + 1, 0, {
 </script>
 <script>
 /* ============================================================
+   11. VOKABELN — Fotos von Buchseiten
+   Ablauf: Foto aufnehmen → senkrechte Linie zwischen die
+   Sprachspalten → waagerechte Linien zwischen die Vokabeln →
+   üben, indem eine Spalte abgedeckt wird.
+   Die Bilder liegen in IndexedDB (localStorage wäre zu klein).
+   ============================================================ */
+
+const VDB = {
+  db:null,
+  open(){
+    return new Promise((res, rej) => {
+      const r = indexedDB.open("cahier-vokabeln", 1);
+      r.onupgradeneeded = e => {
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains("sets")) db.createObjectStore("sets", {keyPath:"id"});
+      };
+      r.onsuccess = e => res(this.db = e.target.result);
+      r.onerror   = () => rej(r.error);
+    });
+  },
+  async store(mode){ if(!this.db) await this.open(); return this.db.transaction("sets", mode).objectStore("sets"); },
+  async all(){ try { const st = await this.store("readonly");
+    return await new Promise(r => { const q = st.getAll(); q.onsuccess = () => r(q.result || []); q.onerror = () => r([]); });
+  } catch(e){ return null; } },
+  async put(v){ try { const st = await this.store("readwrite");
+    return await new Promise(r => { const q = st.put(v); q.onsuccess = () => r(true); q.onerror = () => r(false); });
+  } catch(e){ return false; } },
+  async del(id){ try { const st = await this.store("readwrite");
+    return await new Promise(r => { const q = st.delete(id); q.onsuccess = () => r(true); q.onerror = () => r(false); });
+  } catch(e){ return false; } }
+};
+
+let VSETS = [];              // alle Seiten
+let VLOADED = false;         // schon aus der Datenbank gelesen?
+let VFAIL = false;           // Datenbank nicht verfügbar
+const VIMG = {};             // id → geladenes Bild
+let VEDIT = null;            // gerade bearbeitete Seite
+let VQ = [], VI = 0, VDIR = "fr-de", VSET = null, VSHOWN = false, VRUN = {ok:0, all:0};
+
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const vid = () => "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const saveSet = s => VDB.put(JSON.parse(JSON.stringify(s)));
+
+async function vLoad(){
+  if(VLOADED) return;
+  const all = await VDB.all();
+  if(all === null){ VFAIL = true; VSETS = []; }
+  else VSETS = all.sort((a,b) => (a.created||0) - (b.created||0));
+  VLOADED = true;
+}
+function vImage(set){
+  if(VIMG[set.id]) return Promise.resolve(VIMG[set.id]);
+  return new Promise(res => {
+    const i = new Image();
+    i.onload  = () => res(VIMG[set.id] = i);
+    i.onerror = () => res(null);
+    i.src = set.data;
+  });
+}
+
+/* ---------- Foto einlesen und verkleinern ---------- */
+function readAsURL(file){
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file); });
+}
+function loadImage(src){
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+}
+async function vImport(file){
+  const img = await loadImage(await readAsURL(file));
+  const max = 1500;
+  const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width  = Math.max(1, Math.round(img.naturalWidth  * sc));
+  c.height = Math.max(1, Math.round(img.naturalHeight * sc));
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  return {data:c.toDataURL("image/jpeg", 0.85), w:c.width, h:c.height};
+}
+async function vRotate(set){
+  const img = await vImage(set); if(!img) return;
+  const c = document.createElement("canvas");
+  c.width = img.naturalHeight; c.height = img.naturalWidth;
+  const ctx = c.getContext("2d");
+  ctx.translate(c.width/2, c.height/2); ctx.rotate(Math.PI/2);
+  ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2);
+  set.data = c.toDataURL("image/jpeg", 0.85);
+  set.w = c.width; set.h = c.height;
+  delete VIMG[set.id];
+  set.rows = []; set.top = .04; set.bottom = .96; set.split = .5;
+  syncPairs(set); await saveSet(set); renderVocab();
+}
+
+/* ---------- Zeilen automatisch vorschlagen ----------
+   Schaut, wo in der linken Spalte Text steht, und setzt die
+   Trennlinien in die Lücken dazwischen.                     */
+async function vDetectRows(set){
+  const img = await vImage(set); if(!img) return;
+  const W = 420, H = Math.max(1, Math.round(img.naturalHeight * W / img.naturalWidth));
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0, W, H);
+  const x0 = Math.round(W * (set.split * 0.08)), x1 = Math.round(W * (set.split - 0.02));
+  const y0 = Math.round(H * set.top), y1 = Math.round(H * set.bottom);
+  if(x1 - x0 < 8 || y1 - y0 < 20) return;
+  const d = ctx.getImageData(x0, y0, x1-x0, y1-y0).data;
+  const w = x1-x0, h = y1-y0;
+  const dark = new Array(h).fill(0);
+  let min = 255, max = 0;
+  const grey = new Array(h*w);
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    const p = (y*w+x)*4;
+    const g = (d[p]*0.3 + d[p+1]*0.59 + d[p+2]*0.11);
+    grey[y*w+x] = g; if(g < min) min = g; if(g > max) max = g;
+  }
+  const thr = min + (max-min) * 0.55;
+  for(let y = 0; y < h; y++){ let n = 0; for(let x = 0; x < w; x++) if(grey[y*w+x] < thr) n++; dark[y] = n; }
+  const peak = Math.max(...dark);
+  if(peak < 3) return;
+  const isText = dark.map(v => v > peak * 0.10);
+  const bands = [];
+  let s = -1;
+  for(let y = 0; y < h; y++){
+    if(isText[y] && s < 0) s = y;
+    if((!isText[y] || y === h-1) && s >= 0){ bands.push([s, y]); s = -1; }
+  }
+  const good = bands.filter(b => b[1]-b[0] >= 3);
+  if(good.length < 2) return;
+  const gaps = [];
+  for(let i = 1; i < good.length; i++) gaps.push([good[i-1][1], good[i][0], good[i][0]-good[i-1][1]]);
+  const med = [...gaps].sort((a,b) => a[2]-b[2])[Math.floor(gaps.length/2)][2];
+  /* Lückenmitte zurück in einen Anteil der Bildhöhe rechnen */
+  set.rows = gaps.filter(g => g[2] >= Math.max(2, med * 0.55))
+                 .map(g => (y0 + (g[0]+g[1])/2) / H)
+                 .filter(v => v > set.top + .005 && v < set.bottom - .005);
+  set.rows.sort((a,b) => a-b);
+  syncPairs(set); await saveSet(set); renderVocab();
+}
+
+function syncPairs(set){
+  const n = set.rows.length + 1;
+  set.pairs = set.pairs || [];
+  while(set.pairs.length < n) set.pairs.push({fr:"", de:"", r:0, w:0, s:0});
+  set.pairs.length = n;
+}
+function rowBounds(set, i){
+  const ys = [set.top, ...set.rows, set.bottom];
+  return [ys[i], ys[i+1]];
+}
+const sideX = (set, lang) => (set.left === lang) ? [0, set.split] : [set.split, 1];
+
+/* ---------- Ausschnitt zeichnen ---------- */
+function drawCrop(cv, img, xr, yr, maxW){
+  const sx = xr[0]*img.naturalWidth,  sw = (xr[1]-xr[0])*img.naturalWidth;
+  const sy = yr[0]*img.naturalHeight, sh = (yr[1]-yr[0])*img.naturalHeight;
+  if(sw < 1 || sh < 1) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const scale = Math.min(1.6, maxW / sw, 260 / sh);
+  const dw = Math.max(1, Math.round(sw*scale)), dh = Math.max(1, Math.round(sh*scale));
+  cv.style.width = dw+"px"; cv.style.height = dh+"px";
+  cv.width = Math.round(dw*dpr); cv.height = Math.round(dh*dpr);
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+}
+async function paintCrops(){
+  for(const cv of document.querySelectorAll("canvas[data-set]")){
+    const set = VSETS.find(s => s.id === cv.dataset.set); if(!set) continue;
+    const img = await vImage(set); if(!img) continue;
+    const i = +cv.dataset.row;
+    const box = cv.parentElement ? cv.parentElement.clientWidth : 300;
+    drawCrop(cv, img, sideX(set, cv.dataset.lang), rowBounds(set, i), Math.max(80, box - 4));
+  }
+}
+
+/* ============================================================
+   Ansichten
+   ============================================================ */
+function renderVocab(){
+  if(!VLOADED){
+    stage.innerHTML = `<div class="sheet"><div class="qmeta">Vokabeln</div><div class="qtext">Wird geladen …</div></div>`;
+    vLoad().then(renderVocab);
+    return;
+  }
+  if(S.mode === "seiten") return VEDIT ? vEditor() : vList();
+  if(S.mode === "liste")  return vTypeIn();
+  return vDrill();
+}
+
+/* ---------- Seiten verwalten ---------- */
+function vList(){
+  const cards = VSETS.map(s => {
+    const n = (s.pairs || []).length;
+    const gelernt = (s.pairs || []).filter(p => p.s >= 2).length;
+    return `<div class="vcard2">
+      <img src="${s.data}" alt="">
+      <div class="vmeta">
+        <b>${esc(s.name || "Ohne Namen")}</b>
+        <span>${n} Vokabel${n===1?"":"n"} · ${gelernt} sitzen${(s.pairs||[]).some(p=>p.fr||p.de) ? " · abgetippt" : ""}</span>
+      </div>
+      <div class="vbtns">
+        <button class="btn ghost sm" data-act="vopen" data-id="${s.id}">Zuschnitt</button>
+        <button class="btn ghost sm" data-act="vdel" data-id="${s.id}">Löschen</button>
+      </div></div>`;
+  }).join("");
+  stage.innerHTML = `<div class="sheet plain">
+    <div class="qmeta">Vokabeln · Seiten</div>
+    <div class="qtext">Fotos deiner Vokabelseiten</div>
+    <p class="qsub">Fotografiere eine Seite aus dem Buch oder wähle ein Bild aus. Danach ziehst du eine
+    Linie zwischen die beiden Sprachspalten und Linien zwischen die einzelnen Vokabeln.</p>
+    <div class="inputrow">
+      <label class="btn accent" for="vfile">Foto hinzufügen</label>
+      <input id="vfile" type="file" accept="image/*" multiple hidden>
+    </div>
+    ${VFAIL ? `<div class="rule" style="border-color:var(--marge)"><b>Achtung:</b> Der Browser erlaubt hier keinen
+      Bildspeicher. Die Seiten bleiben nur bis zum Neuladen erhalten — auf deiner eigenen Domain funktioniert es.</div>` : ""}
+    ${VSETS.length ? `<div class="vgrid">${cards}</div>`
+      : `<p class="qsub" style="margin-top:22px">Noch keine Seiten. Tipp: Fotografiere möglichst gerade von oben,
+         bei gleichmäßigem Licht und ohne Schatten in der Mitte — dann findet die automatische Zeilenerkennung
+         die Vokabeln von allein.</p>`}
+  </div>`;
+  const inp = $("#vfile");
+  if(inp) inp.addEventListener("change", async e => {
+    const files = [...e.target.files];
+    if(!files.length) return;
+    stage.innerHTML = `<div class="sheet"><div class="qtext">Bild wird verarbeitet …</div></div>`;
+    for(const f of files){
+      try {
+        const im = await vImport(f);
+        const set = {id:vid(), created:Date.now(), name:"Seite " + (VSETS.length+1),
+          data:im.data, w:im.w, h:im.h, split:.5, top:.04, bottom:.96, left:"fr", rows:[], pairs:[]};
+        syncPairs(set);
+        VSETS.push(set); await saveSet(set);
+      } catch(err){ /* Datei übersprungen */ }
+    }
+    VEDIT = VSETS[VSETS.length-1] ? VSETS[VSETS.length-1].id : null;
+    renderVocab();
+    if(VEDIT){ const s = VSETS.find(x => x.id === VEDIT); if(s && !s.rows.length) vDetectRows(s); }
+  });
+}
+
+/* ---------- Zuschnitt ---------- */
+function vEditor(){
+  const set = VSETS.find(s => s.id === VEDIT);
+  if(!set){ VEDIT = null; return vList(); }
+  const lines = set.rows.map((y,i) =>
+    `<div class="vline vrow" data-drag="row" data-i="${i}" style="top:${y*100}%">
+       <span class="vx" data-x="${i}">×</span></div>`).join("");
+  stage.innerHTML = `<div class="sheet plain">
+    <div class="qmeta">Vokabeln · Zuschnitt</div>
+    <div class="inputrow" style="margin-top:0">
+      <input id="vname" value="${esc(set.name || "")}" placeholder="Name, z. B. Unité 3, S. 142"
+        style="flex:1 1 240px;font:inherit;border:none;border-bottom:2px solid var(--seyes);background:transparent;padding:7px 2px">
+      <button class="btn ghost" data-act="vback">Fertig</button>
+    </div>
+    <p class="qsub">Die <b>senkrechte</b> Linie trennt die Sprachen, die <b>waagerechten</b> trennen die Vokabeln.
+    Linien lassen sich ziehen. Tippe auf das Bild, um eine Linie zu setzen, auf das × einer Linie, um sie zu entfernen.</p>
+    <div class="vedit" id="vedit">
+      <img src="${set.data}" alt="" draggable="false">
+      <div class="vshade vshade-t" style="height:${set.top*100}%"></div>
+      <div class="vshade vshade-b" style="height:${(1-set.bottom)*100}%"></div>
+      <div class="vline vsplit" data-drag="split" style="left:${set.split*100}%"><span class="vtag">${set.left==="fr"?"français":"Deutsch"} | ${set.left==="fr"?"Deutsch":"français"}</span></div>
+      <div class="vline vh" data-drag="top" style="top:${set.top*100}%"></div>
+      <div class="vline vh" data-drag="bottom" style="top:${set.bottom*100}%"></div>
+      ${lines}
+    </div>
+    <div class="inputrow">
+      <button class="btn" data-act="vauto">Zeilen automatisch finden</button>
+      <button class="btn ghost" data-act="vflip">Sprachen tauschen</button>
+      <button class="btn ghost" data-act="vrot">Drehen</button>
+      <button class="btn ghost" data-act="vclear">Linien löschen</button>
+    </div>
+    <p class="qsub">${set.rows.length+1} Vokabel${set.rows.length?"n":""} erkannt.
+    Kontrolliere unten, ob die Ausschnitte stimmen.</p>
+    <div class="vpreview">${(set.pairs||[]).map((p,i) => `
+      <div class="vprow"><div class="vpc"><canvas data-set="${set.id}" data-row="${i}" data-lang="fr"></canvas></div>
+        <div class="vpc"><canvas data-set="${set.id}" data-row="${i}" data-lang="de"></canvas></div></div>`).join("")}</div>
+  </div>`;
+  bindEditor(set);
+  paintCrops();
+  const nm = $("#vname");
+  if(nm) nm.addEventListener("change", () => { set.name = nm.value.trim(); saveSet(set); });
+}
+function applyLines(set){
+  const box = $("#vedit"); if(!box) return;
+  box.querySelector(".vsplit").style.left = set.split*100 + "%";
+  box.querySelectorAll('[data-drag="top"]')[0].style.top = set.top*100 + "%";
+  box.querySelectorAll('[data-drag="bottom"]')[0].style.top = set.bottom*100 + "%";
+  box.querySelector(".vshade-t").style.height = set.top*100 + "%";
+  box.querySelector(".vshade-b").style.height = (1-set.bottom)*100 + "%";
+  box.querySelectorAll(".vrow").forEach(el => { el.style.top = set.rows[+el.dataset.i]*100 + "%"; });
+}
+function bindEditor(set){
+  const box = $("#vedit"); if(!box) return;
+  const rect = () => box.getBoundingClientRect();
+  let drag = null, moved = false;
+
+  box.querySelectorAll("[data-drag]").forEach(el => {
+    el.addEventListener("pointerdown", e => {
+      if(e.target.classList.contains("vx")) return;
+      e.preventDefault();
+      drag = {kind:el.dataset.drag, i:+el.dataset.i};
+      moved = false;
+      try { box.setPointerCapture(e.pointerId); } catch(err){}
+    });
+  });
+  /* Bewegung und Loslassen hängen am Container — sonst reißt das
+     Ziehen ab, sobald der Finger die schmale Linie verlässt. */
+  box.addEventListener("pointermove", e => {
+    if(!drag) return;
+    e.preventDefault(); moved = true;
+    const r = rect();
+    const y = clamp((e.clientY - r.top) / r.height, 0, 1);
+    if(drag.kind === "split")       set.split  = clamp((e.clientX - r.left)/r.width, .08, .92);
+    else if(drag.kind === "top")    set.top    = clamp(y, 0, set.bottom - .03);
+    else if(drag.kind === "bottom") set.bottom = clamp(y, set.top + .03, 1);
+    else if(drag.kind === "row")    set.rows[drag.i] = clamp(y, set.top + .004, set.bottom - .004);
+    applyLines(set);
+  });
+  const stop = e => {
+    if(!drag) return;
+    drag = null;
+    try { box.releasePointerCapture(e.pointerId); } catch(err){}
+    set.rows.sort((a,b) => a-b); syncPairs(set); saveSet(set); vEditor();
+  };
+  box.addEventListener("pointerup", stop);
+  box.addEventListener("pointercancel", stop);
+
+  box.querySelectorAll(".vx").forEach(x => x.addEventListener("click", e => {
+    e.stopPropagation();
+    set.rows.splice(+x.dataset.x, 1); syncPairs(set); saveSet(set); vEditor();
+  }));
+  /* Tippen auf eine freie Stelle setzt eine neue Trennlinie */
+  box.addEventListener("click", e => {
+    if(moved){ moved = false; return; }
+    if(e.target.closest(".vline")) return;
+    const r = rect();
+    const y = clamp((e.clientY - r.top)/r.height, 0, 1);
+    if(y <= set.top + .004 || y >= set.bottom - .004) return;
+    set.rows.push(y); set.rows.sort((a,b) => a-b);
+    syncPairs(set); saveSet(set); vEditor();
+  });
+}
+
+/* ---------- Abtippen (optional) ---------- */
+function vTypeIn(){
+  if(!VSETS.length) return vNoSets("Zum Abtippen brauchst du zuerst eine fotografierte Seite.");
+  const set = VSETS.find(s => s.id === VEDIT) || VSETS[0];
+  VEDIT = set.id;
+  stage.innerHTML = `<div class="sheet plain">
+    <div class="qmeta">Vokabeln · Abtippen</div>
+    <div class="qtext">${esc(set.name || "Seite")}</div>
+    <p class="qsub">Freiwillig: Wenn du die Wörter einträgst, prüft die Seite deine Eingaben beim Üben automatisch.
+    Ohne Eintrag deckst du beim Üben einfach auf und bewertest dich selbst.</p>
+    <div class="subs" style="margin:14px 0 18px">${VSETS.map(s =>
+      `<button class="sub" data-act="vpick" data-id="${s.id}" aria-selected="${s.id===set.id}">${esc(s.name||"Seite")}</button>`).join("")}</div>
+    <div class="vtype">${(set.pairs||[]).map((p,i) => `
+      <div class="vtrow">
+        <div class="vtc"><canvas data-set="${set.id}" data-row="${i}" data-lang="fr"></canvas>
+          <input data-f="fr" data-i="${i}" value="${esc(p.fr||"")}" placeholder="français" autocapitalize="off" spellcheck="false"></div>
+        <div class="vtc"><canvas data-set="${set.id}" data-row="${i}" data-lang="de"></canvas>
+          <input data-f="de" data-i="${i}" value="${esc(p.de||"")}" placeholder="Deutsch" spellcheck="false"></div>
+      </div>`).join("")}</div>
+  </div>`;
+  paintCrops();
+  stage.querySelectorAll(".vtype input").forEach(el => {
+    el.addEventListener("change", () => {
+      set.pairs[+el.dataset.i][el.dataset.f] = el.value.trim();
+      saveSet(set);
+    });
+    el.addEventListener("keydown", e => {
+      if(e.key !== "Enter") return;
+      e.preventDefault();
+      const all = [...stage.querySelectorAll(".vtype input")];
+      const n = all[all.indexOf(el)+1]; if(n) n.focus();
+    });
+  });
+}
+function vNoSets(msg){
+  stage.innerHTML = `<div class="sheet"><div class="qmeta">Vokabeln</div>
+    <div class="qtext">Noch keine Seiten</div><p class="qsub">${msg}</p>
+    <div class="inputrow"><button class="btn accent" data-act="vgoseiten">Zu den Seiten</button></div></div>`;
+}
+
+/* ---------- Üben ---------- */
+function vWeight(p){
+  if(p.w > 0) return 3 + Math.min(p.w, 3);
+  if(p.s >= 2) return 0.5;
+  return 1.5;
+}
+function vBuild(){
+  const sets = VSET ? VSETS.filter(s => s.id === VSET) : VSETS;
+  const pool = [];
+  sets.forEach(s => (s.pairs||[]).forEach((p,i) => pool.push({s, i, p})));
+  if(!pool.length){ VQ = []; return; }
+  const out = [];
+  const seen = new Set();
+  const n = Math.min(12, pool.length);
+  while(out.length < n){
+    const ws = pool.map(x => seen.has(x.s.id+"#"+x.i) ? 0 : vWeight(x.p));
+    const sum = ws.reduce((a,b) => a+b, 0);
+    if(sum <= 0) break;
+    let r = Math.random()*sum, k = 0;
+    while(k < pool.length-1 && r > ws[k]){ r -= ws[k]; k++; }
+    seen.add(pool[k].s.id+"#"+pool[k].i);
+    out.push(pool[k]);
+  }
+  VQ = shuffle(out); VI = 0; VSHOWN = false; VRUN = {ok:0, all:0};
+}
+function vDrill(){
+  if(!VSETS.length) return vNoSets("Fotografiere zuerst eine Vokabelseite, dann kannst du hier üben.");
+  if(!VQ.length){ vBuild(); if(!VQ.length) return vNoSets("Auf dieser Seite sind noch keine Vokabeln abgegrenzt."); }
+
+  const chips = `<div class="subs" style="margin:0 0 18px">
+    <button class="sub" data-act="vset" data-id="" aria-selected="${!VSET}">Alle Seiten</button>
+    ${VSETS.map(s => `<button class="sub" data-act="vset" data-id="${s.id}" aria-selected="${VSET===s.id}">${esc(s.name||"Seite")}</button>`).join("")}
+    <button class="sub" data-act="vdir" data-d="fr-de" aria-selected="${VDIR==="fr-de"}">français → Deutsch</button>
+    <button class="sub" data-act="vdir" data-d="de-fr" aria-selected="${VDIR==="de-fr"}">Deutsch → français</button>
+    <button class="sub" data-act="vdir" data-d="mix" aria-selected="${VDIR==="mix"}">gemischt</button></div>`;
+
+  if(VI >= VQ.length){
+    stage.innerHTML = `${chips}<div class="sheet"><div class="qmeta">Durchgang beendet</div>
+      <div class="qtext">${VRUN.ok} von ${VRUN.all} gewusst.</div>
+      <p class="qsub">Was du nicht wusstest, kommt im nächsten Durchgang häufiger dran.</p>
+      <div class="inputrow"><button class="btn accent" data-act="vagain">Weiter üben</button>
+        <button class="btn ghost" data-act="home">Anderes Thema</button></div></div>`;
+    return;
+  }
+  const cur = VQ[VI], set = cur.s, p = cur.p;
+  const dir = VDIR === "mix" ? (cur.dir || (cur.dir = Math.random() < .5 ? "fr-de" : "de-fr")) : VDIR;
+  const from = dir === "fr-de" ? "fr" : "de";
+  const to   = dir === "fr-de" ? "de" : "fr";
+  const know = (p[to] || "").trim();
+
+  stage.innerHTML = `${chips}<div class="sheet">
+    <div class="qmeta">${esc(set.name || "Seite")} · ${dir === "fr-de" ? "français → Deutsch" : "Deutsch → français"}</div>
+    <div class="vshow"><canvas data-set="${set.id}" data-row="${cur.i}" data-lang="${from}"></canvas></div>
+    <div class="inputrow">
+      <input id="vans" autocomplete="off" autocapitalize="off" spellcheck="false"
+        placeholder="${to === "fr" ? "Übersetzung auf Französisch" : "Übersetzung auf Deutsch"}">
+      <button class="btn" data-act="vcheck">Aufdecken</button>
+    </div>
+    <div id="vsol" hidden>
+      <div class="vsolbox"><span class="vlab">Lösung</span>
+        <canvas data-set="${set.id}" data-row="${cur.i}" data-lang="${to}"></canvas></div>
+      <div class="verdict show" id="vverdict"></div>
+    </div>
+    <div class="progress"><span>${VI+1} / ${VQ.length}</span>
+      <span class="pbar"><i style="width:${Math.round(VI/VQ.length*100)}%"></i></span></div>
+  </div>`;
+  paintCrops();
+  const inp = $("#vans");
+  if(inp){ inp.focus();
+    inp.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); VSHOWN ? vNext() : vReveal(); } }); }
+  cur.know = know;
+}
+function vReveal(){
+  if(VSHOWN) return;
+  VSHOWN = true;
+  const cur = VQ[VI], p = cur.p;
+  const dir = VDIR === "mix" ? cur.dir : VDIR;
+  const to = dir === "fr-de" ? "de" : "fr";
+  const know = (p[to] || "").trim();
+  const mine = ($("#vans") || {}).value || "";
+  $("#vsol").hidden = false;
+  paintCrops();
+  const v = $("#vverdict");
+  if(know && mine.trim()){
+    const r = judge(mine, [know]);
+    v.className = "verdict show " + (r === "ok" ? "ok" : r === "almost" ? "almost" : "no");
+    v.innerHTML = (r === "ok" ? `Richtig: <b>${esc(know)}</b>`
+      : r === "almost" ? `Fast — achte auf die Akzente: <b>${esc(know)}</b>`
+      : `Richtig wäre: <b>${esc(know)}</b>`) +
+      `<div class="inputrow"><button class="btn accent" data-act="vmark" data-ok="${r!=="no"?1:0}">Weiter</button></div>`;
+  } else {
+    v.className = "verdict show almost";
+    v.innerHTML = `<span class="why">Vergleiche mit der Lösung oben und bewerte dich selbst.</span>
+      <div class="inputrow"><button class="btn ghost" data-act="vmark" data-ok="0">Nochmal üben</button>
+        <button class="btn accent" data-act="vmark" data-ok="1">Wusste ich</button></div>`;
+  }
+}
+function vMark(ok){
+  const cur = VQ[VI], p = cur.p;
+  VRUN.all++; if(ok) VRUN.ok++;
+  if(ok){ p.r++; p.s++; if(p.s >= 2) p.w = 0; } else { p.w++; p.s = 0; }
+  stats.all++; if(ok){ stats.ok++; stats.streak++; } else stats.streak = 0;
+  updateStats();
+  saveSet(cur.s);
+  vNext();
+}
+function vNext(){ VI++; VSHOWN = false; vDrill(); }
+
+/* ---------- Klicks ---------- */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if(!el) return;
+  const a = el.dataset.act;
+  const set = () => VSETS.find(s => s.id === el.dataset.id);
+  if(a === "vopen"){ VEDIT = el.dataset.id; return renderVocab(); }
+  if(a === "vback"){ VEDIT = null; return renderVocab(); }
+  if(a === "vdel"){
+    const s = set(); if(!s) return;
+    if(!confirm(`„${s.name || "Seite"}“ mit ${(s.pairs||[]).length} Vokabeln wirklich löschen?`)) return;
+    VDB.del(s.id); VSETS = VSETS.filter(x => x.id !== s.id); delete VIMG[s.id];
+    if(VEDIT === s.id) VEDIT = null;
+    if(VSET === s.id) VSET = null;
+    VQ = []; return renderVocab();
+  }
+  if(a === "vauto"){ const s = VSETS.find(x => x.id === VEDIT); if(s) vDetectRows(s); return; }
+  if(a === "vrot"){  const s = VSETS.find(x => x.id === VEDIT); if(s) vRotate(s); return; }
+  if(a === "vflip"){ const s = VSETS.find(x => x.id === VEDIT); if(s){ s.left = s.left === "fr" ? "de" : "fr"; saveSet(s); renderVocab(); } return; }
+  if(a === "vclear"){ const s = VSETS.find(x => x.id === VEDIT); if(s){ s.rows = []; syncPairs(s); saveSet(s); renderVocab(); } return; }
+  if(a === "vpick"){ VEDIT = el.dataset.id; return renderVocab(); }
+  if(a === "vgoseiten"){ return setMode("seiten"); }
+  if(a === "vset"){ VSET = el.dataset.id || null; VQ = []; return vDrill(); }
+  if(a === "vdir"){ VDIR = el.dataset.d; VQ = []; return vDrill(); }
+  if(a === "vcheck"){ return vReveal(); }
+  if(a === "vmark"){ return vMark(el.dataset.ok === "1"); }
+  if(a === "vagain"){ VQ = []; return vDrill(); }
+});
+window.addEventListener("resize", () => { if(S.topic && S.topic.id === "vokabeln") paintCrops(); });
+
+/* ---------- Thema eintragen ---------- */
+TOPICS.splice(TOPICS.findIndex(t => t.id === "mix"), 0, {
+  id:"vokabeln", title:"Vokabeln", page:"Deine Fotos",
+  desc:"Fotografiere die Vokabelseiten aus deinem Buch, trenne die Sprachspalten und übe mit abgedeckter Seite.",
+  modes:["seiten","ueben","liste"], items:[]
+});
+</script>
+<script>
+/* ============================================================
    8. APP — Modi, Auswertung, Fehlerspeicher
    ============================================================ */
 
 const MODE_LABEL = {how:"Erklärung", ref:"Merkblatt", conj:"Einzelformen", num:"Zahlentrainer",
   table:"Tabelle ausfüllen", form:"Zeit erkennen", inf:"Infinitiv finden",
+  seiten:"Seiten", liste:"Abtippen", ueben:"Üben",
   clock:"Uhrzeit-Trainer", flash:"Karteikarten", mc:"Quiz", fill:"Eingabe", trans:"Übersetzen",
   order:"Satzbau", match:"Zuordnen", fehler:"Fehlerliste"};
 
@@ -2997,6 +3578,7 @@ function weighted(list){
 }
 function buildQueue(){
   const t = S.topic, m = S.mode;
+  if(t.id === "vokabeln"){ S.queue = []; S.retry = []; S.idx = 0; return; }
   S.retry = []; S.round = 1; S.runOk = 0; S.runAll = 0; S.idx = 0;
   if(m === "conj"){
     const t2 = subTense(), vp = subVerbs();
@@ -3019,6 +3601,7 @@ function buildQueue(){
 }
 /* Welche Unterthemen gibt es im aktuellen Modus? */
 function subsFor(t, m){
+  if(t.id === "vokabeln") return [];
   if(t.id === "konjugation"){
     if(!["conj","table","form","inf"].includes(m)) return [];
     return TENSES.map(x => ({id:"t:"+x.id, label:x.label})).concat([
@@ -3046,7 +3629,7 @@ function availableModes(t){
   return (t.modes || []).filter(m => {
     if(m === "how") return !!EXPL[t.id];
     if(m === "ref") return !!REFS[t.ref];
-    if(["conj","num","clock","fehler","table","form","inf"].includes(m)) return true;
+    if(["conj","num","clock","fehler","table","form","inf","seiten","ueben","liste"].includes(m)) return true;
     return itemsOf(t, m === "flash" ? "card" : m).length > 0;
   });
 }
@@ -3148,6 +3731,7 @@ function joinWords(arr){
 const banner = () => S.round > 1 ? `<div class="banner">Nachholrunde — nur deine Fehler</div>` : "";
 
 function render(){
+  if(S.topic.id === "vokabeln") return renderVocab();
   if(S.mode === "how"){ stage.innerHTML = `<div class="sheet plain ref">${EXPL[S.topic.id]()}</div>`; return; }
   if(S.mode === "ref"){ stage.innerHTML = `<div class="sheet plain ref">${REFS[S.topic.ref]()}</div>`; return; }
 
