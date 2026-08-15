@@ -2978,7 +2978,7 @@ async function vLoad(){
     if(x.x0 == null) x.x0 = 0;
     if(x.x1 == null) x.x1 = 1;
     if(!x.order) x.order = x.cols === 3
-      ? (x.left === "de" ? ["de","ex","fr"] : ["fr","ex","de"])
+      ? (x.left === "de" ? ["de","fr","ex"] : ["fr","de","ex"])
       : (x.left === "de" ? ["de","fr"] : ["fr","de"]);
   });
   VLOADED = true;
@@ -3160,7 +3160,7 @@ function vFix(set){
   if(set.x1 == null) set.x1 = 1;
   if(set.cols == null) set.cols = 2;
   if(!Array.isArray(set.order) || set.order.length !== set.cols)
-    set.order = set.cols === 3 ? ["fr","ex","de"] : ["fr","de"];
+    set.order = set.cols === 3 ? ["fr","de","ex"] : ["fr","de"];
 }
 function syncPairs(set){
   const n = set.rows.length + 1;
@@ -3611,8 +3611,10 @@ document.addEventListener("click", e => {
     if(s.cols === 3){ s.cols = 2; s.order = s.order.filter(k => k !== "ex"); }
     else {
       s.cols = 3;
-      if(s.split2 <= s.split + .04) s.split2 = Math.min(s.x1 - .04, s.split + .25);
-      s.order = [s.order[0], "ex", s.order[1]];
+      const a = s.x0 == null ? 0 : s.x0, b = s.x1 == null ? 1 : s.x1;
+      s.split  = a + (b-a)/3;                 // gleichmäßiger Startpunkt
+      s.split2 = a + (b-a)*2/3;
+      s.order = [...s.order, "ex"];           // Beispiel steht rechts
     }
     saveSet(s); vEditor(); return;
   }
