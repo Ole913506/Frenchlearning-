@@ -285,11 +285,13 @@ button{font:inherit;color:inherit}
 .vline.vh,.vline.vrow{left:0;right:0;height:3px;margin-top:-1.5px;cursor:ns-resize;z-index:2}
 .vline.vh{background:var(--ink)}
 .vline.vh::after,.vline.vrow::after{content:"";position:absolute;left:0;right:0;top:-9px;bottom:-9px}
-.vline.vrow{background:rgba(242,107,33,.85)}
+.vline.vrow{background:rgba(242,107,33,.85);will-change:transform}
 .vtag{position:absolute;top:4px;left:6px;font-family:var(--mono);font-size:10px;line-height:1.6;
   background:var(--rhodia);color:#fff;padding:1px 6px;border-radius:4px;white-space:nowrap}
-.vx{position:absolute;right:4px;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--rhodia);
-  color:#fff;font-size:14px;line-height:22px;text-align:center;cursor:pointer;z-index:3}
+.vgrip{position:absolute;width:22px;height:22px;border-radius:50%;color:#fff;font-size:13px;line-height:22px;
+  text-align:center;z-index:6;touch-action:none;cursor:pointer}
+.vrot{background:var(--ink);cursor:ns-resize}
+.vx{background:var(--rhodia)}
 
 .vtag2{top:26px}
 .vline.vv{top:0;bottom:0;width:3px;margin-left:-1.5px;cursor:ew-resize;background:var(--ink);z-index:3}
@@ -3108,8 +3110,9 @@ function vRowsFromGaps(set, cache){
     : Math.round(auto - (sens - .5)/.5 * (auto - 1));
   return [...cache.gaps].sort((a,b) => b[2]-a[2]).slice(0, clamp(n, 1, N))
     .map(g => (g[0]+g[1]) / 2 / cache.H)
-    .filter(v => v > set.top + .004 && v < set.bottom - .004)
-    .sort((a,b) => a-b);
+    .filter(v => v > set.top + GAP && v < set.bottom - GAP)
+    .sort((a,b) => a-b)
+    .map(v => ({l:v, r:v}));
 }
 async function vDetect(set){
   const cache = await vScan(set);
@@ -3123,8 +3126,8 @@ function vApplySens(set, val){
   const box = $("#vedit");
   if(box){
     box.querySelectorAll(".vrow").forEach(el => el.remove());
-    set.rows.forEach((y,i) => box.insertAdjacentHTML("beforeend",
-      `<div class="vline vrow" data-drag="row" data-i="${i}" style="top:${y*100}%"><span class="vx" data-x="${i}">\u00d7</span></div>`));
+    set.rows.forEach((ln,i) => box.insertAdjacentHTML("beforeend", vRowHTML(i)));
+    applyLines(set);
   }
   const lab = $("#vsenslab"); if(lab) lab.textContent = (set.rows.length+1) + " Vokabeln";
 }
@@ -3134,13 +3137,13 @@ function vSplitRow(set, i){
   const cache = VGAPS[set.id];
   let y = (a+b)/2;
   if(cache){
-    const drin = cache.gaps.filter(g => (g[0]/cache.H) > a + .004 && (g[1]/cache.H) < b - .004);
+    const drin = cache.gaps.filter(g => (g[0]/cache.H) > a + GAP && (g[1]/cache.H) < b - GAP);
     if(drin.length){
       const big = drin.reduce((m,g) => g[2] > m[2] ? g : m, drin[0]);
       y = (big[0]+big[1])/2/cache.H;
     }
   }
-  set.rows.push(y); set.rows.sort((x,z) => x-z);
+  insertRow(set, y);
   syncPairs(set); saveSet(set); vEditor();
 }
 function vMergeRow(set, i){
@@ -3150,7 +3153,7 @@ function vMergeRow(set, i){
 function vEvenRows(set, n){
   n = clamp(Math.round(n), 1, 60);
   set.rows = [];
-  for(let i = 1; i < n; i++) set.rows.push(set.top + (set.bottom-set.top) * i/n);
+  for(let i = 1; i < n; i++){ const v = set.top + (set.bottom-set.top) * i/n; set.rows.push({l:v, r:v}); }
   syncPairs(set); saveSet(set); vEditor();
 }
 
@@ -3158,6 +3161,8 @@ function vEvenRows(set, n){
 function vFix(set){
   if(set.x0 == null) set.x0 = 0;
   if(set.x1 == null) set.x1 = 1;
+  set.rows = (set.rows || []).map(r => typeof r === "number" ? {l:r, r:r} : {l:+r.l, r:+r.r});
+  set.rows.sort((a,b) => a.l - b.l);
   if(set.cols == null) set.cols = 2;
   if(!Array.isArray(set.order) || set.order.length !== set.cols)
     set.order = set.cols === 3 ? ["fr","de","ex"] : ["fr","de"];
@@ -3168,9 +3173,54 @@ function syncPairs(set){
   while(set.pairs.length < n) set.pairs.push({fr:"", de:"", r:0, w:0, s:0});
   set.pairs.length = n;
 }
-function rowBounds(set, i){
-  const ys = [set.top, ...set.rows, set.bottom];
-  return [ys[i], ys[i+1]];
+/* Eine Zeilenlinie hat zwei Höhen: l am linken Bildrand, r am rechten.
+   Dazwischen wird linear interpoliert — so lässt sie sich neigen. */
+const lineY = (ln, x) => ln.l + (ln.r - ln.l) * x;
+const GAP = .006;                          // Mindestabstand zweier Linien
+
+function rowBounds(set, i, x){
+  if(x == null) x = .5;
+  const ys = [{l:set.top, r:set.top}, ...set.rows, {l:set.bottom, r:set.bottom}];
+  return [lineY(ys[i], x), lineY(ys[i+1], x)];
+}
+/* Grenzen, innerhalb derer Linie i liegen darf, ohne eine
+   Nachbarlinie zu schneiden — an beiden Bildrändern geprüft. */
+function rowLimits(set, i){
+  const p = set.rows[i-1], n = set.rows[i+1];
+  return {
+    lMin: (p ? p.l : set.top) + GAP,   lMax: (n ? n.l : set.bottom) - GAP,
+    rMin: (p ? p.r : set.top) + GAP,   rMax: (n ? n.r : set.bottom) - GAP
+  };
+}
+/* Eine ganze Linie verschieben — die Neigung bleibt erhalten,
+   und sie kann die Nachbarn nicht überholen. */
+function moveRow(set, i, l0, r0, d){
+  const ln = set.rows[i], k = rowLimits(set, i);
+  if(!isFinite(d) || k.lMax < k.lMin || k.rMax < k.rMin) return;
+  const lo = Math.max(k.lMin - l0, k.rMin - r0);
+  const hi = Math.min(k.lMax - l0, k.rMax - r0);
+  if(hi < lo) return;
+  const dd = clamp(d, lo, hi);
+  ln.l = l0 + dd; ln.r = r0 + dd;
+}
+/* Nur ein Ende bewegen = die Linie neigen */
+function tiltRow(set, i, seite, y){
+  const ln = set.rows[i], k = rowLimits(set, i);
+  if(!isFinite(y)) return;
+  if(seite === "l"){ if(k.lMax >= k.lMin) ln.l = clamp(y, k.lMin, k.lMax); }
+  else             { if(k.rMax >= k.rMin) ln.r = clamp(y, k.rMin, k.rMax); }
+}
+/* Neue Linie einfügen — nur, wenn dafür Platz ist */
+function insertRow(set, y){
+  const rows = set.rows;
+  let i = 0; while(i < rows.length && lineY(rows[i], .5) < y) i++;
+  const p = rows[i-1], n = rows[i];
+  const lo = Math.max((p ? p.l : set.top), (p ? p.r : set.top)) + GAP;
+  const hi = Math.min((n ? n.l : set.bottom), (n ? n.r : set.bottom)) - GAP;
+  if(hi < lo) return false;
+  const v = clamp(y, lo, hi);
+  rows.splice(i, 0, {l:v, r:v});
+  return true;
 }
 /* Senkrechte Grenzen der Spalten, von links nach rechts */
 function colBounds(set){
@@ -3286,8 +3336,7 @@ function vEditor(){
   vFix(set);
   /* Löschknöpfe versetzt, damit sie bei dicht liegenden Linien
      noch einzeln zu treffen sind */
-  const rows = set.rows.map((y,i) =>
-    `<div class="vline vrow" data-drag="row" data-i="${i}" style="top:${y*100}%"><span class="vx" data-x="${i}" style="right:${4 + (i%3)*30}px">\u00d7</span></div>`).join("");
+  const rows = set.rows.map((ln,i) => vRowHTML(i)).join("");
   const nameOf = k => k === "fr" ? "français" : k === "de" ? "Deutsch" : "Beispiel";
   const order  = set.order || ["fr","de"];
   const cache  = VGAPS[set.id];
@@ -3301,7 +3350,8 @@ function vEditor(){
     </div>
     <p class="qsub">Die <b>dunklen</b> Linien schneiden den Rand ab, die <b>orangenen senkrechten</b> trennen die Spalten,
     die <b>waagerechten</b> die Vokabeln. Alle lassen sich ziehen. Tippe aufs Bild, um eine Linie zu setzen,
-    aufs \u00d7, um sie zu entfernen.</p>
+    aufs \u00d7 rechts, um sie zu entfernen. Ist das Foto leicht schief, ziehst du am <b>\u2195</b> links das
+    Linienende nach oben oder unten — Linien können sich dabei nie überschneiden.</p>
 
     <div class="vedit" id="vedit">
       <img src="${set.data}" alt="" draggable="false">
@@ -3358,6 +3408,7 @@ function vEditor(){
         </span>
       </div>`).join("")}</div>
   </div>`;
+  applyLines(set);          // Linien und Griffe an ihre Stelle setzen
   bindEditor(set);
   paintCrops();
   const nm = $("#vname");
@@ -3367,6 +3418,15 @@ function vEditor(){
     sl.addEventListener("input",  () => vApplySens(set, +sl.value/100));
     sl.addEventListener("change", () => vEditor());
   }
+}
+/* Eine Zeilenlinie: links der Griff zum Neigen, rechts das Kreuz zum Löschen.
+   Beide sind versetzt, damit sie bei dicht liegenden Linien einzeln
+   zu treffen sind. */
+function vRowHTML(i){
+  const off = 4 + (i%3)*30;
+  return `<div class="vline vrow" data-drag="row" data-i="${i}"></div>
+    <span class="vgrip vrot" data-rot="${i}" data-i="${i}" style="left:${off}px">\u2195</span>
+    <span class="vgrip vx" data-x="${i}" data-i="${i}" style="right:${off}px">\u00d7</span>`;
 }
 function applyLines(set){
   const box = $("#vedit"); if(!box) return;
@@ -3383,7 +3443,21 @@ function applyLines(set){
   const sl = box.querySelector(".vshade-l"), sr = box.querySelector(".vshade-r");
   if(sl){ sl.style.width = set.x0*100 + "%"; sl.style.top = set.top*100 + "%"; sl.style.height = (set.bottom-set.top)*100 + "%"; }
   if(sr){ sr.style.width = (1-set.x1)*100 + "%"; sr.style.top = set.top*100 + "%"; sr.style.height = (set.bottom-set.top)*100 + "%"; }
-  box.querySelectorAll(".vrow").forEach(el => { el.style.top = set.rows[+el.dataset.i]*100 + "%"; });
+  const H = box.clientHeight || 1, W = box.clientWidth || 1;
+  box.querySelectorAll(".vrow").forEach(el => {
+    const ln = set.rows[+el.dataset.i]; if(!ln) return;
+    el.style.top = ln.l*100 + "%";
+    el.style.transformOrigin = "0 50%";
+    el.style.transform = `rotate(${Math.atan2((ln.r - ln.l) * H, W)}rad)`;
+  });
+  /* Griffe sitzen an den beiden Linienenden — als eigene Elemente,
+     damit sie nicht von der Ziehfläche der Linie überdeckt werden. */
+  box.querySelectorAll(".vrot").forEach(el => {
+    const ln = set.rows[+el.dataset.i]; if(ln) el.style.top = `calc(${ln.l*100}% - 11px)`;
+  });
+  box.querySelectorAll(".vx").forEach(el => {
+    const ln = set.rows[+el.dataset.i]; if(ln) el.style.top = `calc(${ln.r*100}% - 11px)`;
+  });
 }
 function bindEditor(set){
   const box = $("#vedit"); if(!box) return;
@@ -3393,6 +3467,7 @@ function bindEditor(set){
   box.querySelectorAll("[data-drag]").forEach(el => {
     el.addEventListener("pointerdown", e => {
       if(e.target.classList.contains("vx")) return;
+      if(e.target.classList.contains("vrot")) return;
       e.preventDefault();
       drag = {kind:el.dataset.drag, i:+el.dataset.i};
       moved = false;
@@ -3411,32 +3486,48 @@ function bindEditor(set){
     else if(drag.kind === "x1")     set.x1     = clamp(x, (set.cols === 3 ? set.split2 : set.split) + .04, 1);
     else if(drag.kind === "split")  set.split  = clamp(x, set.x0 + .04, (set.cols === 3 ? set.split2 : set.x1) - .04);
     else if(drag.kind === "split2") set.split2 = clamp(x, set.split + .04, set.x1 - .04);
-    else if(drag.kind === "top")    set.top    = clamp(y, 0, set.bottom - .03);
-    else if(drag.kind === "bottom") set.bottom = clamp(y, set.top + .03, 1);
-    else if(drag.kind === "row")    set.rows[drag.i] = clamp(y, set.top + .004, set.bottom - .004);
+    else if(drag.kind === "top"){
+      const hi = set.rows.length ? Math.min(set.rows[0].l, set.rows[0].r) - GAP : set.bottom - .03;
+      set.top = clamp(y, 0, Math.min(hi, set.bottom - .03));
+    }
+    else if(drag.kind === "bottom"){
+      const last = set.rows[set.rows.length-1];
+      const lo = last ? Math.max(last.l, last.r) + GAP : set.top + .03;
+      set.bottom = clamp(y, Math.max(lo, set.top + .03), 1);
+    }
+    else if(drag.kind === "row")    moveRow(set, drag.i, drag.l0, drag.r0, y - drag.y0);
+    else if(drag.kind === "rot"){ tiltRow(set, drag.i, "l", y); }
     applyLines(set);
   });
   const stop = e => {
     if(!drag) return;
     drag = null;
     try { box.releasePointerCapture(e.pointerId); } catch(err){}
-    set.rows.sort((a,b) => a-b); syncPairs(set); saveSet(set); vEditor();
+    syncPairs(set); saveSet(set); vEditor();
   };
   box.addEventListener("pointerup", stop);
   box.addEventListener("pointercancel", stop);
 
-  box.querySelectorAll(".vx").forEach(x => x.addEventListener("click", e => {
-    e.stopPropagation();
-    set.rows.splice(+x.dataset.x, 1); syncPairs(set); saveSet(set); vEditor();
+  box.querySelectorAll(".vrot").forEach(h => h.addEventListener("pointerdown", e => {
+    e.preventDefault(); e.stopPropagation();
+    drag = {kind:"rot", i:+h.dataset.rot}; moved = false;
+    try { box.setPointerCapture(e.pointerId); } catch(err){}
   }));
+  box.querySelectorAll(".vx").forEach(x => {
+    x.addEventListener("pointerdown", e => e.stopPropagation());
+    x.addEventListener("click", e => {
+      e.stopPropagation();
+      set.rows.splice(+x.dataset.x, 1); syncPairs(set); saveSet(set); vEditor();
+    });
+  });
   /* Tippen auf eine freie Stelle setzt eine neue Trennlinie */
   box.addEventListener("click", e => {
     if(moved){ moved = false; return; }
-    if(e.target.closest(".vline")) return;
+    if(e.target.closest(".vline") || e.target.closest(".vgrip")) return;
     const r = rect();
     const y = clamp((e.clientY - r.top)/r.height, 0, 1);
-    if(y <= set.top + .004 || y >= set.bottom - .004) return;
-    set.rows.push(y); set.rows.sort((a,b) => a-b);
+    if(y <= set.top + GAP || y >= set.bottom - GAP) return;
+    if(!insertRow(set, y)) return;
     syncPairs(set); saveSet(set); vEditor();
   });
 }
