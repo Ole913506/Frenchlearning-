@@ -483,14 +483,14 @@ const VERBS = [
  pres:["fais","fais","fait","faisons","faites","font"],fut:"fer",
  subj:["fasse","fasses","fasse","fassions","fassiez","fassent"],imper:["fais","faisons","faites"],
  note:"vous faites (ohne -ez)."},
-{inf:"falloir",de:"müssen, nötig sein",grp:"irr",aux:"avoir",pp:"fallu",imp:true,
+{inf:"falloir",de:"müssen, nötig sein",grp:"irr",aux:"avoir",pp:"fallu",imp:true,impf:"fall",
  pres:[null,null,"faut",null,null,null],fut:"faudr",subj:[null,null,"faille",null,null,null],noImper:true,
  note:"Nur unpersönlich: il faut."},
 {inf:"lire",de:"lesen",grp:"irr",aux:"avoir",pp:"lu",
  pres:["lis","lis","lit","lisons","lisez","lisent"],fut:"lir"},
 {inf:"mettre",de:"setzen, stellen, legen, anziehen",grp:"irr",aux:"avoir",pp:"mis",
  pres:["mets","mets","met","mettons","mettez","mettent"],fut:"mettr"},
-{inf:"pleuvoir",de:"regnen",grp:"irr",aux:"avoir",pp:"plu",imp:true,
+{inf:"pleuvoir",de:"regnen",grp:"irr",aux:"avoir",pp:"plu",imp:true,impf:"pleuv",
  pres:[null,null,"pleut",null,null,null],fut:"pleuvr",subj:[null,null,"pleuve",null,null,null],noImper:true,
  note:"Nur unpersönlich: il pleut."},
 {inf:"pouvoir",de:"können, dürfen",grp:"irr",aux:"avoir",pp:"pu",
@@ -504,7 +504,7 @@ const VERBS = [
 {inf:"savoir",de:"wissen, können (gelernt)",grp:"irr",aux:"avoir",pp:"su",
  pres:["sais","sais","sait","savons","savez","savent"],fut:"saur",
  subj:["sache","saches","sache","sachions","sachiez","sachent"],imper:["sache","sachons","sachez"]},
-{inf:"suffire",de:"genügen, reichen",grp:"irr",aux:"avoir",pp:"suffi",imp:true,
+{inf:"suffire",de:"genügen, reichen",grp:"irr",aux:"avoir",pp:"suffi",imp:true,impf:"suffis",
  pres:[null,null,"suffit",null,null,null],fut:"suffir",subj:[null,null,"suffise",null,null,null],noImper:true,
  note:"Meist unpersönlich: il suffit (de …)."},
 {inf:"venir",de:"kommen",grp:"irr",aux:"être",pp:"venu",
@@ -555,8 +555,9 @@ function reflPron(i, word){                 // me / te / se + Elision
   return p + " " + word;
 }
 function impfStem(v){
-  if(v.impf) return v.impf;
-  const nous = v.pres[3] || v.pres[2];
+  if(v.impf) return v.impf;                 // ausdrücklich hinterlegt
+  const nous = v.pres[3];
+  if(!nous) return null;                    // ohne nous-Form nicht ableitbar
   return nous.replace(/ons$/, "");
 }
 function softenStem(stem, ending){          // commenç+ions -> commencions ; mange+ions -> mangions
@@ -575,12 +576,20 @@ function rawForm(v, tense, i){
   if(v.imp && i !== 2) return null;
   switch(tense){
     case "present":   return v.pres[i];
-    case "imparfait": {const s=impfStem(v); return softenStem(s,END_IMPF[i])+END_IMPF[i];}
+    case "imparfait": {
+      const s = impfStem(v);
+      if(!s) return null;
+      return softenStem(s, END_IMPF[i]) + END_IMPF[i];
+    }
     case "futur":     return v.fut + END_FUT[i];
     case "conditionnel": return v.fut + END_IMPF[i];
     case "subjonctif": {
       if(v.subj) return v.subj[i];
-      if(i===3||i===4){const s=impfStem(v); return softenStem(s,END_SUBJ[i])+END_SUBJ[i];}
+      if(i===3||i===4){
+        const s = impfStem(v);
+        if(!s) return null;
+        return softenStem(s, END_SUBJ[i]) + END_SUBJ[i];
+      }
       const st = (v.pres[5]||"").replace(/ent$/,"");
       return st + END_SUBJ[i];
     }
@@ -680,14 +689,16 @@ function numFR(n){
     if(r === 0) return head + (h > 1 ? "s" : "");
     return head + "-" + num99(r);
   }
+  /* vingt und cent verlieren ihr Plural-s, sobald ein Zahlwort folgt */
+  const ohneS = t => t.replace(/(vingt|cent)s$/, "$1");
   if(n < 1000000){
     const th = Math.floor(n/1000), r = n%1000;
-    let head = (th === 1) ? "mille" : numFR(th) + "-mille";
+    const head = (th === 1) ? "mille" : ohneS(numFR(th)) + "-mille";
     return r === 0 ? head : head + "-" + numFR(r);
   }
   const m = Math.floor(n/1000000), r = n%1000000;
-  let head = numFR(m) + "-million" + (m > 1 ? "s" : "");
-  return r === 0 ? head : head + "-" + numFR(r);
+  const head = ohneS(numFR(m)) + " million" + (m > 1 ? "s" : "");   // million ist ein Nomen
+  return r === 0 ? head : head + " " + numFR(r);
 }
 function ordinalFR(n){
   if(n === 1) return "premier";
@@ -2222,7 +2233,7 @@ addItems("pronomen", [
 ]);
 addItems("satzbau", [
  {t:"trans",q:"Ich habe nichts verstanden.",a:["je n'ai rien compris"],hint:"rien steht vor dem Partizip",why:"Je n'ai rien compris."},
- {t:"trans",q:"Warum kommst du nicht?",a:["pourquoi tu ne viens pas","pourquoi est-ce que tu ne viens pas","pourquoi ne viens-tu pas"],
+ {t:"trans",q:"Warum kommst du nicht?",a:["pourquoi est-ce que tu ne viens pas","pourquoi ne viens-tu pas","pourquoi tu ne viens pas"],
   hint:"drei Möglichkeiten",why:"Pourquoi est-ce que tu ne viens pas ? — oder mit Inversion: Pourquoi ne viens-tu pas ?"}
 ]);
 addItems("zeiten", [
@@ -4088,7 +4099,8 @@ function render(){
 
   const it = S.queue[S.idx];
   const type = S.mode === "flash" ? "card" : it.t;
-  const meta = `${S.topic.title} · ${MODE_LABEL[S.mode]}${S.sub ? " · " + S.sub : ""}`;
+  const sub = S.sub ? (subsFor(S.topic, S.mode).find(x => x.id === S.sub) || {}).label || S.sub : "";
+  const meta = `${S.topic.title} · ${MODE_LABEL[S.mode]}${sub ? " · " + sub : ""}`;
   const extra = S.mode === "fehler" ? `<div class="inputrow"><button class="btn ghost" data-act="clearerrors">Fehlerliste leeren</button></div>` : "";
 
   if(type === "card"){
@@ -4192,12 +4204,25 @@ function showVerdict(kind, html){
 }
 const nextBtn = () => `<div class="inputrow"><button class="btn accent" data-act="next">Weiter</button></div>`;
 
+/* Übersetzungen werden kleingeschrieben geprüft, aber als richtiger
+   Satz angezeigt: Großbuchstabe, Eigennamen, Satzzeichen. */
+const FR_NAMEN = ["paris", "berlin", "rome", "madrid", "londres", "lyon", "france", "allemagne", "espagne", "italie", "suisse", "angleterre", "max", "marie", "paul", "léa", "tom", "noël"];
+function prettyFr(txt, frage){
+  let out = String(txt);
+  FR_NAMEN.forEach(n => {
+    out = out.replace(new RegExp("\\b" + n + "\\b", "gi"),
+      n.charAt(0).toUpperCase() + n.slice(1));
+  });
+  out = out.replace(/(^|[.!?]\s+)([a-zà-ÿ])/g, (m0, a, b) => a + b.toUpperCase());
+  if(!/[.!?]$/.test(out)) out += /\?\s*$/.test(String(frage || "")) ? " ?" : ".";
+  return out;
+}
 function checkInput(){
   const it = S.queue[S.idx];
   const r = judge($("#ans").value, it.a);
   score(r === "ok", it);
   const why = it.why ? `<span class="why">${esc(it.why)}</span>` : "";
-  const sol = esc(it.full || it.a[0]);
+  const sol = esc(it.full || (it.t === "trans" ? prettyFr(it.a[0], it.q) : it.a[0]));
   const note = errNote(it, r === "ok");
   if(r === "ok")          showVerdict("ok", `Richtig: <b>${sol}</b>${why}${note}`);
   else if(r === "almost") showVerdict("almost", `Fast — achte auf die Akzente: <b>${sol}</b>${why}${note}`);
