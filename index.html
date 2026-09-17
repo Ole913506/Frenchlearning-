@@ -114,6 +114,8 @@ button{font:inherit;color:inherit}
 .sub{cursor:pointer;background:transparent;border:1px solid var(--line);border-radius:8px;
   padding:5px 11px;font-size:12.5px;color:var(--ink-2);transition:.12s}
 .sub:hover{border-color:var(--ink-3);color:var(--ink)}
+.sub.verr{border-color:rgba(224,64,95,.5);color:var(--marge)}
+.sub.verr[aria-selected="true"]{background:rgba(224,64,95,.08);border-color:var(--marge);color:var(--marge)}
 .sub[aria-selected="true"]{background:var(--paper);border-color:var(--rhodia);color:var(--rhodia);font-weight:700}
 .sheet{
   position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
@@ -2974,6 +2976,7 @@ const VIMG  = {};            // id → geladenes Bild
 const VGAPS = {};            // id → gefundene Lücken (nur im Arbeitsspeicher)
 let VEDIT = null;            // gerade bearbeitete Seite
 let VQ = [], VI = 0, VDIR = "fr-de", VSET = null, VSHOWN = false, VRUN = {ok:0, all:0};
+let VRETRY = [], VROUND = 1, VONLY = false;
 
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 const vid = () => "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
@@ -3296,7 +3299,7 @@ function vList(){
       <img src="${s.data}" alt="">
       <div class="vmeta">
         <b>${esc(s.name || "Ohne Namen")}</b>
-        <span>${n} Vokabel${n===1?"":"n"} · ${gelernt} sitzen · ${s.cols===3?3:2} Spalten</span>
+        <span>${n} Vokabel${n===1?"":"n"} · ${gelernt} sitzen${(s.pairs||[]).filter(p=>p.w>0).length ? " · " + (s.pairs||[]).filter(p=>p.w>0).length + " Fehler" : ""} · ${s.cols===3?3:2} Spalten</span>
       </div>
       <div class="vbtns">
         <button class="btn ghost sm" data-act="vopen" data-id="${s.id}">Zuschnitt</button>
@@ -3589,10 +3592,17 @@ function vWeight(p){
   if(p.s >= 2) return 0.5;
   return 1.5;
 }
+/* Vokabeln, die zuletzt falsch waren und seitdem noch nicht
+   zweimal saßen — das Gegenstück zur Fehlerliste der Grammatikthemen. */
+function vErrCount(){
+  const sets = VSET ? VSETS.filter(s => s.id === VSET) : VSETS;
+  return sets.reduce((n,s) => n + (s.pairs||[]).filter(p => p.w > 0).length, 0);
+}
 function vBuild(){
   const sets = VSET ? VSETS.filter(s => s.id === VSET) : VSETS;
-  const pool = [];
+  let pool = [];
   sets.forEach(s => (s.pairs||[]).forEach((p,i) => pool.push({s, i, p})));
+  if(VONLY) pool = pool.filter(x => x.p.w > 0);
   if(!pool.length){ VQ = []; return; }
   const out = [];
   const seen = new Set();
@@ -3606,24 +3616,35 @@ function vBuild(){
     seen.add(pool[k].s.id+"#"+pool[k].i);
     out.push(pool[k]);
   }
-  VQ = shuffle(out); VI = 0; VSHOWN = false; VRUN = {ok:0, all:0};
+  VQ = shuffle(out); VI = 0; VSHOWN = false; VRUN = {ok:0, all:0}; VRETRY = []; VROUND = 1;
 }
 function vDrill(){
   if(!VSETS.length) return vNoSets("Fotografiere zuerst eine Vokabelseite, dann kannst du hier üben.");
   if(!VQ.length){ vBuild(); if(!VQ.length) return vNoSets("Auf dieser Seite sind noch keine Vokabeln abgegrenzt."); }
 
+  const fehler = vErrCount();
   const chips = `<div class="subs" style="margin:0 0 18px">
     <button class="sub" data-act="vset" data-id="" aria-selected="${!VSET}">Alle Seiten</button>
     ${VSETS.map(s => `<button class="sub" data-act="vset" data-id="${s.id}" aria-selected="${VSET===s.id}">${esc(s.name||"Seite")}</button>`).join("")}
     <button class="sub" data-act="vdir" data-d="fr-de" aria-selected="${VDIR==="fr-de"}">français → Deutsch</button>
     <button class="sub" data-act="vdir" data-d="de-fr" aria-selected="${VDIR==="de-fr"}">Deutsch → français</button>
-    <button class="sub" data-act="vdir" data-d="mix" aria-selected="${VDIR==="mix"}">gemischt</button></div>`;
+    <button class="sub" data-act="vdir" data-d="mix" aria-selected="${VDIR==="mix"}">gemischt</button>
+    ${fehler ? `<button class="sub verr" data-act="vonly" aria-selected="${VONLY}">Nur Fehler (${fehler})</button>` : ""}</div>`;
 
   if(VI >= VQ.length){
+    if(VRETRY.length){                       // erst die Fehler nachholen
+      VQ = shuffle(VRETRY); VRETRY = []; VI = 0; VSHOWN = false; VROUND++;
+      return vDrill();
+    }
+    const alles = VRUN.all && VRUN.ok === VRUN.all;
     stage.innerHTML = `${chips}<div class="sheet"><div class="qmeta">Durchgang beendet</div>
-      <div class="qtext">${VRUN.ok} von ${VRUN.all} gewusst.</div>
-      <p class="qsub">Was du nicht wusstest, kommt im nächsten Durchgang häufiger dran.</p>
+      <div class="qtext">${alles ? "Alle gewusst." : VRUN.ok + " von " + VRUN.all + " gewusst."}</div>
+      <p class="qsub">${fehler
+        ? `${fehler} Vokabel${fehler===1?" liegt":"n liegen"} noch auf der Fehlerliste. Sie kommen häufiger dran —
+           oder du übst sie mit „Nur Fehler“ gezielt. Zweimal richtig, dann sind sie raus.`
+        : "Keine offenen Fehler mehr."}</p>
       <div class="inputrow"><button class="btn accent" data-act="vagain">Weiter üben</button>
+        ${fehler ? `<button class="btn" data-act="vonlystart">Nur Fehler üben</button>` : ""}
         <button class="btn ghost" data-act="home">Anderes Thema</button></div></div>`;
     return;
   }
@@ -3634,6 +3655,8 @@ function vDrill(){
   const know = (p[to] || "").trim();
 
   stage.innerHTML = `${chips}<div class="sheet">
+    ${VROUND > 1 ? `<div class="banner">Nachholrunde — nur deine Fehler</div>` : ""}
+    ${VONLY && VROUND === 1 ? `<div class="banner">Nur Vokabeln von der Fehlerliste</div>` : ""}
     <div class="qmeta">${esc(set.name || "Seite")} · ${dir === "fr-de" ? "français → Deutsch" : "Deutsch → français"}</div>
     <div class="vshow"><canvas data-set="${set.id}" data-row="${cur.i}" data-lang="${from}"></canvas></div>
     <div class="inputrow">
@@ -3673,7 +3696,7 @@ function vReveal(){
     v.className = "verdict show " + (r === "ok" ? "ok" : r === "almost" ? "almost" : "no");
     v.innerHTML = (r === "ok" ? `Richtig: <b>${esc(know)}</b>`
       : r === "almost" ? `Fast — achte auf die Akzente: <b>${esc(know)}</b>`
-      : `Richtig wäre: <b>${esc(know)}</b>`) +
+      : `Richtig wäre: <b>${esc(know)}</b>`) + vErrNote(p, r !== "no") +
       `<div class="inputrow"><button class="btn accent" data-act="vmark" data-ok="${r!=="no"?1:0}">Weiter</button></div>`;
   } else {
     v.className = "verdict show almost";
@@ -3685,11 +3708,21 @@ function vReveal(){
 function vMark(ok){
   const cur = VQ[VI], p = cur.p;
   VRUN.all++; if(ok) VRUN.ok++;
-  if(ok){ p.r++; p.s++; if(p.s >= 2) p.w = 0; } else { p.w++; p.s = 0; }
+  if(ok){ p.r++; p.s++; if(p.s >= 2) p.w = 0; }
+  else { p.w++; p.s = 0; VRETRY.push(cur); }
   stats.all++; if(ok){ stats.ok++; stats.streak++; } else stats.streak = 0;
   updateStats();
   saveSet(cur.s);
   vNext();
+}
+/* Wie weit ist diese Vokabel? Nur zeigen, wenn sie auf der Fehlerliste steht. */
+function vErrNote(p, ok){
+  if(ok === null)                       // Selbstkontrolle: Stand vorab anzeigen
+    return p.w > 0 ? `<span class="why">Diese Vokabel steht auf deiner Fehlerliste — zweimal richtig, dann ist sie raus.</span>` : "";
+  if(!(p.w > 0)) return "";
+  if(ok === false) return `<span class="why">Bleibt auf der Fehlerliste.</span>`;
+  return p.s + 1 >= 2 ? `<span class="why">Von der Fehlerliste gestrichen.</span>`
+                      : `<span class="why">Noch einmal richtig, dann ist sie raus.</span>`;
 }
 function vNext(){ VI++; VSHOWN = false; vDrill(); }
 
@@ -3741,7 +3774,9 @@ document.addEventListener("click", e => {
   if(a === "vdir"){ VDIR = el.dataset.d; VQ = []; return vDrill(); }
   if(a === "vcheck"){ return vReveal(); }
   if(a === "vmark"){ return vMark(el.dataset.ok === "1"); }
-  if(a === "vagain"){ VQ = []; return vDrill(); }
+  if(a === "vagain"){ VONLY = false; VQ = []; return vDrill(); }
+  if(a === "vonly"){ VONLY = !VONLY; VQ = []; return vDrill(); }
+  if(a === "vonlystart"){ VONLY = true; VQ = []; return vDrill(); }
 });
 window.addEventListener("resize", () => { if(S.topic && S.topic.id === "vokabeln") paintCrops(); });
 
