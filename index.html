@@ -333,6 +333,12 @@ button{font:inherit;color:inherit}
   border-bottom:2px solid var(--seyes);padding:5px 2px}
 .vtc input:focus{outline:none;border-bottom-color:var(--rhodia)}
 
+.vdbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;
+  font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.vdbar .tag{background:rgba(242,107,33,.12);color:var(--rhodia);border-radius:6px;padding:3px 9px;font-weight:500}
+.vdpunkte{display:inline-flex;gap:4px;align-items:center}
+.vdpunkte i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--seyes);display:block}
+.vdpunkte i.on{background:var(--juste);border-color:var(--juste)}
 .vshow{margin:18px 0 6px;padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
   display:flex;justify-content:center;overflow:auto}
 .vsolbox{margin-top:16px;padding:14px 16px;border:1px dashed var(--juste);border-radius:10px;
@@ -3175,6 +3181,7 @@ function vEvenRows(set, n){
 function vFix(set){
   if(set.x0 == null) set.x0 = 0;
   if(set.x1 == null) set.x1 = 1;
+  (set.pairs || []).forEach(p => { if(p.k == null) p.k = 0; });
   set.rows = (set.rows || []).map(r => typeof r === "number" ? {l:r, r:r} : {l:+r.l, r:+r.r});
   set.rows.sort((a,b) => a.l - b.l);
   if(set.cols == null) set.cols = 2;
@@ -3184,7 +3191,7 @@ function vFix(set){
 function syncPairs(set){
   const n = set.rows.length + 1;
   set.pairs = set.pairs || [];
-  while(set.pairs.length < n) set.pairs.push({fr:"", de:"", r:0, w:0, s:0});
+  while(set.pairs.length < n) set.pairs.push({fr:"", de:"", r:0, w:0, s:0, k:0});
   set.pairs.length = n;
 }
 /* Eine Zeilenlinie hat zwei Höhen: l am linken Bildrand, r am rechten.
@@ -3286,6 +3293,7 @@ function renderVocab(){
     return;
   }
   if(S.mode === "seiten") return VEDIT ? vEditor() : vList();
+  if(S.mode === "durch")  return vRun();
   if(S.mode === "liste")  return vTypeIn();
   return vDrill();
 }
@@ -3726,6 +3734,137 @@ function vErrNote(p, ok){
 }
 function vNext(){ VI++; VSHOWN = false; vDrill(); }
 
+
+/* ============================================================
+   Alle durchgehen — Stapel nach dem Leitner-Prinzip
+   Gewusst → die Vokabel pausiert eine Runde und kommt erst in
+   der übernächsten wieder. Nicht gewusst → schon in der nächsten.
+   Nach 5-mal gewusst ist sie fertig und fällt aus dem Stapel.
+   ============================================================ */
+const VZIEL = 5;
+let VD = null;
+
+function vdPool(){
+  const sets = VSET ? VSETS.filter(s => s.id === VSET) : VSETS;
+  const out = [];
+  sets.forEach(s => (s.pairs||[]).forEach((p,i) => { if(p.k == null) p.k = 0; out.push({s, i, p}); }));
+  return out;
+}
+function vdStart(){
+  VD = {round:1, items:vdPool().map(x => ({s:x.s, i:x.i, p:x.p, due:1})),
+        queue:[], idx:0, shown:false, run:{ok:0, all:0}};
+  vdFill();
+}
+/* Vokabeln der aktuellen Runde sammeln. Ist niemand fällig,
+   wird weitergezählt, bis wieder etwas ansteht. */
+function vdFill(){
+  const offen = VD.items.filter(x => x.p.k < VZIEL);
+  if(!offen.length){ VD.queue = []; return; }
+  let q = offen.filter(x => x.due <= VD.round), schutz = 0;
+  while(!q.length && schutz++ < 100){ VD.round++; q = offen.filter(x => x.due <= VD.round); }
+  VD.queue = shuffle(q); VD.idx = 0; VD.shown = false;
+}
+function vdAnswer(ok){
+  const cur = VD.queue[VD.idx], p = cur.p;
+  VD.run.all++; if(ok) VD.run.ok++;
+  stats.all++; if(ok){ stats.ok++; stats.streak++; } else stats.streak = 0;
+  if(ok){
+    p.k = Math.min(VZIEL, (p.k||0) + 1);
+    p.r++; p.s++; if(p.s >= 2) p.w = 0;
+    cur.due = VD.round + 2;                  // eine Runde Pause
+  } else {
+    p.k = 0;                                  // Zähler beginnt von vorn
+    p.w++; p.s = 0;
+    cur.due = VD.round + 1;                  // gleich in der nächsten Runde
+  }
+  updateStats(); saveSet(cur.s);
+  VD.idx++; VD.shown = false;
+  if(VD.idx >= VD.queue.length){ VD.round++; vdFill(); }
+  vRun();
+}
+function vRun(){
+  if(!VSETS.length) return vNoSets("Fotografiere zuerst eine Vokabelseite, dann kannst du hier üben.");
+  if(!VD) vdStart();
+  const alle = vdPool();
+  if(!alle.length) return vNoSets("Auf dieser Seite sind noch keine Vokabeln abgegrenzt.");
+  const fertig = alle.filter(x => x.p.k >= VZIEL).length;
+  const chips = `<div class="subs" style="margin:0 0 18px">
+    <button class="sub" data-act="vdset" data-id="" aria-selected="${!VSET}">Alle Seiten</button>
+    ${VSETS.map(s => `<button class="sub" data-act="vdset" data-id="${s.id}" aria-selected="${VSET===s.id}">${esc(s.name||"Seite")}</button>`).join("")}
+    <button class="sub" data-act="vddir" data-d="fr-de" aria-selected="${VDIR==="fr-de"}">français → Deutsch</button>
+    <button class="sub" data-act="vddir" data-d="de-fr" aria-selected="${VDIR==="de-fr"}">Deutsch → français</button>
+    <button class="sub" data-act="vddir" data-d="mix" aria-selected="${VDIR==="mix"}">gemischt</button></div>`;
+  const balken = `<div class="progress"><span>${fertig} / ${alle.length} fertig</span>
+    <span class="pbar"><i style="width:${alle.length ? Math.round(fertig/alle.length*100) : 0}%"></i></span></div>`;
+
+  if(!VD.queue.length){
+    stage.innerHTML = `${chips}<div class="sheet">
+      <div class="qmeta">Stapel geschafft</div>
+      <div class="qtext">Alle ${alle.length} Vokabeln sitzen ${VZIEL}-mal.</div>
+      <p class="qsub">Du kannst den Stapel zurücksetzen und von vorn anfangen — die Zählstände gehen dabei verloren.</p>
+      <div class="inputrow"><button class="btn ghost" data-act="vdreset">Stapel zurücksetzen</button>
+        <button class="btn accent" data-act="home">Anderes Thema</button></div>${balken}</div>`;
+    return;
+  }
+
+  const cur = VD.queue[VD.idx], set = cur.s, p = cur.p;
+  const dir = VDIR === "mix" ? (cur.dir || (cur.dir = Math.random() < .5 ? "fr-de" : "de-fr")) : VDIR;
+  const from = dir === "fr-de" ? "fr" : "de";
+  const to   = dir === "fr-de" ? "de" : "fr";
+  const punkte = Array.from({length:VZIEL}, (_,i) => `<i class="${i < p.k ? "on" : ""}"></i>`).join("");
+
+  stage.innerHTML = `${chips}<div class="sheet">
+    <div class="vdbar"><span class="tag">Runde ${VD.round}</span>
+      <span>${VD.idx+1} von ${VD.queue.length} in dieser Runde</span>
+      <span class="vdpunkte">${punkte}</span><span>${p.k} / ${VZIEL}</span></div>
+    <div class="qmeta">${esc(set.name || "Seite")} · ${dir === "fr-de" ? "français → Deutsch" : "Deutsch → français"}</div>
+    <div class="vshow"><canvas data-set="${set.id}" data-row="${cur.i}" data-lang="${from}"></canvas></div>
+    <div class="inputrow">
+      <input id="vdans" autocomplete="off" autocapitalize="off" spellcheck="false"
+        placeholder="${to === "fr" ? "Übersetzung auf Französisch" : "Übersetzung auf Deutsch"}">
+      <button class="btn" data-act="vdcheck">Aufdecken</button>
+    </div>
+    <div id="vdsol" hidden>
+      <div class="vsolbox"><span class="vlab">Lösung</span>
+        <canvas data-set="${set.id}" data-row="${cur.i}" data-lang="${to}"></canvas>
+        ${set.cols === 3 ? `<span class="vlab">Beispiel</span>
+          <canvas data-set="${set.id}" data-row="${cur.i}" data-lang="ex"></canvas>` : ""}</div>
+      <div class="verdict show" id="vdverdict"></div>
+    </div>${balken}</div>`;
+  paintCrops();
+  const inp = $("#vdans");
+  if(inp){ inp.focus();
+    inp.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); if(!VD.shown) vdReveal(); } }); }
+}
+function vdReveal(){
+  if(VD.shown) return;
+  VD.shown = true;
+  const cur = VD.queue[VD.idx], p = cur.p;
+  const dir = VDIR === "mix" ? cur.dir : VDIR;
+  const to = dir === "fr-de" ? "de" : "fr";
+  const know = (p[to] || "").trim();
+  const mine = ($("#vdans") || {}).value || "";
+  $("#vdsol").hidden = false;
+  paintCrops();
+  const v = $("#vdverdict");
+  const weiter = p.k + 1 >= VZIEL ? "Damit ist die Vokabel fertig."
+    : `Dann sind es ${p.k+1} von ${VZIEL}, und sie pausiert eine Runde.`;
+  if(know && mine.trim()){
+    const r = judge(mine, [know]);
+    v.className = "verdict show " + (r === "ok" ? "ok" : r === "almost" ? "almost" : "no");
+    v.innerHTML = (r === "ok" ? `Richtig: <b>${esc(know)}</b>`
+      : r === "almost" ? `Fast — achte auf die Akzente: <b>${esc(know)}</b>`
+      : `Richtig wäre: <b>${esc(know)}</b>`) +
+      `<span class="why">${r !== "no" ? weiter : "Der Zähler beginnt wieder bei 0, und sie kommt schon in der nächsten Runde."}</span>
+       <div class="inputrow"><button class="btn accent" data-act="vdmark" data-ok="${r!=="no"?1:0}">Weiter</button></div>`;
+  } else {
+    v.className = "verdict show almost";
+    v.innerHTML = `<span class="why">Vergleiche mit der Lösung und bewerte dich selbst. Bei „Wusste ich“: ${weiter}</span>
+      <div class="inputrow"><button class="btn ghost" data-act="vdmark" data-ok="0">Wusste ich nicht</button>
+        <button class="btn accent" data-act="vdmark" data-ok="1">Wusste ich</button></div>`;
+  }
+}
+
 /* ---------- Klicks ---------- */
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-act]"); if(!el) return;
@@ -3777,6 +3916,17 @@ document.addEventListener("click", e => {
   if(a === "vagain"){ VONLY = false; VQ = []; return vDrill(); }
   if(a === "vonly"){ VONLY = !VONLY; VQ = []; return vDrill(); }
   if(a === "vonlystart"){ VONLY = true; VQ = []; return vDrill(); }
+  if(a === "vdcheck") return vdReveal();
+  if(a === "vdmark")  return vdAnswer(el.dataset.ok === "1");
+  if(a === "vdset"){ VSET = el.dataset.id || null; VD = null; return vRun(); }
+  if(a === "vddir"){ VDIR = el.dataset.d; VD = null; return vRun(); }
+  if(a === "vdreset"){
+    if(!confirm("Alle Zählstände in diesem Stapel auf 0 setzen?")) return;
+    const ids = new Set();
+    vdPool().forEach(x => { x.p.k = 0; ids.add(x.s.id); });
+    [...ids].forEach(id => saveSet(VSETS.find(y => y.id === id)));
+    VD = null; return vRun();
+  }
 });
 window.addEventListener("resize", () => { if(S.topic && S.topic.id === "vokabeln") paintCrops(); });
 
@@ -3784,7 +3934,7 @@ window.addEventListener("resize", () => { if(S.topic && S.topic.id === "vokabeln
 TOPICS.splice(TOPICS.findIndex(t => t.id === "mix"), 0, {
   id:"vokabeln", title:"Vokabeln", kat:"Üben & Wiederholen",
   desc:"Eigene Vokabellisten fotografieren, Spalten trennen und mit abgedeckter Seite üben.",
-  modes:["seiten","ueben","liste"], items:[]
+  modes:["seiten","ueben","durch","liste"], items:[]
 });
 </script>
 <script>
@@ -3794,7 +3944,7 @@ TOPICS.splice(TOPICS.findIndex(t => t.id === "mix"), 0, {
 
 const MODE_LABEL = {how:"Erklärung", ref:"Merkblatt", conj:"Einzelformen", num:"Zahlentrainer",
   table:"Tabelle ausfüllen", form:"Zeit erkennen", inf:"Infinitiv finden",
-  seiten:"Seiten", liste:"Abtippen", ueben:"Üben",
+  seiten:"Seiten", liste:"Abtippen", ueben:"Üben", durch:"Alle durchgehen",
   clock:"Uhrzeit-Trainer", flash:"Karteikarten", mc:"Quiz", fill:"Eingabe", trans:"Übersetzen",
   order:"Satzbau", match:"Zuordnen", fehler:"Fehlerliste"};
 
@@ -3998,7 +4148,7 @@ function availableModes(t){
   return (t.modes || []).filter(m => {
     if(m === "how") return !!EXPL[t.id];
     if(m === "ref") return !!REFS[t.ref];
-    if(["conj","num","clock","fehler","table","form","inf","seiten","ueben","liste"].includes(m)) return true;
+    if(["conj","num","clock","fehler","table","form","inf","seiten","ueben","durch","liste"].includes(m)) return true;
     return itemsOf(t, m === "flash" ? "card" : m).length > 0;
   });
 }
