@@ -3700,7 +3700,7 @@ function vReveal(){
       `<div class="inputrow"><button class="btn accent" data-act="vmark" data-ok="${r!=="no"?1:0}">Weiter</button></div>`;
   } else {
     v.className = "verdict show almost";
-    v.innerHTML = `<span class="why">Vergleiche mit der Lösung oben und bewerte dich selbst.</span>
+    v.innerHTML = `<span class="why">Vergleiche mit der Lösung oben und bewerte dich selbst.</span>${vErrNote(p, null)}
       <div class="inputrow"><button class="btn ghost" data-act="vmark" data-ok="0">Nochmal üben</button>
         <button class="btn accent" data-act="vmark" data-ok="1">Wusste ich</button></div>`;
   }
