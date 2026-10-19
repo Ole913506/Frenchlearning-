@@ -368,6 +368,29 @@ label.btn{display:inline-block;cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
+/* ---------- Sprechen lernen ---------- */
+.ref ul.steps{list-style:none;padding:0;margin:14px 0}
+.ref ul.steps li{position:relative;padding:0 0 0 20px;margin:0 0 12px;font-size:14.5px}
+.ref ul.steps li::before{content:"";position:absolute;left:3px;top:8px;width:6px;height:6px;
+  border-radius:50%;background:var(--rhodia)}
+.topic .spbar{display:block;width:100%;height:4px;margin:13px 0 7px;
+  background:var(--seyes-soft);border-radius:99px;overflow:hidden}
+.topic .spbar i{display:block;height:100%;background:var(--juste);width:0}
+.topic .spstate{display:block;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.topic.splock{opacity:.6;background:var(--paper)}
+.topic.splock .spstate{color:var(--marge)}
+.spkon{margin:14px 0 6px;padding:11px 14px;border-left:3px solid var(--seyes);
+  background:var(--paper);border-radius:0 10px 10px 0;font-size:15.5px;color:var(--ink-2)}
+.spfrei{display:block;width:100%;font:inherit;font-size:17px;line-height:1.5;color:var(--ink);
+  background:transparent;border:1px solid var(--line);border-radius:10px;
+  padding:11px 13px;margin-top:20px;min-height:104px;resize:vertical}
+.spfrei:focus{outline:none;border-color:var(--rhodia)}
+.spcheck{margin:4px 0 2px;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
+.spcheck li{margin:3px 0}
+.spscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:6px 0 14px}
+.spscroll .tbl{margin:0;min-width:430px}
+.tbl.sm6 th,.tbl.sm6 td{padding:6px 8px;font-size:13.5px;white-space:nowrap}
+.ref td.sm,.ref p.sm,.ref span.sm{font-size:13px;color:var(--ink-3)}
 </style>
 </head>
 <body>
@@ -3945,6 +3968,7 @@ TOPICS.splice(TOPICS.findIndex(t => t.id === "mix"), 0, {
 const MODE_LABEL = {how:"Erklärung", ref:"Merkblatt", conj:"Einzelformen", num:"Zahlentrainer",
   table:"Tabelle ausfüllen", form:"Zeit erkennen", inf:"Infinitiv finden",
   seiten:"Seiten", liste:"Abtippen", ueben:"Üben", durch:"Alle durchgehen",
+  kurs:"Lehrgang", wort:"Wortschatz", wliste:"Wortliste",
   clock:"Uhrzeit-Trainer", flash:"Karteikarten", mc:"Quiz", fill:"Eingabe", trans:"Übersetzen",
   order:"Satzbau", match:"Zuordnen", fehler:"Fehlerliste"};
 
@@ -4097,7 +4121,7 @@ function weighted(list){
 }
 function buildQueue(){
   const t = S.topic, m = S.mode;
-  if(t.id === "vokabeln"){ S.queue = []; S.retry = []; S.idx = 0; return; }
+  if(t.id === "vokabeln" || t.id === "sprechen"){ S.queue = []; S.retry = []; S.idx = 0; return; }
   S.retry = []; S.round = 1; S.runOk = 0; S.runAll = 0; S.idx = 0;
   if(m === "conj"){
     const t2 = subTense(), vp = subVerbs();
@@ -4120,7 +4144,7 @@ function buildQueue(){
 }
 /* Welche Unterthemen gibt es im aktuellen Modus? */
 function subsFor(t, m){
-  if(t.id === "vokabeln") return [];
+  if(t.id === "vokabeln" || t.id === "sprechen") return [];
   if(t.id === "konjugation"){
     if(!["conj","table","form","inf"].includes(m)) return [];
     return TENSES.map(x => ({id:"t:"+x.id, label:x.label})).concat([
@@ -4148,7 +4172,8 @@ function availableModes(t){
   return (t.modes || []).filter(m => {
     if(m === "how") return !!EXPL[t.id];
     if(m === "ref") return !!REFS[t.ref];
-    if(["conj","num","clock","fehler","table","form","inf","seiten","ueben","durch","liste"].includes(m)) return true;
+    if(["conj","num","clock","fehler","table","form","inf","seiten","ueben","durch","liste",
+        "kurs","wort","wliste"].includes(m)) return true;
     return itemsOf(t, m === "flash" ? "card" : m).length > 0;
   });
 }
@@ -4156,7 +4181,7 @@ function availableModes(t){
 /* ---------- Navigation ------------------------------------ */
 const ERR_TOPIC = {id:"fehler", title:"Deine Fehler", modes:["fehler"], items:[]};
 
-const KATS = ["Verben & Zeiten","Wortarten","Sätze bauen","Zahlen & Alltag","Üben & Wiederholen"];
+const KATS = ["Verben & Zeiten","Wortarten","Sätze bauen","Zahlen & Alltag","Sprechen","Üben & Wiederholen"];
 function renderHome(){
   $("#home").hidden = false;
   $("#drill").hidden = true;
@@ -4257,6 +4282,7 @@ const banner = () => S.round > 1 ? `<div class="banner">Nachholrunde — nur dei
 
 function render(){
   if(S.topic.id === "vokabeln") return renderVocab();
+  if(S.topic.id === "sprechen" && S.mode !== "how") return renderSprechen();
   if(S.mode === "how"){ stage.innerHTML = `<div class="sheet plain ref">${EXPL[S.topic.id]()}</div>`; return; }
   if(S.mode === "ref"){ stage.innerHTML = `<div class="sheet plain ref">${REFS[S.topic.ref]()}</div>`; return; }
 
@@ -4532,6 +4558,1621 @@ document.addEventListener("click", e => {
     return;
   }
 });
+
+/* ============================================================
+   9. SPRECHEN LERNEN — Stufenlehrgang + Kernwortschatz
+   ============================================================ */
+
+/* ============================================================
+   SPRECHEN LERNEN — Teil 1: Kernwortschatz + Stufen 1 bis 4
+   ============================================================ */
+
+/* ---------- Kernwortschatz -----------------------------------
+   Rund 160 Wörter, die beim Sprechen am meisten tragen.
+   [französisch, deutsch, kategorie, zusätzliche Antworten?]
+   Kategorien: verb · nomen · adj · zeit · ort · verbw · frage · chunk
+------------------------------------------------------------- */
+const KERNWORT = [
+  /* --- Verben: das Gerüpst jedes Satzes --- */
+  ["être","sein","verb"],
+  ["avoir","haben","verb"],
+  ["aller","gehen, fahren","verb"],
+  ["faire","machen, tun","verb"],
+  ["dire","sagen","verb"],
+  ["pouvoir","können (dürfen)","verb"],
+  ["vouloir","wollen","verb"],
+  ["devoir","müssen","verb"],
+  ["savoir","wissen, können (gelernt)","verb"],
+  ["venir","kommen","verb"],
+  ["voir","sehen","verb"],
+  ["prendre","nehmen","verb"],
+  ["mettre","legen, stellen, anziehen","verb"],
+  ["parler","sprechen, reden","verb"],
+  ["demander","fragen, bitten","verb"],
+  ["répondre","antworten","verb"],
+  ["donner","geben","verb"],
+  ["trouver","finden","verb"],
+  ["chercher","suchen","verb"],
+  ["penser","denken","verb"],
+  ["croire","glauben","verb"],
+  ["aimer","mögen, lieben","verb"],
+  ["préférer","lieber mögen","verb"],
+  ["détester","hassen, nicht leiden können","verb"],
+  ["manger","essen","verb"],
+  ["boire","trinken","verb"],
+  ["acheter","kaufen","verb"],
+  ["payer","bezahlen","verb"],
+  ["coûter","kosten","verb"],
+  ["travailler","arbeiten","verb"],
+  ["apprendre","lernen","verb"],
+  ["comprendre","verstehen","verb"],
+  ["expliquer","erklären","verb"],
+  ["écouter","zuhören, hören","verb"],
+  ["regarder","anschauen, ansehen","verb"],
+  ["lire","lesen","verb"],
+  ["écrire","schreiben","verb"],
+  ["jouer","spielen","verb"],
+  ["partir","losfahren, weggehen","verb"],
+  ["rester","bleiben","verb"],
+  ["rentrer","nach Hause kommen","verb"],
+  ["attendre","warten","verb"],
+  ["aider","helfen","verb"],
+  ["oublier","vergessen","verb"],
+  ["essayer","versuchen, probieren","verb"],
+  ["commencer","anfangen","verb"],
+  ["finir","beenden, fertig werden","verb"],
+  ["arriver","ankommen","verb"],
+  ["sortir","ausgehen, hinausgehen","verb"],
+  ["dormir","schlafen","verb"],
+  ["habiter","wohnen","verb"],
+  ["se lever","aufstehen","verb",["lever"]],
+  ["s'appeler","heißen","verb",["appeler"]],
+
+  /* --- Nomen: die Dinge, über die man redet --- */
+  ["le temps","die Zeit; das Wetter","nomen",["temps"]],
+  ["le jour","der Tag","nomen",["jour"]],
+  ["l'année","das Jahr","nomen",["année","une année"]],
+  ["la semaine","die Woche","nomen",["semaine"]],
+  ["le matin","der Morgen","nomen",["matin"]],
+  ["le soir","der Abend","nomen",["soir"]],
+  ["le week-end","das Wochenende","nomen",["week-end"]],
+  ["les vacances","die Ferien","nomen",["vacances"]],
+  ["la maison","das Haus","nomen",["maison"]],
+  ["l'école","die Schule","nomen",["école","une école"]],
+  ["le cours","der Unterricht, die Stunde","nomen",["cours"]],
+  ["les devoirs","die Hausaufgaben","nomen",["devoirs"]],
+  ["le travail","die Arbeit","nomen",["travail"]],
+  ["l'ami","der Freund","nomen",["ami","un ami","l'amie","une amie"]],
+  ["les parents","die Eltern","nomen",["parents"]],
+  ["le frère","der Bruder","nomen",["frère"]],
+  ["la sœur","die Schwester","nomen",["sœur","soeur","la soeur"]],
+  ["la famille","die Familie","nomen",["famille"]],
+  ["les gens","die Leute","nomen",["gens"]],
+  ["la ville","die Stadt","nomen",["ville"]],
+  ["le pays","das Land","nomen",["pays"]],
+  ["la rue","die Straße","nomen",["rue"]],
+  ["le magasin","der Laden, das Geschäft","nomen",["magasin"]],
+  ["l'argent","das Geld","nomen",["argent","de l'argent"]],
+  ["la chose","die Sache, das Ding","nomen",["chose"]],
+  ["le problème","das Problem","nomen",["problème"]],
+  ["l'idée","die Idee","nomen",["idée","une idée"]],
+  ["la question","die Frage","nomen",["question"]],
+  ["le mot","das Wort","nomen",["mot"]],
+  ["la vie","das Leben","nomen",["vie"]],
+  ["le monde","die Welt","nomen",["monde"]],
+  ["le repas","die Mahlzeit, das Essen","nomen",["repas"]],
+  ["la fois","das Mal","nomen",["fois"]],
+
+  /* --- Adjektive: damit es nicht nur Fakten sind --- */
+  ["bon, bonne","gut","adj",["bon","bonne"]],
+  ["mauvais, mauvaise","schlecht","adj",["mauvais","mauvaise"]],
+  ["grand, grande","groß","adj",["grand","grande"]],
+  ["petit, petite","klein","adj",["petit","petite"]],
+  ["beau, belle","schön","adj",["beau","belle"]],
+  ["nouveau, nouvelle","neu","adj",["nouveau","nouvelle"]],
+  ["vieux, vieille","alt","adj",["vieux","vieille"]],
+  ["jeune","jung","adj"],
+  ["facile","leicht, einfach","adj"],
+  ["difficile","schwierig","adj"],
+  ["important, importante","wichtig","adj",["important","importante"]],
+  ["intéressant, intéressante","interessant","adj",["intéressant","intéressante"]],
+  ["content, contente","zufrieden, froh","adj",["content","contente"]],
+  ["fatigué, fatiguée","müde","adj",["fatigué","fatiguée"]],
+  ["sympa","nett, sympathisch","adj"],
+  ["gentil, gentille","freundlich, lieb","adj",["gentil","gentille"]],
+  ["méchant, méchante","gemein, böse","adj",["méchant","méchante"]],
+  ["cher, chère","teuer; lieb","adj",["cher","chère"]],
+  ["drôle","lustig, komisch","adj"],
+  ["génial, géniale","super, genial","adj",["génial","géniale"]],
+  ["libre","frei","adj"],
+  ["prêt, prête","fertig, bereit","adj",["prêt","prête"]],
+
+  /* --- Zeit --- */
+  ["aujourd'hui","heute","zeit"],
+  ["hier","gestern","zeit"],
+  ["demain","morgen","zeit"],
+  ["maintenant","jetzt","zeit"],
+  ["avant","vorher, davor","zeit"],
+  ["après","danach, nachher","zeit"],
+  ["souvent","oft","zeit"],
+  ["toujours","immer","zeit"],
+  ["jamais","nie (mit ne)","zeit"],
+  ["quelquefois","manchmal","zeit",["parfois"]],
+  ["déjà","schon, bereits","zeit"],
+  ["encore","noch","zeit"],
+  ["bientôt","bald","zeit"],
+  ["tôt","früh","zeit"],
+  ["tard","spät","zeit"],
+  ["longtemps","lange","zeit"],
+  ["tout de suite","sofort","zeit"],
+
+  /* --- Ort und Menge --- */
+  ["ici","hier","ort"],
+  ["là-bas","da drüben, dort","ort"],
+  ["partout","überall","ort"],
+  ["à côté","daneben, nebenan","ort"],
+  ["chez moi","bei mir, zu mir","ort"],
+  ["en haut","oben, nach oben","ort"],
+  ["beaucoup","viel, sehr","ort",["beaucoup de"]],
+  ["un peu","ein bisschen","ort"],
+  ["trop","zu (viel)","ort"],
+  ["assez","genug; ziemlich","ort"],
+  ["tout","alles","ort"],
+  ["quelque chose","etwas","ort"],
+  ["rien","nichts (mit ne)","ort"],
+  ["quelqu'un","jemand","ort"],
+
+  /* --- Verbindungswörter: sie machen aus Wörtern Rede --- */
+  ["et","und","verbw"],
+  ["mais","aber","verbw"],
+  ["ou","oder","verbw"],
+  ["parce que","weil","verbw",["parce qu'"]],
+  ["donc","also, deshalb","verbw"],
+  ["alors","dann, na dann","verbw"],
+  ["aussi","auch","verbw"],
+  ["si","wenn, falls","verbw"],
+  ["que","dass","verbw"],
+  ["comme","so wie; da, weil","verbw"],
+  ["d'abord","zuerst","verbw"],
+  ["ensuite","dann, als Nächstes","verbw",["puis"]],
+  ["enfin","schließlich, endlich","verbw"],
+  ["par exemple","zum Beispiel","verbw"],
+  ["surtout","vor allem","verbw"],
+
+  /* --- Fragewörter --- */
+  ["qui","wer","frage"],
+  ["qu'est-ce que","was (als Frage)","frage",["que","quoi"]],
+  ["où","wo, wohin","frage"],
+  ["quand","wann; als, wenn","frage"],
+  ["comment","wie (Frage)","frage"],
+  ["pourquoi","warum","frage"],
+  ["combien","wie viel, wie viele","frage",["combien de"]],
+  ["quel, quelle","welcher, welche","frage",["quel","quelle"]],
+
+  /* --- Feste Wendungen: ganze Sätze zum Auswendiglernen --- */
+  ["il y a","es gibt","chunk"],
+  ["il faut","man muss","chunk"],
+  ["c'est","das ist","chunk"],
+  ["ce n'est pas","das ist nicht","chunk"],
+  ["je voudrais","ich möchte","chunk"],
+  ["j'ai besoin de","ich brauche","chunk"],
+  ["j'ai envie de","ich habe Lust auf","chunk"],
+  ["je pense que","ich denke, dass","chunk"],
+  ["à mon avis","meiner Meinung nach","chunk"],
+  ["je suis d'accord","ich bin einverstanden","chunk"],
+  ["ça dépend","das kommt darauf an","chunk"],
+  ["bien sûr","natürlich, klar","chunk"],
+  ["peut-être","vielleicht","chunk"],
+  ["s'il te plaît","bitte (zu einer Person, die du duzt)","chunk"],
+  ["s'il vous plaît","bitte (höflich)","chunk"],
+  ["merci beaucoup","vielen Dank","chunk"],
+  ["de rien","keine Ursache, gern (Antwort auf Danke)","chunk"],
+  ["excuse-moi","entschuldige","chunk"],
+  ["je ne sais pas","ich weiß nicht","chunk"],
+  ["qu'est-ce que c'est","was ist das","chunk"],
+  ["ça va","es geht, alles gut","chunk"],
+  ["avec plaisir","gern, mit Vergnügen","chunk"],
+  ["tant pis","auch egal, Pech","chunk"],
+  ["ça m'est égal","das ist mir egal","chunk"]
+];
+
+/* ---------- Die Stufen --------------------------------------
+   Jede Stufe: {id, titel, kurz, ziel (HTML), items}
+   Aufgabentypen:
+     say   deutscher Auftrag  → französischer Satz tippen
+     form  französischer Satz → umformen
+     pick  Multiple Choice zu einer Regel
+     frei  freie Antwort, danach Musterlösung + Selbstkontrolle
+   Felder: q (Auftrag) · kontext? (was der andere sagt) · a [akzeptiert]
+           full (Musterlösung) · tipp? · why?
+------------------------------------------------------------- */
+const STUFEN = [
+
+/* ===================== STUFE 1 ===================== */
+{
+  id:"kerne", titel:"Satzkerne", kurz:"14 Anfänge, mit denen fast jeder Satz beginnt",
+  ziel:`
+  <h3>Warum diese Stufe?</h3>
+  <p>Flüssig sprechen heißt nicht, viele Wörter zu kennen. Es heißt, den <b>Satzanfang</b>
+  nicht suchen zu müssen. Im gesprochenen Französisch fangen die meisten Sätze mit einer
+  Handvoll fester Bausteine an. Wenn die automatisch kommen, hast du Zeit, über den Rest
+  nachzudenken.</p>
+
+  <h3>Die 14 Kerne</h3>
+  <table class="tbl">
+    <tr><td><b>je suis …</b></td><td>ich bin …</td><td class="sm">+ Adjektiv oder Ort</td></tr>
+    <tr><td><b>j'ai …</b></td><td>ich habe …</td><td class="sm">+ Nomen</td></tr>
+    <tr><td><b>je vais …</b></td><td>ich gehe / fahre …</td><td class="sm">+ Ort <i>oder</i> + Infinitiv (= ich werde …)</td></tr>
+    <tr><td><b>je veux …</b></td><td>ich will …</td><td class="sm">+ Infinitiv</td></tr>
+    <tr><td><b>je peux …</b></td><td>ich kann / darf …</td><td class="sm">+ Infinitiv</td></tr>
+    <tr><td><b>je dois …</b></td><td>ich muss …</td><td class="sm">+ Infinitiv</td></tr>
+    <tr><td><b>j'aime …</b></td><td>ich mag …</td><td class="sm">+ bestimmter Artikel <i>oder</i> + Infinitiv</td></tr>
+    <tr><td><b>je voudrais …</b></td><td>ich möchte …</td><td class="sm">+ Nomen oder Infinitiv — die höfliche Form</td></tr>
+    <tr><td><b>il y a …</b></td><td>es gibt …</td><td class="sm">+ Nomen</td></tr>
+    <tr><td><b>il faut …</b></td><td>man muss …</td><td class="sm">+ Infinitiv</td></tr>
+    <tr><td><b>c'est …</b></td><td>das ist …</td><td class="sm">+ Artikel, Name oder Adjektiv</td></tr>
+    <tr><td><b>je pense que …</b></td><td>ich denke, dass …</td><td class="sm">+ ganzer Satz</td></tr>
+    <tr><td><b>j'ai besoin de …</b></td><td>ich brauche …</td><td class="sm">+ Nomen oder Infinitiv</td></tr>
+    <tr><td><b>j'ai envie de …</b></td><td>ich habe Lust auf / zu …</td><td class="sm">+ Nomen oder Infinitiv</td></tr>
+  </table>
+
+  <h3>Drei Dinge, die hier schon zählen</h3>
+  <ul class="steps">
+    <li><b>Nach <i>vouloir, pouvoir, devoir, il faut, aller</i> kommt der Infinitiv.</b>
+      Kein „zu“, kein <i>que</i>: <i>je dois travailler</i> — ich muss arbeiten.</li>
+    <li><b>Nach <i>aimer, adorer, détester, préférer</i> kommt der bestimmte Artikel.</b>
+      <i>J'aime le chocolat</i> — nicht <i>du chocolat</i>.</li>
+    <li><b><i>je</i> wird vor Vokal zu <i>j'</i>.</b> <i>j'ai, j'aime, j'habite</i> — aber
+      <i>je suis, je veux, je dois</i>.</li>
+  </ul>
+  <p class="qsub">Tippe jede Antwort als ganzen Satz. Akzente darfst du weglassen —
+  das zählt als „fast richtig“, nicht als Fehler.</p>`,
+  items:[
+  {t:"say", q:"Ich bin müde.", a:["je suis fatigué","je suis fatiguée"], full:"Je suis fatigué.",
+   why:"être + Adjektiv. Wenn du ein Mädchen wärst: fatiguée."},
+  {t:"say", q:"Ich habe einen Bruder.", a:["j'ai un frère"], full:"J'ai un frère.",
+   why:"j' statt je vor Vokal."},
+  {t:"say", q:"Ich gehe nach Hause.", a:["je vais à la maison","je rentre à la maison","je vais chez moi","je rentre chez moi"],
+   full:"Je vais à la maison.", tipp:"„nach Hause“ = à la maison oder chez moi",
+   why:"Mit rentrer klingt es noch natürlicher: je rentre à la maison."},
+  {t:"say", q:"Ich will schlafen.", a:["je veux dormir"], full:"Je veux dormir.",
+   why:"Nach vouloir kommt direkt der Infinitiv."},
+  {t:"say", q:"Ich kann kommen.", a:["je peux venir"], full:"Je peux venir.",
+   why:"Nach pouvoir kommt direkt der Infinitiv."},
+  {t:"say", q:"Ich muss arbeiten.", a:["je dois travailler"], full:"Je dois travailler.",
+   why:"devoir + Infinitiv. Kein „zu“ dazwischen."},
+  {t:"say", q:"Ich mag Schokolade.", a:["j'aime le chocolat"], full:"J'aime le chocolat.",
+   tipp:"Schokolade = le chocolat",
+   why:"Nach aimer steht immer der bestimmte Artikel — auch wenn im Deutschen keiner steht."},
+  {t:"say", q:"Ich möchte einen Kaffee.", a:["je voudrais un café"], full:"Je voudrais un café.",
+   why:"je voudrais ist die höfliche Form von je veux. Im Laden oder Café nimmst du immer sie."},
+  {t:"say", q:"Es gibt ein Problem.", a:["il y a un problème"], full:"Il y a un problème.",
+   why:"il y a ist unveränderlich — es gibt auch „il y a des problèmes“."},
+  {t:"say", q:"Man muss warten.", a:["il faut attendre"], full:"Il faut attendre.",
+   why:"il faut + Infinitiv = man muss. Es gibt keine andere Person: nie „je faut“."},
+  {t:"say", q:"Das ist meine Schwester.", a:["c'est ma sœur","c'est ma soeur"], full:"C'est ma sœur.",
+   why:"c'est + Artikel, Besitzwort oder Name. Vor einem Adjektiv allein nimmst du il/elle est."},
+  {t:"say", q:"Ich denke, dass es leicht ist.", a:["je pense que c'est facile"], full:"Je pense que c'est facile.",
+   why:"que darf im Französischen nie weggelassen werden — anders als „ich denke, es ist leicht“."},
+  {t:"say", q:"Ich brauche Geld.", a:["j'ai besoin d'argent"], full:"J'ai besoin d'argent.",
+   tipp:"Geld = l'argent, besoin de + l'argent wird zu …",
+   why:"besoin de + Nomen. de + argent wird zu d'argent."},
+  {t:"say", q:"Ich habe Lust auszugehen.", a:["j'ai envie de sortir"], full:"J'ai envie de sortir.",
+   why:"avoir envie de + Infinitiv. Mit Nomen genauso: j'ai envie d'un café."},
+  {t:"say", q:"Ich bin in Paris.", a:["je suis à paris"], full:"Je suis à Paris.",
+   why:"Bei Städten immer à: à Paris, à Berlin, à Löhne."},
+  {t:"say", q:"Ich kann losfahren.", a:["je peux partir"], full:"Je peux partir.",
+   why:"partir = weggehen, losfahren. aller braucht ein Ziel, partir nicht."},
+  {t:"say", q:"Ich mag lesen.", a:["j'aime lire"], full:"J'aime lire.",
+   why:"aimer + Infinitiv, wenn es um eine Tätigkeit geht. Kein de dazwischen."},
+  {t:"pick", q:"Was folgt auf «je veux»?",
+   opts:["ein Infinitiv: je veux partir","ein konjugiertes Verb: je veux je pars","que + Satz: je veux que je parte"],
+   a:0, why:"Nach vouloir, pouvoir, devoir und il faut steht immer der Infinitiv."},
+  {t:"pick", q:"«J'aime ___ musique.» Was gehört in die Lücke?",
+   opts:["la","de la","une"],
+   a:0, why:"Nach aimer, adorer, détester und préférer steht der bestimmte Artikel: la musique."},
+  {t:"pick", q:"Welcher Satz ist richtig?",
+   opts:["J'ai besoin d'un stylo.","Je besoin un stylo.","J'ai besoin un stylo."],
+   a:0, why:"avoir besoin de — das de bleibt immer, auch vor un/une: besoin d'un stylo."}
+  ]
+},
+
+/* ===================== STUFE 2 ===================== */
+{
+  id:"personen", titel:"Verben im Gespräch", kurz:"je, tu, il, on — und der Trick mit «on»",
+  ziel:`
+  <h3>Warum diese Stufe?</h3>
+  <p>In Stufe 1 ging immer nur <i>ich</i>. In einem echten Gespräch brauchst du vier Personen:
+  <b>je</b> (ich), <b>tu</b> (du), <b>il / elle</b> (er/sie) und <b>on</b>. Die Formen von
+  <i>nous</i> und <i>vous</i> brauchst du zwar zum Verstehen, aber viel seltener zum Reden.</p>
+
+  <h3>Der Trick: on</h3>
+  <p><i>on</i> heißt wörtlich „man“. Im gesprochenen Französisch sagt aber fast niemand
+  <i>nous</i> — man sagt <b>on</b> und meint <b>wir</b>:</p>
+  <table class="tbl">
+    <tr><td class="sm">geschrieben</td><td><i>Nous allons au cinéma.</i></td></tr>
+    <tr><td class="sm">gesprochen</td><td><b>On va au cinéma.</b> — Wir gehen ins Kino.</td></tr>
+  </table>
+  <p>Und das Beste: <b>on wird konjugiert wie il/elle</b>. Du musst also keine einzige
+  neue Form lernen. Nur beim Adjektiv oder Partizip darf ein Plural-s dazu:
+  <i>on est fatigués</i>.</p>
+
+  <h3>Die sechs Verben, die du im Schlaf brauchst</h3>
+  <div class="spscroll"><table class="tbl sm6">
+    <tr><td></td><th>être</th><th>avoir</th><th>aller</th><th>faire</th><th>pouvoir</th><th>vouloir</th></tr>
+    <tr><td class="sm">je</td><td>suis</td><td>ai</td><td>vais</td><td>fais</td><td>peux</td><td>veux</td></tr>
+    <tr><td class="sm">tu</td><td>es</td><td>as</td><td>vas</td><td>fais</td><td>peux</td><td>veux</td></tr>
+    <tr><td class="sm">il/elle/on</td><td>est</td><td>a</td><td>va</td><td>fait</td><td>peut</td><td>veut</td></tr>
+    <tr><td class="sm">nous</td><td>sommes</td><td>avons</td><td>allons</td><td>faisons</td><td>pouvons</td><td>voulons</td></tr>
+    <tr><td class="sm">vous</td><td>êtes</td><td>avez</td><td>allez</td><td>faites</td><td>pouvez</td><td>voulez</td></tr>
+    <tr><td class="sm">ils/elles</td><td>sont</td><td>ont</td><td>vont</td><td>font</td><td>peuvent</td><td>veulent</td></tr>
+  </table></div>
+
+  <h3>Hör-Trick</h3>
+  <p><i>je, tu, il, elle, on, ils, elles</i> klingen bei den meisten Verben auf <b>-er</b>
+  völlig gleich: <i>je parle, tu parles, il parle, ils parlent</i> — alles „parl“.
+  Nur <i>nous</i> und <i>vous</i> hört man heraus. Deshalb geht beim Sprechen so viel
+  automatisch, sobald du die sechs unregelmäßigen Verben oben sitzen hast.</p>`,
+  items:[
+  {t:"form", q:"être · tu", a:["tu es"], full:"tu es", why:"Nicht „tu est“ — das ist die il-Form."},
+  {t:"form", q:"avoir · il", a:["il a"], full:"il a", why:"Ohne s. „il as“ gibt es nicht."},
+  {t:"form", q:"aller · on", a:["on va"], full:"on va", why:"on nimmt immer die il-Form."},
+  {t:"form", q:"faire · vous", a:["vous faites"], full:"vous faites", why:"Eine der drei Ausnahmen auf -tes: vous faites, vous dites, vous êtes."},
+  {t:"form", q:"pouvoir · tu", a:["tu peux"], full:"tu peux", why:"je peux und tu peux sind gleich."},
+  {t:"form", q:"vouloir · elle", a:["elle veut"], full:"elle veut", why:"veux (je/tu) gegen veut (il/elle/on)."},
+  {t:"form", q:"devoir · on", a:["on doit"], full:"on doit", why:"on = il-Form: il doit, on doit."},
+  {t:"form", q:"savoir · je", a:["je sais"], full:"je sais", why:"Sehr häufig in «je ne sais pas»."},
+  {t:"form", q:"venir · tu", a:["tu viens"], full:"tu viens", why:"je viens, tu viens, il vient — das t hört man nicht."},
+  {t:"form", q:"prendre · on", a:["on prend"], full:"on prend", why:"Ohne Endung: il prend, on prend."},
+  {t:"form", q:"dire · vous", a:["vous dites"], full:"vous dites", why:"Nicht „vous disez“."},
+  {t:"form", q:"voir · je", a:["je vois"], full:"je vois", why:"je vois, tu vois, il voit."},
+  {t:"form", q:"être · ils", a:["ils sont"], full:"ils sont", why:"Nicht mit „ils ont“ (haben) verwechseln."},
+  {t:"form", q:"avoir · nous", a:["nous avons"], full:"nous avons", why:"Beim Sprechen sagst du dafür meist: on a."},
+  {t:"form", q:"faire · ils", a:["ils font"], full:"ils font", why:"font, nicht „faisent“."},
+  {t:"say", q:"Wir gehen ins Kino. (mit on)", a:["on va au cinéma"], full:"On va au cinéma.",
+   tipp:"à + le cinéma = au cinéma", why:"on + il-Form. à + le wird immer zu au."},
+  {t:"say", q:"Du hast recht.", a:["tu as raison"], full:"Tu as raison.",
+   why:"avoir raison — im Französischen „hat“ man recht, man „ist“ es nicht."},
+  {t:"say", q:"Wir sind müde. (mit on)", a:["on est fatigués","on est fatigué","on est fatiguées"],
+   full:"On est fatigués.", why:"on bleibt grammatisch Einzahl (est), das Adjektiv darf aber ins Plural."},
+  {t:"say", q:"Sie (= die Eltern) wollen nicht.", a:["ils ne veulent pas","elles ne veulent pas"],
+   full:"Ils ne veulent pas.", tipp:"ne … pas um das Verb", why:"veulent — hier hört man das Plural deutlich."},
+  {t:"say", q:"Könnt ihr mir helfen?", a:["est-ce que vous pouvez m'aider","vous pouvez m'aider","pouvez-vous m'aider"],
+   full:"Est-ce que vous pouvez m'aider ?", why:"aider qn — ohne Präposition. me wird vor Vokal zu m'."},
+  {t:"pick", q:"«on» wird konjugiert wie …",
+   opts:["il / elle","nous","ils / elles"],
+   a:0, why:"on nimmt immer die 3. Person Einzahl — deshalb musst du für „wir“ keine neue Form lernen."},
+  {t:"pick", q:"Welche Form hörst du bei «parler» anders als die übrigen?",
+   opts:["nous parlons","je parle","il parle","ils parlent"],
+   a:0, why:"parle, parles, parle, parlent klingen gleich. Nur nous parlons und vous parlez hört man."}
+  ]
+},
+
+/* ===================== STUFE 3 ===================== */
+{
+  id:"erweitern", titel:"Sätze erweitern", kurz:"Wer – tut was – was – wo – wann – warum",
+  ziel:`
+  <h3>Warum diese Stufe?</h3>
+  <p>Ein Satz wie <i>je travaille</i> ist richtig, aber arm. Flüssig klingt, wer
+  <b>anbaut</b>: wo, wann, mit wem, warum. Dafür gibt es eine feste Reihenfolge, und
+  die ist zum Glück fast die deutsche.</p>
+
+  <h3>Die Reihenfolge</h3>
+  <table class="tbl">
+    <tr><td class="sm">1. Wer</td><td><b>Je</b></td></tr>
+    <tr><td class="sm">2. tut was</td><td><b>travaille</b></td></tr>
+    <tr><td class="sm">3. was / wen</td><td>—</td></tr>
+    <tr><td class="sm">4. wo</td><td><b>en ville</b></td></tr>
+    <tr><td class="sm">5. wann</td><td><b>demain</b></td></tr>
+  </table>
+  <p><i>Je travaille en ville demain.</i> — Die <b>Zeitangabe</b> darf auch ganz nach vorne:
+  <i>Demain, je travaille en ville.</i> Beides ist richtig; vorne betont die Zeit.</p>
+
+  <h3>Die Anbauteile, die du am meisten brauchst</h3>
+  <ul class="steps">
+    <li><b>wo</b> — <i>à la maison, à l'école, en ville, chez moi, au magasin, en France</i></li>
+    <li><b>wann</b> — <i>aujourd'hui, demain, le week-end, à huit heures, souvent, le lundi</i></li>
+    <li><b>mit wem</b> — <i>avec mes amis, avec ma sœur, avec toi</i></li>
+    <li><b>wofür</b> — <i>pour l'école, pour mon frère, pour apprendre</i></li>
+    <li><b>warum</b> — <i>parce que + ganzer Satz</i>: <i>parce que c'est important</i></li>
+  </ul>
+
+  <h3>Zwei Fallen</h3>
+  <ul class="steps">
+    <li><b>à + le = au</b>, <b>à + les = aux</b>, <b>de + le = du</b>, <b>de + les = des</b>.
+      <i>au magasin, aux États-Unis, du cinéma</i>. Bei <i>la</i> und <i>l'</i> passiert nichts.</li>
+    <li><b>jouer à</b> beim Spiel oder Sport (<i>jouer au foot</i>), <b>jouer de</b> beim
+      Instrument (<i>jouer du piano</i>).</li>
+  </ul>`,
+  items:[
+  {t:"say", q:"Ich arbeite morgen in der Stadt.",
+   a:["je travaille demain en ville","demain je travaille en ville","je travaille en ville demain"],
+   full:"Je travaille en ville demain.", tipp:"in der Stadt = en ville",
+   why:"Ort vor Zeit — oder die Zeit ganz nach vorn."},
+  {t:"say", q:"Wir spielen mit Freunden Fußball. (mit on)",
+   a:["on joue au foot avec des amis","on joue au football avec des amis","on joue au foot avec des copains"],
+   full:"On joue au foot avec des amis.", tipp:"jouer à + Sport",
+   why:"jouer au foot (à + le). „mit Freunden“ ohne Besitzwort: avec des amis."},
+  {t:"say", q:"Ich fahre mit dem Zug nach Paris.",
+   a:["je vais à paris en train"],
+   full:"Je vais à Paris en train.", tipp:"mit dem Zug = en train",
+   why:"Verkehrsmittel mit en: en train, en voiture, en bus — aber à pied und à vélo."},
+  {t:"say", q:"Ich lerne Französisch für die Schule.",
+   a:["j'apprends le français pour l'école"],
+   full:"J'apprends le français pour l'école.",
+   why:"Sprachen mit bestimmtem Artikel: le français, l'anglais, l'allemand."},
+  {t:"say", q:"Er wohnt bei seinen Eltern.",
+   a:["il habite chez ses parents"],
+   full:"Il habite chez ses parents.", tipp:"bei jemandem = chez",
+   why:"chez + Person. ses, weil parents Plural ist — nicht weil „er“ männlich ist."},
+  {t:"say", q:"Sie kauft am Samstag ein Buch im Laden.",
+   a:["elle achète un livre au magasin samedi","samedi elle achète un livre au magasin","elle achète samedi un livre au magasin"],
+   full:"Elle achète un livre au magasin samedi.",
+   why:"Objekt, dann Ort, dann Zeit. samedi ohne Artikel = an diesem Samstag."},
+  {t:"say", q:"Ich bin um acht Uhr zu Hause.",
+   a:["je suis à la maison à huit heures","à huit heures je suis à la maison"],
+   full:"Je suis à la maison à huit heures.",
+   why:"Uhrzeit mit à: à huit heures."},
+  {t:"say", q:"Ich gehe ins Schwimmbad, weil es heiß ist.",
+   a:["je vais à la piscine parce qu'il fait chaud"],
+   full:"Je vais à la piscine parce qu'il fait chaud.", tipp:"Schwimmbad = la piscine · es ist heiß = il fait chaud",
+   why:"parce que wird vor Vokal zu parce qu'. Beim Wetter immer il fait."},
+  {t:"say", q:"Zuerst esse ich, dann mache ich meine Hausaufgaben.",
+   a:["d'abord je mange, ensuite je fais mes devoirs","d'abord je mange, puis je fais mes devoirs"],
+   full:"D'abord je mange, ensuite je fais mes devoirs.",
+   why:"Nach d'abord und ensuite steht ganz normal Subjekt + Verb — keine Umstellung wie im Deutschen."},
+  {t:"say", q:"Ich spiele Klavier.",
+   a:["je joue du piano"],
+   full:"Je joue du piano.",
+   why:"Instrument mit de: jouer du piano, de la guitare. Sport mit à: jouer au tennis."},
+  {t:"say", q:"Wir essen jeden Montag bei meiner Oma. (mit on)",
+   a:["on mange chez ma grand-mère le lundi","le lundi on mange chez ma grand-mère"],
+   full:"On mange chez ma grand-mère le lundi.", tipp:"Oma = la grand-mère · jeden Montag = le lundi",
+   why:"le lundi = jeden Montag. Ohne le wäre es nur dieser eine Montag."},
+  {t:"say", q:"Ich suche ein Geschenk für meine Mutter.",
+   a:["je cherche un cadeau pour ma mère"],
+   full:"Je cherche un cadeau pour ma mère.", tipp:"Geschenk = le cadeau",
+   why:"chercher braucht keine Präposition — anders als „suchen nach“."},
+  {t:"form", q:"Bau einen Satz: je / aller / au cinéma / avec mon frère / ce soir",
+   a:["je vais au cinéma avec mon frère ce soir","ce soir je vais au cinéma avec mon frère"],
+   full:"Je vais au cinéma avec mon frère ce soir.",
+   why:"Wer – tut was – wo – mit wem – wann."},
+  {t:"form", q:"Bau einen Satz: on / manger / une pizza / à la maison / souvent",
+   a:["on mange souvent une pizza à la maison","on mange une pizza à la maison souvent"],
+   full:"On mange souvent une pizza à la maison.",
+   why:"Kurze Häufigkeitswörter wie souvent, toujours, déjà stehen direkt hinter dem Verb."},
+  {t:"pick", q:"Welcher Satz stellt «souvent» richtig?",
+   opts:["Je regarde souvent la télé.","Je souvent regarde la télé.","Je regarde la télé souvent beaucoup."],
+   a:0, why:"souvent, toujours, déjà, encore stehen direkt hinter dem konjugierten Verb — nie davor."},
+  {t:"pick", q:"«Ich gehe ins Kino» heißt …",
+   opts:["Je vais au cinéma.","Je vais à le cinéma.","Je vais en cinéma."],
+   a:0, why:"à + le zieht sich immer zu au zusammen."},
+  {t:"pick", q:"Welcher Satz ist richtig?",
+   opts:["Elle joue de la guitare.","Elle joue à la guitare.","Elle joue la guitare."],
+   a:0, why:"Instrument: jouer de. Sport und Spiel: jouer à."}
+  ]
+},
+
+/* ===================== STUFE 4 ===================== */
+{
+  id:"negfrage", titel:"Verneinen und fragen", kurz:"ne … pas, pas de und drei Wege zur Frage",
+  ziel:`
+  <h3>Warum diese Stufe?</h3>
+  <p>Ein Gespräch besteht zur Hälfte aus Fragen und Widerspruch. Wer nur zustimmen kann,
+  kommt nicht weit. Gut: Es sind nur zwei Muster.</p>
+
+  <h3>Verneinen: ne … pas umschließt das Verb</h3>
+  <table class="tbl">
+    <tr><td><i>Je suis fatigué.</i></td><td>→</td><td><b>Je ne suis pas</b> fatigué.</td></tr>
+    <tr><td><i>Je veux partir.</i></td><td>→</td><td><b>Je ne veux pas</b> partir.</td></tr>
+    <tr><td class="sm">vor Vokal</td><td>→</td><td><i>Je <b>n'</b>ai pas …</i> · <i>Il <b>n'</b>y a pas …</i></td></tr>
+  </table>
+  <p><b>Wichtig:</b> Nur das <b>konjugierte</b> Verb steht zwischen ne und pas.
+  Der Infinitiv bleibt dahinter: <i>je ne veux pas partir</i>, nicht „je ne veux partir pas“.</p>
+
+  <h3>Die Falle: un / une / du / des werden zu de</h3>
+  <table class="tbl">
+    <tr><td><i>J'ai <b>un</b> frère.</i></td><td>→</td><td><i>Je n'ai pas <b>de</b> frère.</i></td></tr>
+    <tr><td><i>On mange <b>du</b> pain.</i></td><td>→</td><td><i>On ne mange pas <b>de</b> pain.</i></td></tr>
+    <tr><td><i>On a <b>des</b> devoirs.</i></td><td>→</td><td><i>On n'a pas <b>de</b> devoirs.</i></td></tr>
+  </table>
+  <p>Zwei Ausnahmen: nach <b>être</b> bleibt der Artikel (<i>ce n'est pas un problème</i>),
+  und der <b>bestimmte</b> Artikel bleibt immer (<i>je n'aime pas le café</i>).</p>
+
+  <h3>Die anderen Verneinungen — gleiches Muster</h3>
+  <p><i>ne … <b>plus</b></i> nicht mehr · <i>ne … <b>jamais</b></i> nie ·
+  <i>ne … <b>rien</b></i> nichts · <i>ne … <b>personne</b></i> niemand ·
+  <i>ne … <b>que</b></i> nur</p>
+
+  <h3>Fragen: drei Wege, einer reicht</h3>
+  <table class="tbl">
+    <tr><td class="sm">1. gesprochen</td><td><i>Tu viens ?</i></td><td class="sm">nur die Stimme geht hoch — das Einfachste</td></tr>
+    <tr><td class="sm">2. immer sicher</td><td><i><b>Est-ce que</b> tu viens ?</i></td><td class="sm">est-ce que davor, Satz bleibt gleich</td></tr>
+    <tr><td class="sm">3. schriftlich</td><td><i>Viens-<b>tu</b> ?</i></td><td class="sm">Umstellung — brauchst du zum Verstehen</td></tr>
+  </table>
+  <p><b>Mit Fragewort</b> stellst du es einfach vorne an: <i>Où est-ce que tu habites ?</i>
+  Im Gespräch geht es auch hinten: <i>Tu habites où ?</i></p>
+  <p><b>„Was“ ist der Sonderfall:</b> allein steht es als <i>qu'est-ce que</i>
+  (<i>Qu'est-ce que tu fais ?</i>), nach einer Präposition als <i>quoi</i>
+  (<i>Tu penses à quoi ?</i>).</p>`,
+  items:[
+  {t:"form", q:"Verneine: Je suis fatigué.", a:["je ne suis pas fatigué","je ne suis pas fatiguée"],
+   full:"Je ne suis pas fatigué.", why:"ne vor dem Verb, pas dahinter."},
+  {t:"form", q:"Verneine: J'ai un frère.", a:["je n'ai pas de frère"],
+   full:"Je n'ai pas de frère.", why:"un wird nach der Verneinung zu de. Und je → n' vor Vokal."},
+  {t:"form", q:"Verneine: On mange du pain.", a:["on ne mange pas de pain"],
+   full:"On ne mange pas de pain.", why:"du wird zu de."},
+  {t:"form", q:"Verneine: Il y a un problème.", a:["il n'y a pas de problème"],
+   full:"Il n'y a pas de problème.", why:"Bei il y a rutscht das n' vor das y: il n'y a pas."},
+  {t:"form", q:"Verneine: Je veux partir.", a:["je ne veux pas partir"],
+   full:"Je ne veux pas partir.", why:"Nur das konjugierte Verb wird umschlossen, der Infinitiv bleibt hinten."},
+  {t:"form", q:"Verneine: J'aime le café.", a:["je n'aime pas le café"],
+   full:"Je n'aime pas le café.", why:"Der bestimmte Artikel bleibt — nur un/une/du/des werden zu de."},
+  {t:"form", q:"Verneine: C'est un problème.", a:["ce n'est pas un problème"],
+   full:"Ce n'est pas un problème.", why:"Nach être bleibt der Artikel: pas un problème, nicht „pas de problème“."},
+  {t:"form", q:"Mach eine Frage mit est-ce que: Tu viens.", a:["est-ce que tu viens"],
+   full:"Est-ce que tu viens ?", why:"est-ce que davor, der Satz bleibt unverändert."},
+  {t:"form", q:"Mach eine Frage mit est-ce que: Vous avez des frères.",
+   a:["est-ce que vous avez des frères"], full:"Est-ce que vous avez des frères ?",
+   why:"Auch mit Fragewort funktioniert das: Combien de frères est-ce que vous avez ?"},
+  {t:"say", q:"Wo wohnst du?",
+   a:["où est-ce que tu habites","tu habites où","où habites-tu"],
+   full:"Où est-ce que tu habites ?", why:"Alle drei Formen sind richtig. Im Gespräch hörst du am meisten: Tu habites où ?"},
+  {t:"say", q:"Was machst du?",
+   a:["qu'est-ce que tu fais","tu fais quoi","que fais-tu"],
+   full:"Qu'est-ce que tu fais ?", why:"„Was“ als Objekt = qu'est-ce que. Locker gesprochen: Tu fais quoi ?"},
+  {t:"say", q:"Wann kommst du?",
+   a:["quand est-ce que tu viens","tu viens quand","quand viens-tu"],
+   full:"Quand est-ce que tu viens ?", why:"Fragewort vorne, dann est-ce que."},
+  {t:"say", q:"Wie viel kostet das?",
+   a:["ça coûte combien","combien est-ce que ça coûte","combien ça coûte","c'est combien"],
+   full:"Ça coûte combien ?", why:"Im Laden hörst du meist: C'est combien ? oder Ça coûte combien ?"},
+  {t:"say", q:"Warum nicht?", a:["pourquoi pas"], full:"Pourquoi pas ?",
+   why:"Fester Ausdruck ohne Verb — genau wie im Deutschen."},
+  {t:"say", q:"Ich weiß nicht.", a:["je ne sais pas"], full:"Je ne sais pas.",
+   why:"Gesprochen fällt das ne oft weg: „je sais pas“. Schreiben solltest du es trotzdem."},
+  {t:"say", q:"Ich habe nie Zeit.", a:["je n'ai jamais le temps"], full:"Je n'ai jamais le temps.",
+   tipp:"Zeit haben = avoir le temps", why:"jamais steht an der Stelle von pas."},
+  {t:"say", q:"Das ist nicht wahr.", a:["ce n'est pas vrai"], full:"Ce n'est pas vrai.",
+   why:"ce n'est pas + Adjektiv."},
+  {t:"say", q:"Ich habe nichts gesagt.", a:["je n'ai rien dit"], full:"Je n'ai rien dit.",
+   why:"Im passé composé steht rien zwischen Hilfsverb und Partizip — wie pas."},
+  {t:"say", q:"Er arbeitet nicht mehr hier.", a:["il ne travaille plus ici"], full:"Il ne travaille plus ici.",
+   why:"ne … plus = nicht mehr."},
+  {t:"pick", q:"Nach «pas» wird «du pain» zu …",
+   opts:["de pain","du pain","le pain"],
+   a:0, why:"Nach einer Verneinung werden un, une, du, de la und des alle zu de."},
+  {t:"pick", q:"Welcher Satz ist richtig?",
+   opts:["Je ne peux pas venir.","Je ne peux venir pas.","Je peux ne pas venir."],
+   a:0, why:"pas steht direkt hinter dem konjugierten Verb, der Infinitiv folgt danach."},
+  {t:"pick", q:"Welche Frage ist so richtig geschrieben?",
+   opts:["Est-ce que tu as le temps ?","Est-ce que as-tu le temps ?","Que tu as le temps ?"],
+   a:0, why:"Nach est-ce que bleibt der Satz normal. Die Umstellung ist die Alternative dazu, nicht die Ergänzung — und sie braucht einen Bindestrich: As-tu le temps ?"}
+  ]
+}
+];
+
+/* ============================================================
+   SPRECHEN LERNEN — Teil 2: Stufen 5 bis 7
+   ============================================================ */
+
+STUFEN.push(
+
+/* ===================== STUFE 5 ===================== */
+{
+  id:"zeiten", titel:"Gestern und morgen", kurz:"Vergangenheit und Zukunft, wie man sie wirklich spricht",
+  ziel:`
+  <h3>Warum diese Stufe?</h3>
+  <p>Sobald jemand fragt <i>Qu'est-ce que tu as fait ?</i> brauchst du die Vergangenheit.
+  Und für die Zukunft brauchst du <b>nicht</b> das futur simple — im Gespräch nimmt man fast
+  immer <i>aller</i> + Infinitiv. Damit deckst du mit zwei Mustern fast alles ab.</p>
+
+  <h3>Gestern: passé composé = Hilfsverb + Partizip</h3>
+  <table class="tbl">
+    <tr><td class="sm">die meisten Verben</td><td><b>avoir</b> + Partizip</td><td><i>j'ai joué, j'ai fait, j'ai vu</i></td></tr>
+    <tr><td class="sm">Bewegung & Veränderung<br>+ alle reflexiven</td><td><b>être</b> + Partizip</td><td><i>je suis allé, je suis parti, je me suis levé</i></td></tr>
+  </table>
+  <p><b>Partizip bilden:</b> <i>-er</i> → <b>-é</b> (parlé, joué, mangé) · <i>-ir</i> → <b>-i</b>
+  (fini, parti, dormi) · unregelmäßig lernst du als Paket:
+  <i>fait, vu, pris, mis, dit, lu, écrit, eu, été, voulu, pu, dû, su, venu</i>.</p>
+  <p><b>Bei être wird das Partizip ans Subjekt angeglichen:</b>
+  <i>je suis allé</i> / <i>elle est allée</i> / <i>ils sont allés</i>.
+  Bei avoir passiert nichts: <i>elle a mangé</i>.</p>
+  <p class="sm">Die être-Verben: aller, venir, arriver, partir, entrer, sortir, monter,
+  descendre, rester, tomber, rentrer, retourner, devenir, naître, mourir — und jedes
+  Verb mit <i>se</i>.</p>
+
+  <h3>Morgen: futur proche = aller + Infinitiv</h3>
+  <table class="tbl">
+    <tr><td><i>je <b>vais</b> travailler</i></td><td>ich werde arbeiten</td></tr>
+    <tr><td><i>tu <b>vas</b> voir</i></td><td>du wirst sehen</td></tr>
+    <tr><td><i>on <b>va</b> manger</i></td><td>wir werden essen</td></tr>
+  </table>
+  <p>Verneint: <i>je ne vais pas travailler</i> — ne … pas umschließt nur <i>vais</i>.</p>
+
+  <h3>Und wofür dann der imparfait?</h3>
+  <p>Für <b>wie es war</b>, nicht <b>was passiert ist</b>:</p>
+  <table class="tbl">
+    <tr><td class="sm">passé composé</td><td><i>Hier, j'ai joué au foot.</i></td><td>einmal, abgeschlossen</td></tr>
+    <tr><td class="sm">imparfait</td><td><i>Avant, je jouais au foot.</i></td><td>Gewohnheit, früher immer</td></tr>
+    <tr><td class="sm">imparfait</td><td><i>Il faisait beau, j'étais content.</i></td><td>Zustand, Hintergrund</td></tr>
+  </table>
+  <p>Zwei Formen reichen fürs Sprechen fast immer: <b>c'était</b> (es war) und
+  <b>il y avait</b> (es gab).</p>`,
+  items:[
+  {t:"say", q:"Ich habe gestern Fußball gespielt.",
+   a:["j'ai joué au foot hier","hier j'ai joué au foot","j'ai joué au football hier","hier j'ai joué au football"],
+   full:"Hier, j'ai joué au foot.", why:"jouer nimmt avoir. Partizip von -er-Verben: joué."},
+  {t:"say", q:"Ich bin nach Paris gefahren.",
+   a:["je suis allé à paris","je suis allée à paris"],
+   full:"Je suis allé à Paris.", why:"aller nimmt être — und das Partizip wird angeglichen."},
+  {t:"say", q:"Wir haben einen Film gesehen. (mit on)",
+   a:["on a vu un film"], full:"On a vu un film.",
+   why:"Partizip von voir ist vu — unregelmäßig."},
+  {t:"say", q:"Sie ist zu Hause geblieben.",
+   a:["elle est restée à la maison"], full:"Elle est restée à la maison.",
+   why:"rester gehört zu den être-Verben, also restée mit e."},
+  {t:"say", q:"Ich habe den Bus genommen.",
+   a:["j'ai pris le bus"], full:"J'ai pris le bus.",
+   why:"Partizip von prendre ist pris."},
+  {t:"say", q:"Ich bin um sieben Uhr aufgestanden.",
+   a:["je me suis levé à sept heures","je me suis levée à sept heures"],
+   full:"Je me suis levé à sept heures.",
+   why:"Reflexive Verben nehmen immer être: je me suis levé, tu t'es levé."},
+  {t:"say", q:"Ich werde morgen arbeiten.",
+   a:["je vais travailler demain","demain je vais travailler"],
+   full:"Demain, je vais travailler.", why:"futur proche: aller + Infinitiv."},
+  {t:"say", q:"Was wirst du machen?",
+   a:["qu'est-ce que tu vas faire","tu vas faire quoi"],
+   full:"Qu'est-ce que tu vas faire ?", why:"Fragewort + est-ce que, dahinter tu vas + Infinitiv."},
+  {t:"say", q:"Wir werden nicht ins Kino gehen. (mit on)",
+   a:["on ne va pas aller au cinéma"], full:"On ne va pas aller au cinéma.",
+   why:"ne … pas umschließt nur va. Danach zwei Infinitive — das ist richtig so."},
+  {t:"say", q:"Ich habe nichts gemacht.",
+   a:["je n'ai rien fait"], full:"Je n'ai rien fait.",
+   why:"rien steht zwischen Hilfsverb und Partizip."},
+  {t:"say", q:"Früher habe ich Klavier gespielt.",
+   a:["avant je jouais du piano","avant, je jouais du piano"],
+   full:"Avant, je jouais du piano.",
+   why:"Gewohnheit in der Vergangenheit → imparfait, nicht passé composé."},
+  {t:"say", q:"Es war schön.", a:["c'était bien","c'était beau","c'était super"],
+   full:"C'était bien.", why:"c'était ist die imparfait-Form von c'est. Fürs Sprechen unbezahlbar."},
+  {t:"say", q:"Es gab viele Leute.", a:["il y avait beaucoup de gens","il y avait beaucoup de monde"],
+   full:"Il y avait beaucoup de gens.", why:"il y avait = es gab. Nach beaucoup immer de ohne Artikel."},
+  {t:"say", q:"Hast du gegessen?", a:["est-ce que tu as mangé","tu as mangé","as-tu mangé"],
+   full:"Est-ce que tu as mangé ?", why:"Im passé composé wird das Hilfsverb zur Frage gestellt."},
+  {t:"form", q:"Setz ins passé composé: Je fais mes devoirs.",
+   a:["j'ai fait mes devoirs"], full:"J'ai fait mes devoirs.",
+   why:"faire → avoir + fait."},
+  {t:"form", q:"Setz ins passé composé: Il part à huit heures.",
+   a:["il est parti à huit heures"], full:"Il est parti à huit heures.",
+   why:"partir ist ein être-Verb. Partizip auf -i: parti."},
+  {t:"form", q:"Setz ins passé composé: Nous arrivons à Paris.",
+   a:["nous sommes arrivés à paris","nous sommes arrivées à paris"],
+   full:"Nous sommes arrivés à Paris.", why:"arriver nimmt être, Partizip im Plural: arrivés."},
+  {t:"form", q:"Setz ins futur proche: Je mange.",
+   a:["je vais manger"], full:"Je vais manger.", why:"aller + Infinitiv."},
+  {t:"form", q:"Setz ins futur proche: Tu ne viens pas.",
+   a:["tu ne vas pas venir"], full:"Tu ne vas pas venir.",
+   why:"Verneint wird das konjugierte vas, nicht der Infinitiv."},
+  {t:"pick", q:"Welche Verben nehmen im passé composé «être»?",
+   opts:["Verben der Bewegung und Veränderung plus alle reflexiven",
+         "alle Verben auf -er",
+         "alle Verben mit direktem Objekt"],
+   a:0, why:"aller, venir, partir, arriver, rester, sortir … und jedes Verb mit se."},
+  {t:"pick", q:"«Als ich klein war, ging ich oft ins Schwimmbad.» Welche Zeit für «ging»?",
+   opts:["imparfait: j'allais","passé composé: je suis allé","futur proche: je vais aller"],
+   a:0, why:"Gewohnheit und Hintergrund → imparfait. „oft“ ist das Signalwort."},
+  {t:"pick", q:"Welcher Satz ist richtig?",
+   opts:["Elle est allée au cinéma.","Elle a allé au cinéma.","Elle est allé au cinéma."],
+   a:0, why:"aller nimmt être, und das Partizip wird ans weibliche Subjekt angeglichen: allée."}
+  ]
+},
+
+/* ===================== STUFE 6 ===================== */
+{
+  id:"meinung", titel:"Meinung und Gefühl", kurz:"zustimmen, widersprechen, begründen",
+  ziel:`
+  <h3>Warum diese Stufe?</h3>
+  <p>Fast jede mündliche Prüfung und jedes echte Gespräch läuft irgendwann auf
+  <i>Et toi, qu'est-ce que tu en penses ?</i> zu. Mit sechs Anfängen und einem
+  <i>parce que</i> kommst du da immer durch — auch wenn dir das Thema nichts sagt.</p>
+
+  <h3>Die Anfänge</h3>
+  <table class="tbl">
+    <tr><td><b>À mon avis, …</b></td><td>Meiner Meinung nach …</td></tr>
+    <tr><td><b>Je pense que …</b></td><td>Ich denke, dass …</td></tr>
+    <tr><td><b>Je trouve que …</b></td><td>Ich finde, dass …</td></tr>
+    <tr><td><b>Je suis d'accord / Je ne suis pas d'accord.</b></td><td>Ich bin (nicht) einverstanden.</td></tr>
+    <tr><td><b>Pour moi, …</b></td><td>Für mich …</td></tr>
+    <tr><td><b>Ça dépend.</b></td><td>Das kommt darauf an.</td></tr>
+  </table>
+  <p>Und dahinter immer: <b>parce que</b> + ganzer Satz. Eine Meinung ohne Begründung
+  zählt in der Prüfung halb.</p>
+
+  <h3>Gefühle</h3>
+  <p><i>Je suis content(e)</i> froh · <i>Je suis triste</i> traurig ·
+  <i>J'ai peur de …</i> ich habe Angst vor · <i>Ça me plaît</i> das gefällt mir ·
+  <i>Ça m'énerve</i> das nervt mich · <i>Je suis désolé(e)</i> es tut mir leid ·
+  <i>Ce n'est pas grave</i> das ist nicht schlimm</p>
+
+  <h3>Die eine Stelle, wo der subjonctif kommt</h3>
+  <p>Solange du <b>zustimmst</b>, bleibt alles normal: <i>Je pense qu'il vient.</i>
+  Sobald du <b>verneinst, willst oder bewertest</b>, wechselt das Nebensatzverb in den
+  subjonctif:</p>
+  <table class="tbl">
+    <tr><td><i>Je pense qu'il <b>vient</b>.</i></td><td class="sm">normal</td></tr>
+    <tr><td><i>Je ne pense pas qu'il <b>vienne</b>.</i></td><td class="sm">verneint → subjonctif</td></tr>
+    <tr><td><i>Je voudrais qu'il <b>vienne</b>.</i></td><td class="sm">Wunsch → subjonctif</td></tr>
+    <tr><td><i>Il faut qu'il <b>vienne</b>.</i></td><td class="sm">Notwendigkeit → subjonctif</td></tr>
+    <tr><td><i>Je suis content qu'il <b>vienne</b>.</i></td><td class="sm">Gefühl → subjonctif</td></tr>
+  </table>
+  <p class="sm">Die vier Formen, die du dafür wirklich brauchst:
+  <i>que je sois / que tu sois</i> (être), <i>que j'aie / que tu aies</i> (avoir),
+  <i>qu'il fasse</i> (faire), <i>qu'il aille</i> (aller) — plus <i>qu'il vienne</i>,
+  <i>que je parte</i>, <i>que je puisse</i>.</p>
+
+  <h3>Ausweichen können ist auch Sprechen</h3>
+  <p><i>Je ne sais pas exactement, mais …</i> · <i>C'est une bonne question.</i> ·
+  <i>Comment dire …</i> · <i>Je n'ai pas compris, tu peux répéter ?</i> —
+  solche Sätze halten das Gespräch am Leben, wenn dir ein Wort fehlt. Lerne sie
+  genauso auswendig wie die Vokabeln.</p>`,
+  items:[
+  {t:"say", q:"Meiner Meinung nach ist das wichtig.",
+   a:["à mon avis c'est important","à mon avis, c'est important"],
+   full:"À mon avis, c'est important.", why:"à mon avis steht vorne, danach ein ganz normaler Satz."},
+  {t:"say", q:"Ich finde, dass der Film gut ist.",
+   a:["je trouve que le film est bien","je trouve que le film est bon"],
+   full:"Je trouve que le film est bien.",
+   why:"Bei Filmen und Büchern sagt man meist bien. bon ist nicht falsch, klingt aber eher nach Geschmack oder Qualität."},
+  {t:"say", q:"Ich bin einverstanden.", a:["je suis d'accord"], full:"Je suis d'accord.",
+   why:"être d'accord — nie „avoir d'accord“."},
+  {t:"say", q:"Ich bin nicht einverstanden, weil es zu teuer ist.",
+   a:["je ne suis pas d'accord parce que c'est trop cher"],
+   full:"Je ne suis pas d'accord parce que c'est trop cher.",
+   why:"Verneinung um suis, dann parce que + ganzer Satz."},
+  {t:"say", q:"Das kommt darauf an.", a:["ça dépend"], full:"Ça dépend.",
+   why:"Wenn du mehr sagen willst: ça dépend de la situation (dépendre de)."},
+  {t:"say", q:"Ich mag Mathe lieber als Französisch.",
+   a:["je préfère les maths au français","j'aime mieux les maths que le français"],
+   full:"Je préfère les maths au français.",
+   why:"préférer A à B — nicht „que“. Mit aimer mieux heißt es dagegen que."},
+  {t:"say", q:"Das gefällt mir.", a:["ça me plaît","j'aime ça"], full:"Ça me plaît.",
+   why:"plaire dreht sich um: nicht ich mag es, sondern es gefällt mir."},
+  {t:"say", q:"Ich glaube nicht, dass er kommt.",
+   a:["je ne pense pas qu'il vienne","je ne crois pas qu'il vienne"],
+   full:"Je ne pense pas qu'il vienne.",
+   why:"Verneintes Meinungsverb → subjonctif: vienne statt vient."},
+  {t:"say", q:"Ich möchte, dass du mir hilfst.",
+   a:["je voudrais que tu m'aides"], full:"Je voudrais que tu m'aides.",
+   why:"Wunsch → subjonctif. Bei -er-Verben sieht der subjonctif aber wie das Präsens aus."},
+  {t:"say", q:"Ich bin froh, dass du da bist.",
+   a:["je suis content que tu sois là","je suis contente que tu sois là"],
+   full:"Je suis content que tu sois là.",
+   why:"Gefühl → subjonctif. que tu sois ist die wichtigste subjonctif-Form überhaupt."},
+  {t:"say", q:"Ich muss los.", a:["il faut que je parte","je dois partir","il faut que j'y aille"],
+   full:"Il faut que je parte.",
+   why:"il faut que + subjonctif. Mit je dois partir geht es auch — und ist einfacher."},
+  {t:"say", q:"Ich habe Angst vor Prüfungen.",
+   a:["j'ai peur des examens"], full:"J'ai peur des examens.",
+   why:"avoir peur de + les = des."},
+  {t:"say", q:"Es tut mir leid.", a:["je suis désolé","je suis désolée","excuse-moi","pardon"],
+   full:"Je suis désolé.", why:"Für ein echtes Versehen: je suis désolé. Beim Anrempeln: pardon."},
+  {t:"say", q:"Das ist mir egal.", a:["ça m'est égal"], full:"Ça m'est égal.",
+   why:"Wörtlich: das ist mir gleich."},
+  {t:"say", q:"Das ist nicht schlimm.", a:["ce n'est pas grave"], full:"Ce n'est pas grave.",
+   why:"Die Standardantwort auf eine Entschuldigung."},
+  {t:"say", q:"Das ist eine gute Idee.", a:["c'est une bonne idée"], full:"C'est une bonne idée.",
+   why:"bonne steht vor dem Nomen — wie grand, petit, beau, nouveau, vieux, jeune."},
+  {t:"say", q:"Ich habe nicht verstanden. Kannst du wiederholen?",
+   a:["je n'ai pas compris, tu peux répéter","je n'ai pas compris tu peux répéter",
+      "je n'ai pas compris, est-ce que tu peux répéter"],
+   full:"Je n'ai pas compris. Tu peux répéter ?",
+   why:"Der nützlichste Satz der ganzen Stufe — damit rettest du jedes Gespräch."},
+  {t:"say", q:"Einerseits ist es praktisch, andererseits ist es teuer.",
+   a:["d'un côté c'est pratique, de l'autre c'est cher",
+      "d'un côté c'est pratique de l'autre c'est cher",
+      "d'un côté c'est pratique, d'un autre côté c'est cher"],
+   full:"D'un côté c'est pratique, de l'autre c'est cher.",
+   why:"d'un côté … de l'autre — damit klingt eine Stellungnahme sofort erwachsen."},
+  {t:"pick", q:"Nach «je ne pense pas que» steht …",
+   opts:["der subjonctif: qu'il vienne","das Präsens: qu'il vient","das futur: qu'il viendra"],
+   a:0, why:"Verneinte Meinungsverben verlangen den subjonctif. Unverneint bleibt es Präsens."},
+  {t:"pick", q:"Welcher Satz ist richtig?",
+   opts:["Je préfère le thé au café.","Je préfère le thé que le café.","Je préfère le thé du café."],
+   a:0, why:"préférer A à B. Nur bei aimer mieux steht que."},
+  {t:"pick", q:"Was sagst du, wenn dir mitten im Satz ein Wort fehlt?",
+   opts:["Comment dire … / Je ne sais pas comment on dit.","Ich sage nichts mehr und warte.","Ich wechsle auf Deutsch."],
+   a:0, why:"Weiterreden ist die halbe Note. Mit Comment dire … kaufst du dir Zeit, ohne zu stocken."}
+  ]
+},
+
+/* ===================== STUFE 7 ===================== */
+{
+  id:"dialog", titel:"Dialoge", kurz:"alles zusammen — du antwortest in echten Gesprächen",
+  ziel:`
+  <h3>Warum diese Stufe?</h3>
+  <p>Hier gibt es keine neue Grammatik. Hier zeigt sich, ob die Bausteine aus den Stufen 1
+  bis 6 in dem Moment da sind, in dem du sie brauchst. Oben steht, was dein Gegenüber sagt;
+  darunter, was du sagen sollst. Du tippst deinen Satz auf Französisch.</p>
+
+  <h3>So übst du richtig</h3>
+  <ul class="steps">
+    <li><b>Lies die französische Zeile laut.</b> Auch wenn du tippst — die Zunge lernt mit.</li>
+    <li><b>Sag deine Antwort laut, bevor du sie tippst.</b> Genau das ist der Übergang
+      vom Schreiben zum Sprechen.</li>
+    <li><b>Kurz ist richtig.</b> Echte Antworten sind drei bis sechs Wörter lang.
+      Lange Sätze sind beim Reden eher ein Fehler als ein Verdienst.</li>
+  </ul>
+
+  <h3>Die freien Aufgaben am Ende</h3>
+  <p>Vier Aufgaben haben keine feste Lösung. Du tippst, was du sagen würdest, vergleichst
+  dann mit einer Musterantwort und einer Checkliste — und entscheidest selbst, ob es
+  gepasst hat. Sei dabei streng: Wenn ein Verb falsch konjugiert war, war es nicht richtig.</p>`,
+  items:[
+  /* --- Au café --- */
+  {t:"say", kontext:"Le serveur : Bonjour ! Vous désirez ?",
+   q:"Sag höflich, dass du einen Kaffee möchtest.",
+   a:["je voudrais un café","je voudrais un café s'il vous plaît","un café s'il vous plaît"],
+   full:"Je voudrais un café, s'il vous plaît.",
+   why:"Im Laden und im Café immer je voudrais — je veux klingt unhöflich."},
+  {t:"say", kontext:"Le serveur : Et avec ça ?",
+   q:"Sag, dass das alles ist, und danke.",
+   a:["c'est tout merci","c'est tout merci beaucoup","ce sera tout merci"],
+   full:"C'est tout, merci.", why:"C'est tout ist die feste Wendung dafür."},
+  {t:"say", kontext:"Le serveur : Ça fait trois euros cinquante.",
+   q:"Frag, ob du mit Karte zahlen kannst.",
+   a:["est-ce que je peux payer par carte","je peux payer par carte","puis-je payer par carte"],
+   full:"Est-ce que je peux payer par carte ?",
+   why:"mit Karte = par carte. payer braucht keine Präposition davor."},
+
+  /* --- Faire connaissance --- */
+  {t:"say", kontext:"Léa : Salut ! Moi, c'est Léa. Et toi ?",
+   q:"Sag, wie du heißt (nimm «Ole»).",
+   a:["je m'appelle ole","moi c'est ole","je suis ole"],
+   full:"Je m'appelle Ole.", why:"s'appeler ist reflexiv: je m'appelle, tu t'appelles, il s'appelle."},
+  {t:"say", kontext:"Léa : Tu habites où ?",
+   q:"Sag, dass du in Löhne wohnst, in Deutschland.",
+   a:["j'habite à löhne en allemagne","j'habite à löhne, en allemagne"],
+   full:"J'habite à Löhne, en Allemagne.",
+   why:"Stadt mit à, Land (weiblich) mit en: en Allemagne, en France."},
+  {t:"say", kontext:"Léa : Tu as des frères et sœurs ?",
+   q:"Sag, dass du eine Schwester hast, aber keinen Bruder.",
+   a:["j'ai une sœur mais pas de frère","j'ai une soeur mais pas de frère",
+      "j'ai une sœur, mais pas de frère"],
+   full:"J'ai une sœur, mais pas de frère.",
+   why:"Nach der Verneinung wird un frère zu de frère."},
+  {t:"say", kontext:"Léa : Et qu'est-ce que tu fais le week-end ?",
+   q:"Sag, dass du oft Fußball spielst.",
+   a:["je joue souvent au foot","je joue souvent au football"],
+   full:"Je joue souvent au foot.",
+   why:"souvent hinter das Verb, jouer au + Sport."},
+  {t:"say", kontext:"Léa : Ah, moi je fais de la danse. Tu veux venir voir un jour ?",
+   q:"Sag, dass du gern kommst, und frag wann.",
+   a:["oui avec plaisir quand","avec plaisir quand","oui avec plaisir quand est-ce que c'est",
+      "oui je veux bien quand"],
+   full:"Oui, avec plaisir ! Quand ?",
+   why:"avec plaisir ist die freundlichste Art, zuzusagen."},
+
+  /* --- Se donner rendez-vous --- */
+  {t:"say", kontext:"Max : Tu es libre samedi ?",
+   q:"Sag ja und frag, warum.",
+   a:["oui pourquoi","oui, pourquoi","oui je suis libre pourquoi"],
+   full:"Oui, pourquoi ?", why:"Kurz antworten und zurückfragen hält das Gespräch in Gang."},
+  {t:"say", kontext:"Max : On va au cinéma ?",
+   q:"Sag gern — und frag, um wie viel Uhr.",
+   a:["avec plaisir à quelle heure","oui avec plaisir à quelle heure",
+      "d'accord à quelle heure","oui, à quelle heure"],
+   full:"Avec plaisir ! À quelle heure ?",
+   why:"à quelle heure = um wie viel Uhr. Immer mit à."},
+  {t:"say", kontext:"Max : À sept heures devant le cinéma.",
+   q:"Sag, dass du da sein wirst.",
+   a:["d'accord je vais être là","je vais être là","d'accord je serai là","je serai là",
+      "d'accord, je vais être là","ok je vais être là"],
+   full:"D'accord, je vais être là.",
+   why:"futur proche. là heißt hier „da“ im Sinne von anwesend."},
+  {t:"say", kontext:"Max : Super. Tu peux apporter quelque chose à boire ?",
+   q:"Sag ja, dass du etwas zu trinken mitbringst.",
+   a:["oui j'apporte quelque chose à boire","d'accord j'apporte quelque chose à boire",
+      "oui je vais apporter quelque chose à boire","oui, j'apporte quelque chose à boire"],
+   full:"Oui, j'apporte quelque chose à boire.",
+   why:"quelque chose à boire — à + Infinitiv heißt hier „zum Trinken“."},
+
+  /* --- Au magasin --- */
+  {t:"say", kontext:"La vendeuse : Bonjour, je peux vous aider ?",
+   q:"Sag, dass du ein Geschenk für deine Mutter suchst.",
+   a:["je cherche un cadeau pour ma mère","oui je cherche un cadeau pour ma mère",
+      "oui, je cherche un cadeau pour ma mère"],
+   full:"Oui, je cherche un cadeau pour ma mère.",
+   why:"chercher ohne Präposition: je cherche un cadeau."},
+  {t:"say", kontext:"La vendeuse : Ce sac coûte quarante euros.",
+   q:"Sag, dass das zu teuer ist.",
+   a:["c'est trop cher","ah c'est trop cher","c'est trop cher pour moi"],
+   full:"C'est trop cher.", why:"trop = zu (viel). Nicht mit très (sehr) verwechseln."},
+  {t:"say", kontext:"La vendeuse : Et celui-là, à vingt euros ?",
+   q:"Sag, dass du den nimmst.",
+   a:["je le prends","oui je le prends","d'accord je le prends"],
+   full:"Je le prends.",
+   why:"le steht vor dem Verb — anders als im Deutschen „ich nehme ihn“."},
+
+  /* --- Après le week-end --- */
+  {t:"say", kontext:"Léa : Alors, ton week-end, c'était comment ?",
+   q:"Sag, dass es super war.",
+   a:["c'était génial","c'était super","c'était très bien","c'était bien"],
+   full:"C'était génial !", why:"c'était — der imparfait von c'est. Für Rückblicke unentbehrlich."},
+  {t:"say", kontext:"Léa : Qu'est-ce que tu as fait ?",
+   q:"Sag, dass du am Samstag mit deinem Bruder ins Kino gegangen bist.",
+   a:["samedi je suis allé au cinéma avec mon frère",
+      "samedi, je suis allé au cinéma avec mon frère",
+      "je suis allé au cinéma avec mon frère samedi",
+      "samedi je suis allée au cinéma avec mon frère"],
+   full:"Samedi, je suis allé au cinéma avec mon frère.",
+   why:"aller nimmt être. Zeit darf vorne stehen."},
+  {t:"say", kontext:"Léa : Et le film, il était bien ?",
+   q:"Sag, dass du ihn nicht mochtest: er war zu lang.",
+   a:["je ne l'ai pas aimé il était trop long","je ne l'ai pas aimé, il était trop long",
+      "non je ne l'ai pas aimé il était trop long","non, il était trop long"],
+   full:"Je ne l'ai pas aimé : il était trop long.",
+   why:"l' steht vor dem Hilfsverb: je ne l'ai pas aimé."},
+  {t:"say", kontext:"Léa : Dommage. Et demain, tu fais quoi ?",
+   q:"Sag, dass du lernen musst, weil du eine Prüfung hast.",
+   a:["je dois travailler parce que j'ai un examen",
+      "je dois apprendre parce que j'ai un examen",
+      "je dois réviser parce que j'ai un examen"],
+   full:"Je dois travailler parce que j'ai un examen.",
+   why:"Für Schule heißt „lernen“ meist travailler oder réviser; apprendre ist „sich neu aneignen“."},
+
+  /* --- Freie Aufgaben --- */
+  {t:"frei", q:"Stell dich in vier Sätzen vor: Name, Wohnort, Familie, ein Hobby.",
+   full:"Je m'appelle Ole. J'habite à Löhne, en Allemagne. Dans ma famille, il y a mes parents et ma sœur. J'aime beaucoup le foot et je joue souvent avec mes amis.",
+   punkte:["je m'appelle / j'habite à … richtig gebaut",
+           "il y a für die Familie benutzt",
+           "nach j'aime der bestimmte Artikel (le foot)",
+           "vier vollständige Sätze, jedes Verb konjugiert"]},
+  {t:"frei", q:"Erzähl in drei bis vier Sätzen, was du am Wochenende gemacht hast (passé composé).",
+   full:"Samedi, je suis allé en ville avec mon frère. On a mangé une pizza et après, on a vu un film. Dimanche, je suis resté à la maison parce que j'avais des devoirs. C'était un bon week-end.",
+   punkte:["avoir oder être richtig gewählt (allé und resté mit être)",
+           "bei être das Partizip angeglichen",
+           "mindestens einmal on statt nous",
+           "ein parce que oder après als Verbindung"]},
+  {t:"frei", q:"Sag in drei Sätzen, was dir an deiner Schule gefällt und was nicht — mit Begründung.",
+   full:"À mon avis, mon école est assez bien, parce que les profs sont sympas. Ce que je n'aime pas, c'est qu'on a trop de devoirs. Je trouve qu'on devrait avoir plus de temps libre.",
+   punkte:["mit à mon avis oder je trouve que angefangen",
+           "mindestens ein parce que",
+           "eine Sache positiv, eine negativ",
+           "nach je n'aime pas der bestimmte Artikel"]},
+  {t:"frei", q:"Sag in drei Sätzen mit «je vais …», was du nach der Schule machen willst.",
+   full:"Après l'école, je vais faire un apprentissage ou je vais aller à l'université. Je voudrais travailler avec des ordinateurs, parce que ça m'intéresse beaucoup. Plus tard, je vais peut-être habiter dans une grande ville.",
+   punkte:["jedes Mal aller + Infinitiv (vais faire, vais aller)",
+           "ein je voudrais für den Wunsch",
+           "eine Begründung mit parce que",
+           "kein deutsches Wort dazwischen"]}
+  ]
+}
+
+);
+
+/* ============================================================
+   SPRECHEN LERNEN — Teil 3: Logik
+   Kein Zeitdruck, keine Uhr. Getippt wird alles.
+   ============================================================ */
+
+const SPZIEL   = 2;    // zweimal hintereinander richtig → Aufgabe sitzt
+const SPWZIEL  = 3;    // dreimal richtig → Wort sitzt
+const SPQUOTE  = 0.7;  // Anteil einer Stufe, der die nächste öffnet
+const SPRUNDE  = 12;   // Aufgaben pro Runde
+const SPWRUNDE = 15;   // Wörter pro Runde
+const SPKEY    = "cahier-sprechen-v1";
+
+const SPKAT = [["verb","Verben"],["nomen","Nomen"],["adj","Adjektive"],["zeit","Zeit"],
+  ["ort","Ort & Menge"],["verbw","Verbindungswörter"],["frage","Fragewörter"],["chunk","Feste Wendungen"]];
+const SPART = {say:"Auf Französisch sagen", form:"Umformen", pick:"Regel erkennen", frei:"Frei formulieren"};
+
+/* ---------- Lernstand ------------------------------------- */
+let SPM = {st:{}, w:{}, dir:"de-fr", kat:"", offen:{}};
+try{
+  const r = JSON.parse(localStorage.getItem(SPKEY) || "null");
+  if(r && typeof r === "object"){
+    SPM.st    = r.st    && typeof r.st    === "object" ? r.st    : {};
+    SPM.w     = r.w     && typeof r.w     === "object" ? r.w     : {};
+    SPM.offen = r.offen && typeof r.offen === "object" ? r.offen : {};
+    if(typeof r.dir === "string") SPM.dir = r.dir;
+    if(typeof r.kat === "string") SPM.kat = r.kat;
+  }
+}catch(e){}
+function spSave(){ try{ localStorage.setItem(SPKEY, JSON.stringify(SPM)); }catch(e){} }
+
+const spSt    = id => (SPM.st[id] || (SPM.st[id] = {}));
+const spK     = (id,i) => spSt(id)[i] || 0;
+function spSetK(id,i,v){ spSt(id)[i] = v; spSave(); }
+const spFertig = s => s.items.reduce((n,_,i) => n + (spK(s.id,i) >= SPZIEL ? 1 : 0), 0);
+const spHalb   = s => s.items.reduce((n,_,i) => n + (spK(s.id,i) === 1 ? 1 : 0), 0);
+/* Für den Balken: jeder einzelne Treffer zählt, nicht erst der zweite. */
+const spPunkte = s => s.items.reduce((n,_,i) => n + Math.min(SPZIEL, spK(s.id,i)), 0);
+const spAnteil = s => s.items.length ? spPunkte(s) / (s.items.length * SPZIEL) : 0;
+const spOffen  = s => s.items.map((_,i) => i).filter(i => spK(s.id,i) < SPZIEL);
+const spWK     = fr => SPM.w[fr] || 0;
+
+function spAuf(i){
+  if(i === 0) return true;
+  if(SPM.offen[STUFEN[i].id]) return true;
+  const p = STUFEN[i-1];
+  return spFertig(p) / p.items.length >= SPQUOTE;
+}
+
+/* ---------- Antwortprüfung -------------------------------
+   Großzügiger als im Rest der Seite: Kommas, Doppelpunkte,
+   Frage- und Ausrufezeichen und Bindestriche werden überall
+   ignoriert, nicht nur am Satzende. Sonst würde ein fehlendes
+   Komma einen richtigen Satz zum Fehler machen.
+--------------------------------------------------------- */
+function spNorm(s){
+  return (s || "").toLowerCase()
+    .replace(/[’‘`´]/g, "'")
+    .replace(/œ/g, "oe").replace(/æ/g, "ae")
+    .replace(/[.,;:!?()\u00AB\u00BB"\u201C\u201D\u201E\u2026]/g, " ")
+    .replace(/\s*'\s*/g, "'")
+    .replace(/[-–—]/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+function spJudge(txt, acc){
+  const a = spNorm(txt);
+  if(!a) return "no";
+  if(acc.some(x => spNorm(x) === a)) return "ok";
+  if(acc.some(x => stripAcc(spNorm(x)) === stripAcc(a))) return "almost";
+  return "no";
+}
+
+/* ---------- Akzeptierte Formen im Wortschatz -------------- */
+function spFrForms(w){
+  const out = new Set([w[0]]);
+  (w[3] || []).forEach(x => out.add(x));
+  w[0].split(/[,;]/).forEach(p => { p = p.trim(); if(p) out.add(p); });
+  return [...out];
+}
+function spDeForms(w){
+  const out = new Set([w[1]]);
+  w[1].split(/[,;]/).forEach(p => { p = p.trim(); if(p) out.add(p); });
+  [...out].forEach(p => { const q = p.replace(/\([^)]*\)/g, "").trim(); if(q) out.add(q); });
+  return [...out];
+}
+
+/* ---------- Datenpflege ------------------------------------
+   Akzeptierte Antworten, die sich nur durch Kommas oder
+   Bindestriche unterscheiden, fallen bei der Normalisierung
+   ohnehin zusammen — doppelte Einträge fliegen hier raus.
+--------------------------------------------------------- */
+STUFEN.forEach(s => s.items.forEach(it => {
+  if(!Array.isArray(it.a)) return;
+  const seen = new Set();
+  it.a = it.a.filter(x => { const k = spNorm(x); if(seen.has(k)) return false; seen.add(k); return true; });
+}));
+
+/* ---------- Zustand der laufenden Übung ------------------- */
+let SP  = null;   // Lehrgang
+let SPW = null;   // Wortschatztrainer
+
+/* ============================================================
+   Einstieg
+   ============================================================ */
+function renderSprechen(){
+  if(S.mode === "wort")   return spWort();
+  if(S.mode === "wliste") return spListe();
+  return spKurs();
+}
+
+/* ============================================================
+   Modus „Lehrgang“
+   ============================================================ */
+function spKurs(){
+  if(SP) return spRun();
+
+  const ges  = STUFEN.reduce((n,s) => n + spFertig(s), 0);
+  const alle = STUFEN.reduce((n,s) => n + s.items.length, 0);
+  const pkt  = STUFEN.reduce((n,s) => n + spPunkte(s), 0);
+  const pct  = alle ? Math.round(pkt / (alle * SPZIEL) * 100) : 0;
+
+  let html = `<div class="sheet plain">
+    <div class="qmeta">Stufenlehrgang</div>
+    <div class="qtext">Vom Baustein zum Dialog</div>
+    <p class="qsub">${STUFEN.length} Stufen, ${alle} Aufgaben. Eine Aufgabe <b>sitzt</b>, wenn du sie
+      zweimal hintereinander richtig hattest. Sobald ${Math.round(SPQUOTE*100)} % einer Stufe sitzen,
+      geht die nächste auf. Es läuft keine Uhr — sag jede Antwort einmal laut, bevor du sie tippst.</p>
+    <div class="progress"><span>${ges} / ${alle} sitzen</span>
+      <span class="pbar"><i style="width:${pct}%"></i></span></div>
+  </div>
+  <div class="sect"><h2>Die Stufen</h2><span>${STUFEN.length} Stufen</span><i></i></div>
+  <div class="grid">`;
+
+  STUFEN.forEach((s,i) => {
+    const n = s.items.length, f = spFertig(s), h = spHalb(s), auf = spAuf(i);
+    const zustand = !auf ? "gesperrt"
+      : f >= n ? "✓ geschafft"
+      : (f || h) ? `${f} von ${n} sitzen${h ? ` · ${h} halb` : ""}` : `${n} Aufgaben`;
+    html += `<button class="topic${auf ? "" : " splock"}" data-act="spopen" data-i="${i}">
+      <span class="num">STUFE ${String(i+1).padStart(2,"0")}</span>
+      <span class="tname">${esc(s.titel)}</span>
+      <span class="tdesc">${esc(s.kurz)}</span>
+      <span class="spbar"><i style="width:${Math.round(spAnteil(s)*100)}%"></i></span>
+      <span class="spstate">${zustand}</span>
+    </button>`;
+  });
+
+  html += `</div>
+  <div class="sheet plain" style="margin-top:22px">
+    <div class="qmeta">Lernstand</div>
+    <p class="qsub">Der Fortschritt liegt in diesem Browser, nicht in der Fehlerliste auf der
+      Startseite — der Lehrgang zählt für sich.</p>
+    <div class="inputrow"><button class="btn ghost" data-act="spreset">Lehrgang zurücksetzen</button></div>
+  </div>`;
+  stage.innerHTML = html;
+}
+
+function spKopf(){
+  return `<div class="subs" style="margin:0 0 18px">
+    <button class="sub" data-act="spback">‹ Alle Stufen</button>
+    ${STUFEN.map((x,i) => `<button class="sub" data-act="spopen" data-i="${i}"
+      aria-selected="${SP && i === SP.i}" title="${esc(x.titel)}">${i+1}</button>`).join("")}
+    ${SP ? `<button class="sub" data-act="spziel" aria-selected="${!!SP.ziel}">Erklärung</button>` : ""}</div>`;
+}
+
+function spOpen(i){
+  if(!spAuf(i)) return spLock(i);
+  /* Beim ersten Besuch kommt die Erklärung zuerst, später nicht mehr. */
+  const neu = spFertig(STUFEN[i]) === 0;
+  SP = {i, queue:[], retry:[], idx:0, round:1, shown:false, ok:0, all:0, ziel:neu};
+  spFill();
+  spRun();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+function spFill(){
+  SP.queue = shuffle(spOffen(STUFEN[SP.i])).slice(0, SPRUNDE);
+  SP.retry = []; SP.idx = 0; SP.shown = false; SP.ok = 0; SP.all = 0; SP.round = 1;
+}
+function spLock(i){
+  const v = STUFEN[i-1];
+  stage.innerHTML = `${spKopf()}<div class="sheet">
+    <div class="qmeta">Stufe ${i+1} · noch gesperrt</div>
+    <div class="qtext">${esc(STUFEN[i].titel)}</div>
+    <p class="qsub">Diese Stufe baut auf <b>${esc(v.titel)}</b> auf. Sie geht auf, sobald dort
+      ${Math.ceil(v.items.length * SPQUOTE)} von ${v.items.length} Aufgaben sitzen —
+      im Moment sind es ${spFertig(v)}.</p>
+    <p class="qsub">Du kannst sie trotzdem jetzt schon öffnen. Der Lehrgang ist eine Empfehlung,
+      keine Sperre.</p>
+    <div class="inputrow">
+      <button class="btn accent" data-act="spopen" data-i="${i-1}">Zu Stufe ${i} zurück</button>
+      <button class="btn ghost" data-act="spforce" data-i="${i}">Trotzdem anfangen</button></div>
+  </div>`;
+}
+
+function spRun(){
+  const s = STUFEN[SP.i], n = s.items.length, f = spFertig(s), h = spHalb(s);
+  const balken = `<div class="progress"><span>${f} / ${n} sitzen${h ? ` · ${h} halb` : ""}</span>
+    <span class="pbar"><i style="width:${Math.round(spAnteil(s)*100)}%"></i></span></div>`;
+
+  /* Erklärung der Stufe */
+  if(SP.ziel){
+    stage.innerHTML = `${spKopf()}<div class="sheet plain ref">
+      <p class="lead"><b>Stufe ${SP.i+1} · ${esc(s.titel)}</b> — ${esc(s.kurz)}</p>
+      ${s.ziel}
+      <div class="inputrow"><button class="btn accent" data-act="spgo">Los geht's — ${n} Aufgaben</button>
+        <button class="btn ghost" data-act="spback">Alle Stufen</button></div>
+    </div>`;
+    return;
+  }
+
+  /* Stufe komplett — auch am Ende einer Runde, in der das letzte Stück fiel */
+  if(!spOffen(s).length && !SP.retry.length && SP.idx >= SP.queue.length){
+    const next = SP.i + 1 < STUFEN.length;
+    stage.innerHTML = `${spKopf()}<div class="sheet">
+      <div class="qmeta">Stufe ${SP.i+1} geschafft</div>
+      <div class="qtext">${esc(s.titel)} sitzt.</div>
+      <p class="qsub">Alle ${n} Aufgaben hattest du zweimal hintereinander richtig.
+        ${next ? "Stufe " + (SP.i+2) + " ist damit offen." : "Damit ist der ganze Lehrgang durch."}</p>
+      <div class="inputrow">
+        ${next ? `<button class="btn accent" data-act="spopen" data-i="${SP.i+1}">Weiter zu Stufe ${SP.i+2}</button>` : ""}
+        <button class="btn ghost" data-act="spwipe" data-i="${SP.i}">Stufe neu üben</button>
+        <button class="btn ghost" data-act="spback">Alle Stufen</button></div>${balken}
+    </div>`;
+    return;
+  }
+
+  /* Runde zu Ende */
+  if(SP.idx >= SP.queue.length){
+    if(SP.retry.length){
+      SP.queue = shuffle(SP.retry); SP.retry = []; SP.idx = 0; SP.round++; SP.shown = false;
+      return spRun();
+    }
+    const rest = spOffen(s).length;
+    const next = SP.i + 1 < STUFEN.length && spAuf(SP.i + 1);
+    stage.innerHTML = `${spKopf()}<div class="sheet">
+      <div class="qmeta">Runde beendet</div>
+      <div class="qtext">${SP.all && SP.ok === SP.all ? "Alles richtig." : `${SP.ok} von ${SP.all} richtig.`}</div>
+      <p class="qsub">${rest
+        ? `In dieser Stufe sind ${rest} von ${n} Aufgaben noch offen` +
+          (h ? `, davon brauchen ${h} nur noch <b>einmal</b> richtig.` : ".")
+        : "Alle Aufgaben dieser Stufe sitzen."}</p>
+      <div class="inputrow">
+        ${rest ? `<button class="btn accent" data-act="sprunde">Nächste Runde</button>` : ""}
+        ${next ? `<button class="btn ${rest ? "ghost" : "accent"}" data-act="spopen" data-i="${SP.i+1}">Stufe ${SP.i+2}</button>` : ""}
+        <button class="btn ghost" data-act="spback">Alle Stufen</button></div>${balken}
+    </div>`;
+    return;
+  }
+
+  const idx = SP.queue[SP.idx], it = s.items[idx], k = spK(s.id, idx);
+  const punkte = `<span class="vdpunkte">${Array.from({length:SPZIEL},
+    (_,j) => `<i class="${j < k ? "on" : ""}"></i>`).join("")}</span>`;
+  const kopfzeile = `<div class="vdbar">
+    <span class="tag">Stufe ${SP.i+1}</span>
+    <span>Aufgabe ${SP.idx+1} von ${SP.queue.length}</span>
+    ${SP.round > 1 ? `<span>Nachholrunde</span>` : ""}
+    ${punkte}<span>${k} / ${SPZIEL}</span></div>`;
+  const meta = `<div class="qmeta">${esc(s.titel)} · ${SPART[it.t] || ""}</div>`;
+  const kon  = it.kontext ? `<div class="spkon">${esc(it.kontext)}</div>` : "";
+  const tipp = it.tipp ? `<p class="qsub">${esc(it.tipp)}</p>` : "";
+
+  let koerper;
+  if(it.t === "pick"){
+    koerper = `<div class="qtext">${esc(it.q)}</div>
+      <div class="answers">${it.opts.map((o,j) =>
+        `<button class="opt" data-act="spopt" data-i="${j}">${esc(o)}</button>`).join("")}</div>`;
+  } else if(it.t === "frei"){
+    koerper = `<div class="qtext">${esc(it.q)}</div>
+      <textarea class="spfrei" id="spans" autocomplete="off" autocapitalize="off" spellcheck="false"
+        placeholder="Schreib hier, was du sagen würdest — ganze Sätze."></textarea>
+      <div class="inputrow"><button class="btn" data-act="spfrei">Musterantwort zeigen</button></div>`;
+  } else {
+    koerper = `<div class="qtext">${esc(it.q)}</div>${tipp}
+      <div class="inputrow">
+        <input id="spans" autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="Auf Französisch tippen">
+        <button class="btn" data-act="spcheck">Prüfen</button></div>`;
+  }
+
+  stage.innerHTML = `${spKopf()}<div class="sheet">${kopfzeile}${meta}${kon}${koerper}
+    <div class="verdict" id="spv"></div>${balken}</div>`;
+
+  const inp = $("#spans");
+  if(inp){
+    inp.focus();
+    inp.addEventListener("keydown", e => {
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        if(SP.shown) return;
+        if(it.t === "frei") spFreiShow(); else spCheck();
+      }
+    });
+  }
+}
+
+/* ---------- Auswerten ------------------------------------- */
+function spBuchen(ok){
+  const s = STUFEN[SP.i], idx = SP.queue[SP.idx];
+  const neu = ok ? Math.min(SPZIEL, spK(s.id, idx) + 1) : 0;
+  spSetK(s.id, idx, neu);
+  SP.all++;
+  if(ok) SP.ok++; else SP.retry.push(idx);
+  stats.all++;
+  if(ok){ stats.ok++; stats.streak++; } else stats.streak = 0;
+  saveMEM();
+  updateStats();
+  return neu;
+}
+function spWeiterText(neu, ok){
+  if(neu >= SPZIEL) return "Damit sitzt die Aufgabe.";
+  if(ok) return `Noch einmal richtig, dann sitzt sie — ${neu} von ${SPZIEL}.`;
+  return "Der Zähler fängt wieder bei 0 an. Die Aufgabe kommt in der Nachholrunde noch einmal.";
+}
+
+function spCheck(){
+  if(SP.shown) return;
+  const s = STUFEN[SP.i], it = s.items[SP.queue[SP.idx]];
+  const mine = ($("#spans") || {}).value || "";
+  if(!mine.trim()) return;
+  SP.shown = true;
+  const r = spJudge(mine, it.a);
+  const ok = r !== "no";
+  const neu = spBuchen(ok);
+  const v = $("#spv");
+  v.className = "verdict show " + (r === "ok" ? "ok" : r === "almost" ? "almost" : "no");
+  v.innerHTML = (r === "ok"     ? `Richtig: <b>${esc(it.full)}</b>`
+               : r === "almost" ? `Fast — es fehlen nur Akzente: <b>${esc(it.full)}</b>`
+               :                  `So wäre es richtig: <b>${esc(it.full)}</b>`)
+    + (it.why ? `<span class="why">${esc(it.why)}</span>` : "")
+    + `<span class="why">${spWeiterText(neu, ok)}</span>`
+    + `<div class="inputrow"><button class="btn accent" data-act="spnext">Weiter</button></div>`;
+}
+
+function spOpt(j){
+  if(SP.shown) return;
+  SP.shown = true;
+  const s = STUFEN[SP.i], it = s.items[SP.queue[SP.idx]];
+  const ok = j === it.a;
+  document.querySelectorAll(".opt").forEach((b,m) => {
+    b.disabled = true;
+    if(m === it.a) b.classList.add("right");
+    else if(m === j) b.classList.add("wrong");
+  });
+  const neu = spBuchen(ok);
+  const v = $("#spv");
+  v.className = "verdict show " + (ok ? "ok" : "no");
+  v.innerHTML = (ok ? "Richtig." : `Richtig ist: <b>${esc(it.opts[it.a])}</b>`)
+    + (it.why ? `<span class="why">${esc(it.why)}</span>` : "")
+    + `<span class="why">${spWeiterText(neu, ok)}</span>`
+    + `<div class="inputrow"><button class="btn accent" data-act="spnext">Weiter</button></div>`;
+}
+
+function spFreiBox(it, klasse, note, knoepfe){
+  const v = $("#spv");
+  v.className = "verdict show " + klasse;
+  v.innerHTML = `<span class="vlab">Musterantwort</span>
+    <div style="margin:6px 0 10px"><b>${esc(it.full)}</b></div>
+    <span class="vlab">Checkliste</span>
+    <ul class="spcheck">${it.punkte.map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+    ${note ? `<span class="why">${esc(note)}</span>` : ""}
+    <div class="inputrow">${knoepfe}</div>`;
+}
+function spFreiShow(){
+  if(SP.shown) return;
+  SP.shown = true;
+  const it = STUFEN[SP.i].items[SP.queue[SP.idx]];
+  spFreiBox(it, "almost",
+    "Vergleiche Punkt für Punkt und entscheide selbst. Sei streng: ein falsch konjugiertes Verb ist ein Fehler.",
+    `<button class="btn ghost" data-act="spmark" data-ok="0">War nicht richtig</button>
+     <button class="btn accent" data-act="spmark" data-ok="1">Hat gepasst</button>`);
+}
+function spMark(ok){
+  const it = STUFEN[SP.i].items[SP.queue[SP.idx]];
+  const neu = spBuchen(ok);
+  spFreiBox(it, ok ? "ok" : "no", spWeiterText(neu, ok),
+    `<button class="btn accent" data-act="spnext">Weiter</button>`);
+}
+function spNext(){
+  SP.idx++; SP.shown = false;
+  spRun();
+}
+
+/* ============================================================
+   Modus „Wortschatz“
+   ============================================================ */
+const spWListe = () => SPM.kat ? KERNWORT.filter(w => w[2] === SPM.kat) : KERNWORT;
+
+function spWort(){
+  const liste = spWListe();
+  const fertig = liste.filter(w => spWK(w[0]) >= SPWZIEL).length;
+  const chips = `<div class="subs" style="margin:0 0 18px">
+    <button class="sub" data-act="spwkat" data-k="" aria-selected="${!SPM.kat}">alle ${KERNWORT.length} Wörter</button>
+    ${SPKAT.map(([k,l]) => `<button class="sub" data-act="spwkat" data-k="${k}"
+      aria-selected="${SPM.kat === k}">${l}</button>`).join("")}</div>
+    <div class="subs" style="margin:0 0 18px">
+    <button class="sub" data-act="spwdir" data-d="de-fr" aria-selected="${SPM.dir === "de-fr"}">Deutsch → français</button>
+    <button class="sub" data-act="spwdir" data-d="fr-de" aria-selected="${SPM.dir === "fr-de"}">français → Deutsch</button>
+    <button class="sub" data-act="spwdir" data-d="mix" aria-selected="${SPM.dir === "mix"}">gemischt</button></div>`;
+  const balken = `<div class="progress"><span>${fertig} / ${liste.length} sitzen</span>
+    <span class="pbar"><i style="width:${liste.length ? Math.round(fertig/liste.length*100) : 0}%"></i></span></div>`;
+
+  if(!SPW) spWStart();
+
+  if(!SPW.queue.length && !SPW.retry.length){
+    const offen = liste.filter(w => spWK(w[0]) < SPWZIEL).length;
+    stage.innerHTML = `${chips}<div class="sheet">
+      <div class="qmeta">${SPM.kat ? (SPKAT.find(x => x[0] === SPM.kat) || ["",""])[1] : "Kernwortschatz"}</div>
+      <div class="qtext">${offen ? "Runde beendet." : `Alle ${liste.length} Wörter sitzen ${SPWZIEL}-mal.`}</div>
+      <p class="qsub">${offen ? `Es fehlen noch ${offen} Wörter.`
+        : "Du kannst den Stand zurücksetzen und von vorn anfangen."}</p>
+      <div class="inputrow">
+        ${offen ? `<button class="btn accent" data-act="spwrunde">Nächste Runde</button>` : ""}
+        <button class="btn ghost" data-act="spwreset">Stand zurücksetzen</button></div>${balken}
+    </div>`;
+    return;
+  }
+
+  if(SPW.idx >= SPW.queue.length){
+    if(SPW.retry.length){
+      SPW.queue = shuffle(SPW.retry); SPW.retry = []; SPW.idx = 0; SPW.round++; SPW.shown = false;
+      return spWort();
+    }
+    SPW.queue = []; return spWort();
+  }
+
+  const w = SPW.queue[SPW.idx];
+  const dir = SPM.dir === "mix" ? (SPW.dirs[SPW.idx] || (SPW.dirs[SPW.idx] = Math.random() < .5 ? "fr-de" : "de-fr")) : SPM.dir;
+  const nachFr = dir === "de-fr";
+  const k = spWK(w[0]);
+  const punkte = `<span class="vdpunkte">${Array.from({length:SPWZIEL},
+    (_,j) => `<i class="${j < k ? "on" : ""}"></i>`).join("")}</span>`;
+
+  stage.innerHTML = `${chips}<div class="sheet">
+    <div class="vdbar"><span class="tag">Runde ${SPW.round}</span>
+      <span>${SPW.idx+1} von ${SPW.queue.length}</span>
+      ${punkte}<span>${k} / ${SPWZIEL}</span></div>
+    <div class="qmeta">${(SPKAT.find(x => x[0] === w[2]) || ["","Wort"])[1]} · ${nachFr ? "Deutsch → français" : "français → Deutsch"}</div>
+    <div class="qtext">${esc(nachFr ? w[1] : w[0])}</div>
+    <div class="inputrow">
+      <input id="spwans" autocomplete="off" autocapitalize="off" spellcheck="false"
+        placeholder="${nachFr ? "auf Französisch" : "auf Deutsch"}">
+      <button class="btn" data-act="spwcheck">Prüfen</button></div>
+    <div class="verdict" id="spwv"></div>${balken}</div>`;
+
+  const inp = $("#spwans");
+  if(inp){
+    inp.focus();
+    inp.addEventListener("keydown", e => {
+      if(e.key === "Enter"){ e.preventDefault(); if(!SPW.shown) spWCheck(); }
+    });
+  }
+}
+function spWStart(){
+  const offen = spWListe().filter(w => spWK(w[0]) < SPWZIEL);
+  SPW = {queue: shuffle(offen).slice(0, SPWRUNDE), retry:[], idx:0, round:1, shown:false, dirs:{}};
+}
+function spWCheck(){
+  if(SPW.shown) return;
+  const w = SPW.queue[SPW.idx];
+  const dir = SPM.dir === "mix" ? SPW.dirs[SPW.idx] : SPM.dir;
+  const nachFr = dir === "de-fr";
+  const mine = ($("#spwans") || {}).value || "";
+  if(!mine.trim()) return;
+  SPW.shown = true;
+  const r = spJudge(mine, nachFr ? spFrForms(w) : spDeForms(w));
+  const ok = r !== "no";
+  const neu = ok ? Math.min(SPWZIEL, spWK(w[0]) + 1) : 0;
+  SPM.w[w[0]] = neu; spSave();
+  if(!ok) SPW.retry.push(w);
+  stats.all++;
+  if(ok){ stats.ok++; stats.streak++; } else stats.streak = 0;
+  saveMEM(); updateStats();
+  const loes = nachFr ? w[0] : w[1];
+  const v = $("#spwv");
+  v.className = "verdict show " + (r === "ok" ? "ok" : r === "almost" ? "almost" : "no");
+  v.innerHTML = (r === "ok"     ? `Richtig: <b>${esc(loes)}</b>`
+               : r === "almost" ? `Fast — es fehlen nur Akzente: <b>${esc(loes)}</b>`
+               :                  `Richtig wäre: <b>${esc(loes)}</b>`)
+    + `<span class="why">${esc(w[0])} — ${esc(w[1])}</span>`
+    + `<span class="why">${neu >= SPWZIEL ? "Das Wort ist fertig."
+        : ok ? `${neu} von ${SPWZIEL}.` : "Der Zähler fängt wieder bei 0 an."}</span>`
+    + `<div class="inputrow"><button class="btn accent" data-act="spwnext">Weiter</button></div>`;
+}
+
+/* ============================================================
+   Modus „Wortliste“
+   ============================================================ */
+function spListe(){
+  const fertig = KERNWORT.filter(w => spWK(w[0]) >= SPWZIEL).length;
+  let html = `<div class="sheet plain">
+    <div class="qmeta">Kernwortschatz</div>
+    <div class="qtext">${KERNWORT.length} Wörter, die beim Sprechen am meisten tragen</div>
+    <p class="qsub">Keine Liste zum Durchlesen und Vergessen — das sind die Wörter, mit denen du
+      über fast jedes Alltagsthema reden kannst. Die Punkte zeigen, wie oft du ein Wort im
+      Trainer richtig hattest.</p>
+    <div class="progress"><span>${fertig} / ${KERNWORT.length} sitzen</span>
+      <span class="pbar"><i style="width:${Math.round(fertig/KERNWORT.length*100)}%"></i></span></div>
+  </div>`;
+
+  SPKAT.forEach(([k,l]) => {
+    const ws = KERNWORT.filter(w => w[2] === k);
+    if(!ws.length) return;
+    html += `<div class="sect"><h2>${l}</h2><span>${ws.length} Wörter</span><i></i></div>
+      <div class="sheet plain ref"><table class="tbl">` +
+      ws.map(w => {
+        const k2 = spWK(w[0]);
+        return `<tr><td style="width:40%"><b>${esc(w[0])}</b></td><td>${esc(w[1])}</td>
+          <td style="width:60px;text-align:right"><span class="vdpunkte">${
+            Array.from({length:SPWZIEL},(_,j) => `<i class="${j < k2 ? "on" : ""}"></i>`).join("")
+          }</span></td></tr>`;
+      }).join("") + `</table></div>`;
+  });
+  stage.innerHTML = html;
+}
+
+/* ============================================================
+   Klicks
+   ============================================================ */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if(!el) return;
+  const act = el.dataset.act;
+
+  if(act === "spopen")  return spOpen(+el.dataset.i);
+  if(act === "spforce"){
+    const i = +el.dataset.i;
+    SPM.offen[STUFEN[i].id] = 1; spSave();
+    return spOpen(i);
+  }
+  if(act === "spback"){ SP = null; return spKurs(); }
+  if(act === "spziel"){
+    if(!SP) return;
+    SP.ziel = !SP.ziel;
+    if(!SP.ziel && SP.shown){ SP.idx++; SP.shown = false; }   // schon beantwortete Aufgabe nicht doppelt zählen
+    return spRun();
+  }
+  if(act === "spgo"){
+    if(!SP) return;
+    SP.ziel = false;
+    if(SP.shown){ SP.idx++; SP.shown = false; }
+    return spRun();
+  }
+  if(act === "sprunde"){ spFill(); return spRun(); }
+  if(act === "spcheck") return spCheck();
+  if(act === "spopt")   return spOpt(+el.dataset.i);
+  if(act === "spfrei")  return spFreiShow();
+  if(act === "spmark")  return spMark(el.dataset.ok === "1");
+  if(act === "spnext")  return spNext();
+  if(act === "spwipe"){
+    const s = STUFEN[+el.dataset.i];
+    SPM.st[s.id] = {}; spSave();
+    return spOpen(+el.dataset.i);
+  }
+  if(act === "spreset"){
+    if(!confirm("Den ganzen Lehrgang zurücksetzen? Alle Zählstände der Stufen gehen verloren.")) return;
+    SPM.st = {}; SPM.offen = {}; spSave();
+    SP = null; return spKurs();
+  }
+  if(act === "spwkat"){ SPM.kat = el.dataset.k; spSave(); SPW = null; return spWort(); }
+  if(act === "spwdir"){ SPM.dir = el.dataset.d; spSave(); SPW = null; return spWort(); }
+  if(act === "spwcheck") return spWCheck();
+  if(act === "spwnext"){ SPW.idx++; SPW.shown = false; return spWort(); }
+  if(act === "spwrunde"){ spWStart(); return spWort(); }
+  if(act === "spwreset"){
+    if(!confirm("Den Stand im Wortschatztrainer zurücksetzen?")) return;
+    SPM.w = {}; spSave(); SPW = null; return spWort();
+  }
+});
+
+/* ============================================================
+   Erklärung und Thema
+   ============================================================ */
+EXPL.sprechen = () => `
+<h2>Flüssig sprechen lernen</h2>
+<p>Flüssig reden heißt nicht, alles zu wissen. Es heißt, in dem Moment, in dem du etwas sagen
+willst, <b>nicht suchen zu müssen</b>. Dieser Teil der Seite ist dafür gebaut: Du trainierst
+nicht Grammatik zum Ankreuzen, sondern fertige Sätze, bis sie von selbst kommen.</p>
+
+<h3>Wie es aufgebaut ist</h3>
+<ul class="steps">
+  <li><b>Lehrgang</b> — ${STUFEN.length} Stufen, vom einzelnen Satzkern bis zum ganzen Dialog.
+    Jede Stufe fängt mit einer Erklärung an, danach kommen die Aufgaben. Eine Aufgabe sitzt,
+    wenn du sie <b>zweimal hintereinander</b> richtig hattest. Bei ${Math.round(SPQUOTE*100)} % öffnet
+    sich die nächste Stufe — gesperrte Stufen kannst du trotzdem öffnen, wenn du willst.</li>
+  <li><b>Wortschatz</b> — ${KERNWORT.length} Wörter, die beim Sprechen am meisten tragen.
+    Richtung umschaltbar, nach Wortart filterbar, dreimal richtig heißt fertig.</li>
+  <li><b>Wortliste</b> — derselbe Wortschatz zum Lesen, mit deinem Stand pro Wort.</li>
+</ul>
+
+<h3>Die Stufen</h3>
+<table class="tbl">
+${STUFEN.map((s,i) => `<tr><td class="sm">Stufe ${i+1}</td><td><b>${s.titel}</b></td><td class="sm">${s.kurz}</td></tr>`).join("")}
+</table>
+
+<h3>Drei Regeln, damit es wirklich beim Sprechen hilft</h3>
+<ul class="steps">
+  <li><b>Sag jede Antwort laut, bevor du sie tippst.</b> Das Tippen ist nur die Kontrolle.
+    Das Sprechen passiert im Mund, nicht in den Fingern.</li>
+  <li><b>Es läuft keine Uhr.</b> Absichtlich. Zeitdruck erzeugt Raten, und Raten trainiert nichts.
+    Nimm dir die Sekunde, in der du den Satz im Kopf zusammenbaust — genau die wird mit der Zeit kürzer.</li>
+  <li><b>Kurz ist richtig.</b> Echte Antworten sind drei bis sechs Wörter lang. Wer im Gespräch
+    Schachtelsätze baut, bleibt hängen.</li>
+</ul>
+
+<h3>Was zählt als richtig?</h3>
+<p>Groß- und Kleinschreibung, Kommas, Bindestriche und Satzzeichen werden ignoriert — es geht um
+den Satz, nicht um die Tipparbeit. Fehlen nur <b>Akzente</b>, zählt die Antwort als „fast“ und der
+Zähler geht trotzdem weiter; die richtige Schreibweise siehst du daneben. Oft gibt es mehrere
+richtige Lösungen (etwa <i>Où est-ce que tu habites ?</i> und <i>Tu habites où ?</i>) — alle werden
+anerkannt.</p>
+
+<h3>Der Lernstand</h3>
+<p>Der Fortschritt des Lehrgangs liegt getrennt von der Fehlerliste auf der Startseite, weil er
+anders funktioniert: Hier wird nicht gesammelt, was schiefging, sondern gezählt, was schon sitzt.
+Er bleibt in diesem Browser gespeichert.</p>`;
+
+TOPICS.push({
+  id:"sprechen", title:"Sprechen lernen", kat:"Sprechen",
+  desc:`Stufenlehrgang vom Satzkern zum Dialog, dazu ${KERNWORT.length} Wörter Kernwortschatz. Ohne Uhr.`,
+  modes:["kurs","how","wort","wliste"], items:[]
+});
+
+
 $("#btnBack").addEventListener("click", renderHome);
 
 renderHome();
