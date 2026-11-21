@@ -391,6 +391,23 @@ label.btn{display:inline-block;cursor:pointer}
 .spscroll .tbl{margin:0;min-width:430px}
 .tbl.sm6 th,.tbl.sm6 td{padding:6px 8px;font-size:13.5px;white-space:nowrap}
 .ref td.sm,.ref p.sm,.ref span.sm{font-size:13px;color:var(--ink-3)}
+/* ---------- Lesen lernen ---------- */
+.ltext{line-height:1.75}
+.ltext .ltitel{font-family:var(--display);font-size:24px;font-weight:600;
+  margin:2px 0 16px;letter-spacing:-.01em}
+.ltext p{margin:0 0 11px;font-size:17px}
+.ltext p:last-child{margin-bottom:0}
+.gl{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  line-height:inherit;border-bottom:1px dashed var(--rhodia)}
+.gl:hover{background:rgba(242,107,33,.09)}
+.gl .gd{display:none}
+.gl.on{border-bottom-style:solid}
+.gl.on .gd{display:inline;font-size:13.5px;color:var(--rhodia);white-space:nowrap}
+.gl.on .gd::before{content:" ["}
+.gl.on .gd::after{content:"]"}
+.lsperre{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;margin-bottom:22px;padding:13px 18px}
+.lsperre .qsub{margin:0;flex:1 1 320px}
 </style>
 </head>
 <body>
@@ -3708,7 +3725,10 @@ function vDrill(){
   paintCrops();
   const inp = $("#vans");
   if(inp){ inp.focus();
-    inp.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); VSHOWN ? vNext() : vReveal(); } }); }
+    inp.addEventListener("keydown", e => {
+      if(e.key !== "Enter" || VSHOWN) return;   // steht die Lösung da, übernimmt der globale Enter-Griff
+      e.preventDefault(); vReveal();
+    }); }
   cur.know = know;
 }
 function vReveal(){
@@ -3857,7 +3877,10 @@ function vRun(){
   paintCrops();
   const inp = $("#vdans");
   if(inp){ inp.focus();
-    inp.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); if(!VD.shown) vdReveal(); } }); }
+    inp.addEventListener("keydown", e => {
+      if(e.key !== "Enter" || VD.shown) return;
+      e.preventDefault(); vdReveal();
+    }); }
 }
 function vdReveal(){
   if(VD.shown) return;
@@ -3969,6 +3992,7 @@ const MODE_LABEL = {how:"Erklärung", ref:"Merkblatt", conj:"Einzelformen", num:
   table:"Tabelle ausfüllen", form:"Zeit erkennen", inf:"Infinitiv finden",
   seiten:"Seiten", liste:"Abtippen", ueben:"Üben", durch:"Alle durchgehen",
   kurs:"Lehrgang", wort:"Wortschatz", wliste:"Wortliste",
+  lesen:"Texte", lwort:"Wörter",
   clock:"Uhrzeit-Trainer", flash:"Karteikarten", mc:"Quiz", fill:"Eingabe", trans:"Übersetzen",
   order:"Satzbau", match:"Zuordnen", fehler:"Fehlerliste"};
 
@@ -4121,7 +4145,7 @@ function weighted(list){
 }
 function buildQueue(){
   const t = S.topic, m = S.mode;
-  if(t.id === "vokabeln" || t.id === "sprechen"){ S.queue = []; S.retry = []; S.idx = 0; return; }
+  if(t.id === "vokabeln" || t.id === "sprechen" || t.id === "lesen"){ S.queue = []; S.retry = []; S.idx = 0; return; }
   S.retry = []; S.round = 1; S.runOk = 0; S.runAll = 0; S.idx = 0;
   if(m === "conj"){
     const t2 = subTense(), vp = subVerbs();
@@ -4144,7 +4168,7 @@ function buildQueue(){
 }
 /* Welche Unterthemen gibt es im aktuellen Modus? */
 function subsFor(t, m){
-  if(t.id === "vokabeln" || t.id === "sprechen") return [];
+  if(t.id === "vokabeln" || t.id === "sprechen" || t.id === "lesen") return [];
   if(t.id === "konjugation"){
     if(!["conj","table","form","inf"].includes(m)) return [];
     return TENSES.map(x => ({id:"t:"+x.id, label:x.label})).concat([
@@ -4173,7 +4197,7 @@ function availableModes(t){
     if(m === "how") return !!EXPL[t.id];
     if(m === "ref") return !!REFS[t.ref];
     if(["conj","num","clock","fehler","table","form","inf","seiten","ueben","durch","liste",
-        "kurs","wort","wliste"].includes(m)) return true;
+        "kurs","wort","wliste","lesen","lwort"].includes(m)) return true;
     return itemsOf(t, m === "flash" ? "card" : m).length > 0;
   });
 }
@@ -4181,7 +4205,7 @@ function availableModes(t){
 /* ---------- Navigation ------------------------------------ */
 const ERR_TOPIC = {id:"fehler", title:"Deine Fehler", modes:["fehler"], items:[]};
 
-const KATS = ["Verben & Zeiten","Wortarten","Sätze bauen","Zahlen & Alltag","Sprechen","Üben & Wiederholen"];
+const KATS = ["Verben & Zeiten","Wortarten","Sätze bauen","Zahlen & Alltag","Sprechen & Lesen","Üben & Wiederholen"];
 function renderHome(){
   $("#home").hidden = false;
   $("#drill").hidden = true;
@@ -4283,6 +4307,7 @@ const banner = () => S.round > 1 ? `<div class="banner">Nachholrunde — nur dei
 function render(){
   if(S.topic.id === "vokabeln") return renderVocab();
   if(S.topic.id === "sprechen" && S.mode !== "how") return renderSprechen();
+  if(S.topic.id === "lesen" && S.mode !== "how") return renderLesen();
   if(S.mode === "how"){ stage.innerHTML = `<div class="sheet plain ref">${EXPL[S.topic.id]()}</div>`; return; }
   if(S.mode === "ref"){ stage.innerHTML = `<div class="sheet plain ref">${REFS[S.topic.ref]()}</div>`; return; }
 
@@ -5838,8 +5863,8 @@ function spRun(){
     inp.focus();
     inp.addEventListener("keydown", e => {
       if(e.key === "Enter" && !e.shiftKey){
-        e.preventDefault();
         if(SP.shown) return;
+        e.preventDefault();
         if(it.t === "frei") spFreiShow(); else spCheck();
       }
     });
@@ -5999,7 +6024,7 @@ function spWort(){
   if(inp){
     inp.focus();
     inp.addEventListener("keydown", e => {
-      if(e.key === "Enter"){ e.preventDefault(); if(!SPW.shown) spWCheck(); }
+      if(e.key === "Enter"){ if(SPW.shown) return; e.preventDefault(); spWCheck(); }
     });
   }
 }
@@ -6167,9 +6192,1237 @@ anders funktioniert: Hier wird nicht gesammelt, was schiefging, sondern gezählt
 Er bleibt in diesem Browser gespeichert.</p>`;
 
 TOPICS.push({
-  id:"sprechen", title:"Sprechen lernen", kat:"Sprechen",
+  id:"sprechen", title:"Sprechen lernen", kat:"Sprechen & Lesen",
   desc:`Stufenlehrgang vom Satzkern zum Dialog, dazu ${KERNWORT.length} Wörter Kernwortschatz. Ohne Uhr.`,
   modes:["kurs","how","wort","wliste"], items:[]
+});
+
+
+
+/* ============================================================
+   10. ENTER BRINGT WEITER
+   Bisher reagierte Enter nur, solange der Cursor im Eingabefeld
+   stand. Bei Quiz, Zuordnen, Karteikarten — oder nachdem man
+   "Prüfen" mit der Maus getroffen hatte — musste man den Knopf
+   suchen. Jetzt gilt überall: Enter löst den nächsten Schritt aus.
+   ============================================================ */
+const sichtbar = el => !!(el && el.offsetParent !== null && !el.disabled);
+
+function enterZiel(){
+  /* 1. Steht schon eine Rückmeldung da, führt genau ein Knopf weiter.
+        Sind es mehrere (Selbstbewertung), wird nicht geraten. */
+  for(const v of document.querySelectorAll("#stage .verdict.show")){
+    if(!sichtbar(v)) continue;
+    const bs = [...v.querySelectorAll("button")].filter(sichtbar);
+    if(bs.length === 1) return bs[0];
+    if(bs.length > 1)   return null;
+  }
+  /* 2. Sonst der Knopf, der die Aufgabe abschickt. */
+  for(const a of ["check","checktable","checkorder","vcheck","vdcheck",
+                  "spcheck","spwcheck","spfrei","lcheck","lmuster","flip"]){
+    const b = $(`#stage [data-act="${a}"]`);
+    if(sichtbar(b)) return b;
+  }
+  return null;
+}
+
+document.addEventListener("keydown", e => {
+  if(e.key !== "Enter" || e.defaultPrevented || e.isComposing) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  const b = enterZiel();
+  if(!b) return;
+  const t = e.target;
+  /* Im mehrzeiligen Feld schreibt man weiter, solange keine Lösung dasteht. */
+  if(t && (t.tagName === "TEXTAREA" || t.isContentEditable) && !b.closest(".verdict")) return;
+  e.preventDefault();
+  b.click();
+});
+
+/* ============================================================
+   11. LESEN LERNEN
+   ============================================================ */
+
+/* ============================================================
+   LESEN LERNEN — Teil 1: Stufen und die kurzen Texte
+   ------------------------------------------------------------
+   Im Text markiert {{mot|Bedeutung}} ein Wort, das man antippen
+   kann. Wer tippt, bekommt die Bedeutung — und am Ende die
+   Rückmeldung, wie viel er nachgeschlagen hat.
+
+   Fragetypen
+     mc    Multiple Choice auf Deutsch
+     rf    richtig oder falsch, mit Beleg aus dem Text
+     wort  ein französisches Wort aus dem Text eintippen
+     kurz  frei antworten, danach Musterlösung und Selbstkontrolle
+   ============================================================ */
+
+const LSTUFEN = [
+ {nr:1, titel:"Kurze Nachrichten",   kurz:"drei bis fünf Sätze — SMS, Zettel, Aushang"},
+ {nr:2, titel:"Alltagstexte",        kurz:"eine halbe Seite — E-Mail, Programm, Anzeige"},
+ {nr:3, titel:"Dialoge und Berichte",kurz:"längere Texte mit Personen und Meinungen"},
+ {nr:4, titel:"Zusammenhängende Texte", kurz:"Erzählung und Sachtext, wie im Buch"},
+ {nr:5, titel:"Klassenarbeit",       kurz:"volle Länge, gemischte Fragen"}
+];
+
+const LESETEXTE = [
+
+/* ===================== STUFE 1 ===================== */
+{
+ id:"sms-lea", stufe:1, art:"Nachricht", titel:"Un message de Léa",
+ intro:"Léa schreibt dir am Freitagnachmittag.",
+ text:[
+  "Salut ! Tu fais quoi demain ?",
+  "Moi, le matin, je vais au {{marché|Markt}} avec ma mère. L'après-midi, je suis {{libre|frei}}.",
+  "On pourrait aller à la piscine, non ? Le bus part à 14 h 10 devant la {{mairie|Rathaus}}.",
+  "Réponds-moi vite, parce que ma mère veut savoir si elle doit nous {{déposer|hinbringen, absetzen}}."
+ ],
+ ueberblick:{q:"Worum geht es in der Nachricht?",
+  opts:["Léa schlägt etwas für morgen Nachmittag vor.",
+        "Léa sagt eine Verabredung ab.",
+        "Léa fragt nach den Hausaufgaben."], a:0,
+  why:"Schon <i>demain</i>, <i>piscine</i> und <i>le bus part</i> zeigen: Es geht um einen Plan für morgen."},
+ fragen:[
+  {t:"rf", q:"Léa hat morgen den ganzen Tag Zeit.", a:false,
+   beleg:"le matin, je vais au marché avec ma mère",
+   why:"Vormittags ist sie auf dem Markt. Frei ist sie erst nachmittags: <i>L'après-midi, je suis libre.</i>"},
+  {t:"mc", q:"Wann fährt der Bus?",
+   opts:["um 14.10 Uhr","um 4.10 Uhr","um zehn vor zwei"], a:0,
+   why:"<i>14 h 10</i> ist die französische Schreibweise für 14.10 Uhr — <i>h</i> steht für <i>heures</i>."},
+  {t:"wort", q:"Welches Wort im Text heißt „Rathaus“?", a:["la mairie","mairie"],
+   why:"<i>la mairie</i> — das Rathaus. Im Text: <i>devant la mairie</i>."},
+  {t:"kurz", q:"Warum soll man Léa schnell antworten?",
+   muster:"Weil ihre Mutter wissen will, ob sie die beiden hinfahren muss.",
+   why:"Der letzte Satz sagt es: <i>parce que ma mère veut savoir si elle doit nous déposer</i>."}
+ ]
+},
+{
+ id:"mot-maman", stufe:1, art:"Zettel", titel:"Mot sur la table",
+ intro:"Du kommst nach Hause und findest diesen Zettel in der Küche.",
+ text:[
+  "Chéri,",
+  "je rentre vers 19 h, j'ai une {{réunion|Besprechung}} au travail.",
+  "Il y a du poulet dans le {{frigo|Kühlschrank}}, tu n'as qu'à le {{réchauffer|aufwärmen}}.",
+  "N'oublie pas de sortir la {{poubelle|Mülltonne}} — c'est mardi !",
+  "Et s'il te plaît, commence tes devoirs avant la télé.",
+  "Bisous, Maman"
+ ],
+ ueberblick:{q:"Was ist das für ein Text?",
+  opts:["Eine Nachricht der Mutter mit ein paar Aufträgen.",
+        "Eine Einkaufsliste.",
+        "Eine Einladung zum Essen."], a:0,
+  why:"Anrede, Aufträge, Gruß am Ende — das ist ein Zettel von zu Hause, keine Liste."},
+ fragen:[
+  {t:"rf", q:"Die Mutter kommt schon am Nachmittag nach Hause.", a:false,
+   beleg:"je rentre vers 19 h",
+   why:"<i>vers 19 h</i> heißt „gegen 19 Uhr“ — also abends."},
+  {t:"mc", q:"Was soll er essen?",
+   opts:["Hähnchen aus dem Kühlschrank","Er soll etwas kochen","Er soll auf seine Mutter warten"], a:0,
+   why:"<i>Il y a du poulet dans le frigo</i> — <i>le poulet</i> ist das Hähnchen."},
+  {t:"wort", q:"Welches Wort im Text heißt „Mülltonne“?", a:["la poubelle","poubelle"],
+   why:"<i>la poubelle</i>. <i>sortir la poubelle</i> = die Mülltonne rausstellen."},
+  {t:"rf", q:"Er darf erst fernsehen, wenn die Hausaufgaben angefangen sind.", a:true,
+   beleg:"commence tes devoirs avant la télé",
+   why:"<i>avant</i> heißt „vor“ — erst die Hausaufgaben, dann der Fernseher."},
+  {t:"kurz", q:"Warum erwähnt die Mutter, dass Dienstag ist?",
+   muster:"Weil dienstags die Mülltonne rausgestellt werden muss.",
+   why:"Der Dienstag ist der Abfuhrtag — deshalb steht er direkt hinter dem Auftrag mit der <i>poubelle</i>."}
+ ]
+},
+{
+ id:"velo", stufe:1, art:"Anzeige", titel:"Petite annonce",
+ intro:"Ein Aushang am schwarzen Brett im Supermarkt.",
+ text:[
+  "VÉLO À VENDRE",
+  "Vélo de ville, bleu, {{en bon état|in gutem Zustand}}.",
+  "Acheté il y a deux ans, peu {{utilisé|benutzt}}. Avec {{antivol|Fahrradschloss}} et lampe.",
+  "Prix : 90 euros, à {{discuter|verhandelbar}}.",
+  "Contact : Thomas, 06 12 34 56 78. Après 18 h, s'il vous plaît."
+ ],
+ ueberblick:{q:"Was wird hier angeboten?",
+  opts:["Ein gebrauchtes Fahrrad","Ein neues Fahrrad aus dem Laden","Eine Fahrradreparatur"], a:0,
+  why:"<i>à vendre</i> = zu verkaufen, und <i>acheté il y a deux ans</i> zeigt: gebraucht."},
+ fragen:[
+  {t:"mc", q:"Wie alt ist das Fahrrad?",
+   opts:["zwei Jahre","zwei Monate","es ist neu"], a:0,
+   why:"<i>acheté il y a deux ans</i> — <i>il y a</i> + Zeitangabe heißt „vor zwei Jahren“."},
+  {t:"rf", q:"Der Preis steht fest.", a:false,
+   beleg:"90 euros, à discuter",
+   why:"<i>à discuter</i> heißt: über den Preis kann man reden."},
+  {t:"wort", q:"Welches Wort im Text heißt „Fahrradschloss“?", a:["antivol","un antivol","l'antivol"],
+   why:"<i>un antivol</i> — wörtlich „gegen den Diebstahl“ (<i>le vol</i> = der Diebstahl)."},
+  {t:"mc", q:"Wann soll man anrufen?",
+   opts:["nach 18 Uhr","vor 18 Uhr","nur am Wochenende"], a:0,
+   why:"<i>Après 18 h</i> — <i>après</i> heißt „nach“, <i>avant</i> wäre „vor“."}
+ ]
+},
+{
+ id:"sortie", stufe:1, art:"Aushang", titel:"Avis aux élèves",
+ intro:"Ein Aushang im Flur deiner Austauschschule.",
+ text:[
+  "AVIS AUX ÉLÈVES DE 4e",
+  "La {{sortie|Ausflug}} au musée de mardi est {{reportée|verschoben}}.",
+  "Le car est en {{panne|kaputt, Panne}}. La nouvelle date est le jeudi 14, même heure : départ 8 h 30.",
+  "Les élèves qui ne peuvent pas venir jeudi doivent le dire à Mme Richard avant lundi.",
+  "L'argent déjà payé reste {{valable|gültig}}."
+ ],
+ ueberblick:{q:"Worum geht es?",
+  opts:["Ein Ausflug bekommt einen neuen Termin.",
+        "Ein Ausflug fällt ganz aus.",
+        "Für einen Ausflug muss man noch bezahlen."], a:0,
+  why:"<i>reportée</i> heißt verschoben — und es steht sogar ein neues Datum da."},
+ fragen:[
+  {t:"rf", q:"Der Ausflug fällt aus.", a:false,
+   beleg:"La nouvelle date est le jeudi 14",
+   why:"Vorsicht, typische Falle: <i>reporter</i> heißt verschieben, nicht absagen. Absagen wäre <i>annuler</i>."},
+  {t:"mc", q:"Warum klappt der Dienstag nicht?",
+   opts:["Der Bus ist kaputt.","Das Museum ist zu.","Die Lehrerin ist krank."], a:0,
+   why:"<i>Le car est en panne</i> — <i>le car</i> ist der Reisebus, <i>en panne</i> heißt kaputt."},
+  {t:"wort", q:"Welches Wort im Text heißt „verschoben“?", a:["reportée","reporté","reporter"],
+   why:"<i>reportée</i>, vom Verb <i>reporter</i>. Das -e am Ende, weil es sich auf <i>la sortie</i> bezieht."},
+  {t:"kurz", q:"Was müssen Schüler tun, die am Donnerstag nicht können?",
+   muster:"Sie müssen es Frau Richard vor Montag sagen.",
+   why:"<i>doivent le dire à Mme Richard avant lundi</i>."}
+ ]
+},
+
+/* ===================== STUFE 2 ===================== */
+{
+ id:"mail-lucas", stufe:2, art:"E-Mail", titel:"Salut de Nantes !",
+ intro:"Dein Austauschpartner schreibt dir zum ersten Mal.",
+ text:[
+  "Objet : Salut de Nantes !",
+  "Bonjour Ole,",
+  "je m'appelle Lucas, j'ai 15 ans et j'habite à Nantes, dans l'ouest de la France. Je suis vraiment content de venir chez toi au mois de mars.",
+  "Chez moi, nous sommes quatre : mes parents, ma petite sœur Zoé et moi. Nous avons aussi un chien qui {{aboie|bellt}} dès que quelqu'un {{sonne|klingelt}} à la porte.",
+  "Au collège, ma matière préférée, c'est l'histoire. Par contre, je suis {{nul|schlecht, eine Niete}} en maths — j'espère que tu pourras m'aider pendant l'échange !",
+  "Le week-end, je joue au handball dans un club. On s'entraîne le mardi et le jeudi soir, et il y a souvent un match le samedi.",
+  "Une question : est-ce qu'il fait très froid chez vous au mois de mars ? Je ne sais pas quels {{vêtements|Kleidung}} je dois prendre.",
+  "À bientôt, Lucas"
+ ],
+ ueberblick:{q:"Was will Lucas mit dieser E-Mail vor allem?",
+  opts:["Sich vorstellen und eine praktische Frage stellen.",
+        "Sich für den Austausch anmelden.",
+        "Den Termin des Austauschs verschieben."], a:0,
+  why:"Der ganze Text besteht aus Angaben über ihn selbst — und am Ende steht eine Frage zum Wetter."},
+ fragen:[
+  {t:"mc", q:"Wie viele Personen leben bei Lucas zu Hause?",
+   opts:["vier","drei","fünf"], a:0,
+   why:"<i>nous sommes quatre</i> — Eltern, Schwester und er selbst. Der Hund zählt nicht mit."},
+  {t:"rf", q:"Lucas ist gut in Mathe.", a:false,
+   beleg:"je suis nul en maths",
+   why:"<i>nul en …</i> heißt „schlecht in …“. <i>Par contre</i> davor kündigt schon den Gegensatz an."},
+  {t:"wort", q:"Welches Wort im Text heißt „bellen“?", a:["aboie","aboyer"],
+   why:"<i>aboyer</i> — bellen. Im Text steht die Form <i>aboie</i> (il-Form)."},
+  {t:"mc", q:"Wann trainiert Lucas?",
+   opts:["dienstags und donnerstags abends","jeden Abend","samstags"], a:0,
+   why:"<i>On s'entraîne le mardi et le jeudi soir.</i> Samstag ist das Spiel, nicht das Training."},
+  {t:"rf", q:"Lucas weiß nicht, wie das Wetter in Deutschland im März ist.", a:true,
+   beleg:"est-ce qu'il fait très froid chez vous au mois de mars ?",
+   why:"Genau deshalb fragt er — und deshalb weiß er nicht, was er einpacken soll."},
+  {t:"kurz", q:"Welche Frage soll man Lucas beantworten, und warum?",
+   muster:"Ob es im März kalt ist — weil er nicht weiß, welche Kleidung er mitnehmen soll.",
+   why:"Die Frage und ihr Grund stehen direkt nebeneinander: <i>Je ne sais pas quels vêtements je dois prendre.</i>"}
+ ]
+},
+{
+ id:"weekend", stufe:2, art:"Post", titel:"Mon week-end",
+ intro:"Ein Beitrag aus dem Blog einer Schülerin.",
+ text:[
+  "Samedi, je me suis levée à onze heures. Ma mère n'était pas contente, mais {{tant pis|auch egal}}.",
+  "L'après-midi, Sarah est passée et on a fait des crêpes. Enfin, on a {{essayé|versucht}} : les trois premières sont restées dans la {{poêle|Pfanne}}.",
+  "Le soir, on est allées au cinéma. Le film était {{nul|mies}}, mais le pop-corn était bon, donc ça va.",
+  "Dimanche, c'était moins drôle. J'ai {{révisé|gelernt, wiederholt}} pour le contrôle de maths pendant presque quatre heures.",
+  "Et le pire, c'est qu'à neuf heures du soir, j'ai {{réalisé|gemerkt}} que j'avais oublié l'exposé d'anglais.",
+  "Il est pour demain. Bonne nuit, donc."
+ ],
+ ueberblick:{q:"Wie findet sie ihr Wochenende insgesamt?",
+  opts:["Der Samstag war schön, der Sonntag nicht.",
+        "Beide Tage waren schön.",
+        "Beide Tage waren schlecht."], a:0,
+  why:"<i>Dimanche, c'était moins drôle</i> — dieser eine Satz teilt den Text in zwei Hälften."},
+ fragen:[
+  {t:"rf", q:"Die Crêpes sind gut gelungen.", a:false,
+   beleg:"les trois premières sont restées dans la poêle",
+   why:"<i>Enfin, on a essayé</i> — <i>enfin</i> nimmt das Gesagte halb zurück. Die ersten drei blieben in der Pfanne kleben."},
+  {t:"mc", q:"Wie fand sie den Film?",
+   opts:["schlecht","gut","sie ist eingeschlafen"], a:0,
+   why:"<i>Le film était nul</i> — <i>nul</i> heißt hier „mies“. Nur das Popcorn war gut."},
+  {t:"wort", q:"Welches Wort im Text heißt „Pfanne“?", a:["la poêle","poêle"],
+   why:"<i>la poêle</i> — die Pfanne. Nicht verwechseln mit <i>le poêle</i> (der Ofen)."},
+  {t:"mc", q:"Wie lange hat sie am Sonntag gelernt?",
+   opts:["fast vier Stunden","vier Tage","zwei Stunden"], a:0,
+   why:"<i>pendant presque quatre heures</i> — <i>presque</i> heißt „fast“."},
+  {t:"kurz", q:"Was ist für sie das Schlimmste am Wochenende?",
+   muster:"Dass sie am Sonntagabend gemerkt hat, dass sie das Englisch-Referat vergessen hat — und es ist für morgen.",
+   why:"<i>le pire</i> heißt „das Schlimmste“. Dahinter steht immer der Punkt, auf den es ankommt."}
+ ]
+},
+{
+ id:"strasbourg", stufe:2, art:"Programm", titel:"Voyage à Strasbourg",
+ intro:"Der Tagesplan für die Klassenfahrt. Hier musst du nicht jedes Wort lesen — such gezielt.",
+ text:[
+  "VOYAGE À STRASBOURG — MERCREDI",
+  "8 h 00 — Départ du collège. Ne soyez pas en {{retard|zu spät}} !",
+  "10 h 30 — Arrivée. Visite {{guidée|geführt}} de la cathédrale, une heure.",
+  "12 h 00 — Pique-nique au bord de l'Ill. Apportez votre {{repas|Essen}}, rien n'est prévu sur place.",
+  "14 h 00 — Temps libre, en groupes de quatre {{au minimum|mindestens}}. Rendez-vous devant la cathédrale à 16 h 30.",
+  "17 h 00 — Départ. {{Retour prévu|geplante Rückkehr}} vers 19 h 30.",
+  "Important : prenez une veste, il peut pleuvoir. Les portables sont {{autorisés|erlaubt}}, mais éteints pendant les visites."
+ ],
+ ueberblick:{q:"Wofür liest man so einen Text?",
+  opts:["Um gezielt einzelne Angaben zu suchen (Uhrzeit, Treffpunkt, was mitnehmen).",
+        "Um ihn von vorne bis hinten zu verstehen.",
+        "Um die Grammatik zu üben."], a:0,
+  why:"Bei Programmen, Fahrplänen und Listen sucht man — man liest nicht. Das nennt man <i>scanning</i>."},
+ fragen:[
+  {t:"mc", q:"Wie lange dauert die Führung im Münster?",
+   opts:["eine Stunde","eine halbe Stunde","zwei Stunden"], a:0,
+   why:"<i>Visite guidée de la cathédrale, une heure.</i>"},
+  {t:"rf", q:"Das Mittagessen wird gestellt.", a:false,
+   beleg:"Apportez votre repas, rien n'est prévu sur place",
+   why:"<i>Apportez</i> ist ein Befehl: Bringt mit. Und <i>rien n'est prévu</i> — es ist nichts vorgesehen."},
+  {t:"mc", q:"Wie groß muss eine Gruppe in der freien Zeit mindestens sein?",
+   opts:["vier Personen","zwei Personen","sechs Personen"], a:0,
+   why:"<i>en groupes de quatre au minimum</i> — <i>au minimum</i> heißt mindestens."},
+  {t:"wort", q:"Welches Wort im Text heißt „erlaubt“?", a:["autorisés","autorisé","autoriser"],
+   why:"<i>autorisés</i>, vom Verb <i>autoriser</i>. Erlaubt sind die Handys — aber ausgeschaltet."},
+  {t:"rf", q:"Die Klasse ist um 17 Uhr wieder zu Hause.", a:false,
+   beleg:"17 h 00 — Départ. Retour prévu vers 19 h 30.",
+   why:"Um 17 Uhr ist die <i>Abfahrt</i>. Zurück ist man gegen 19.30 Uhr."}
+ ]
+},
+{
+ id:"stage-annonce", stufe:2, art:"Anzeige", titel:"La boulangerie recherche",
+ intro:"Eine Praktikumsanzeige im Schaufenster einer Bäckerei.",
+ text:[
+  "La boulangerie Moreau {{recherche|sucht}} un ou une {{stagiaire|Praktikant/in}}",
+  "Tu as entre 14 et 16 ans et tu veux découvrir un {{métier|Beruf}} ? Nous te proposons un stage d'une semaine pendant les vacances de février.",
+  "Horaires : du lundi au vendredi, de 6 h à 11 h. Oui, c'est tôt — c'est le métier qui veut ça.",
+  "Tu apprendras à préparer la {{pâte|Teig}}, à {{cuire|backen}} le pain et à servir les clients.",
+  "Le stage n'est pas {{payé|bezahlt}}, mais le petit déjeuner est {{offert|gratis}} et tu repars chaque jour avec une baguette.",
+  "Envoie un court message à Mme Moreau avant le 20 janvier. {{Inutile de|Es bringt nichts, zu}} téléphoner, elle est au {{fournil|Backstube}}."
+ ],
+ ueberblick:{q:"An wen richtet sich die Anzeige?",
+  opts:["An Jugendliche zwischen 14 und 16, die ein Praktikum suchen.",
+        "An ausgebildete Bäcker.",
+        "An Kunden der Bäckerei."], a:0,
+  why:"<i>Tu as entre 14 et 16 ans</i> — das Du und die Altersangabe sagen schon alles."},
+ fragen:[
+  {t:"mc", q:"Wann findet das Praktikum statt?",
+   opts:["in den Februarferien","im Februar während der Schulzeit","im Sommer"], a:0,
+   why:"<i>pendant les vacances de février</i>."},
+  {t:"rf", q:"Man wird für das Praktikum bezahlt.", a:false,
+   beleg:"Le stage n'est pas payé",
+   why:"Es gibt nur Frühstück und eine Baguette — Geld nicht. <i>mais</i> leitet die Entschädigung ein, nicht einen Lohn."},
+  {t:"mc", q:"Wie lange dauert ein Arbeitstag?",
+   opts:["fünf Stunden","sechs Stunden","elf Stunden"], a:0,
+   why:"<i>de 6 h à 11 h</i> — von 6 bis 11 Uhr, also fünf Stunden."},
+  {t:"wort", q:"Welches Wort im Text heißt „Teig“?", a:["la pâte","pâte"],
+   why:"<i>la pâte</i>. Mit Akzent — <i>les pâtes</i> ohne Zirkumflex wären die Nudeln."},
+  {t:"rf", q:"Man soll bei Frau Moreau anrufen.", a:false,
+   beleg:"Inutile de téléphoner, elle est au fournil",
+   why:"<i>inutile de</i> heißt „es ist zwecklos zu“. Sie will eine kurze Nachricht."},
+  {t:"kurz", q:"Warum steht in der Anzeige „c'est le métier qui veut ça“?",
+   muster:"Weil die frühen Arbeitszeiten zum Beruf des Bäckers gehören — Brot muss morgens fertig sein.",
+   why:"Der Satz nimmt den Einwand vorweg: 6 Uhr ist früh, aber im Bäckerberuf normal."}
+ ]
+}
+];
+
+/* ============================================================
+   LESEN LERNEN — Teil 2: die längeren Texte, Stufen 3 bis 5
+   ============================================================ */
+
+LESETEXTE.push(
+
+/* ===================== STUFE 3 ===================== */
+{
+ id:"portable", stufe:3, art:"Dialog", titel:"Le portable",
+ intro:"Ein Abend bei Familie Perrin. Achte darauf, wer was sagt — und wer am Ende nachgibt.",
+ text:[
+  "— Thomas, ça fait deux heures que tu es sur ton portable. Tu as fini tes devoirs ?",
+  "— Presque, maman. Il me reste juste l'exercice de maths.",
+  "— « Presque », ça veut dire non. Donne-moi ton téléphone, tu le {{récupéreras|wirst zurückbekommen}} après le dîner.",
+  "— Mais c'est {{injuste|ungerecht}} ! Clara a le sien, elle !",
+  "— Clara a dix-sept ans et elle a passé son contrôle ce matin. Toi, tu l'as demain.",
+  "— Tout le monde dans ma classe peut garder son portable le soir. Je suis le seul à qui on l'{{enlève|wegnehmen}}.",
+  "— Je ne crois pas que ce soit vrai. Et même si c'était vrai, ça ne changerait rien.",
+  "— Papa, dis quelque chose !",
+  "— Ta mère a raison. Mais on peut peut-être {{trouver un accord|eine Lösung finden}} : tu finis ton exercice maintenant, tu me le montres, et tu reprends ton téléphone à partir de huit heures.",
+  "— Jusqu'à quelle heure ?",
+  "— Vingt-deux heures. Et il reste dans le salon la nuit.",
+  "— … D'accord. Mais vingt-deux heures trente le vendredi.",
+  "— Vingt-deux heures. Va faire tes maths."
+ ],
+ ueberblick:{q:"Wie endet der Streit?",
+  opts:["Mit einem Kompromiss, den der Vater vorschlägt.",
+        "Thomas bekommt sein Handy sofort zurück.",
+        "Thomas bekommt sein Handy bis zum nächsten Tag nicht wieder."], a:0,
+  why:"<i>on peut peut-être trouver un accord</i> — ab da verhandeln sie, und Thomas sagt am Ende <i>D'accord</i>."},
+ fragen:[
+  {t:"mc", q:"Warum darf Clara ihr Handy behalten?",
+   opts:["Sie ist älter und hat ihre Arbeit schon geschrieben.",
+         "Sie hat keine Hausaufgaben.",
+         "Sie braucht es für die Schule."], a:0,
+   why:"<i>Clara a dix-sept ans et elle a passé son contrôle ce matin.</i> Zwei Gründe in einem Satz."},
+  {t:"rf", q:"Thomas hat seine Hausaufgaben fertig.", a:false,
+   beleg:"Il me reste juste l'exercice de maths",
+   why:"<i>Presque</i> — und die Mutter sagt direkt, was sie davon hält: <i>« Presque », ça veut dire non.</i>"},
+  {t:"mc", q:"Welches Argument bringt Thomas, das seine Mutter nicht gelten lässt?",
+   opts:["Dass alle anderen in seiner Klasse ihr Handy abends behalten dürfen.",
+         "Dass er morgen keine Schule hat.",
+         "Dass er das Handy für die Hausaufgaben braucht."], a:0,
+   why:"Die Mutter antwortet doppelt: Sie glaubt es nicht — und selbst wenn, würde es nichts ändern."},
+  {t:"wort", q:"Welches Wort im Text heißt „ungerecht“?", a:["injuste"],
+   why:"<i>injuste</i>. Das Gegenteil von <i>juste</i> (gerecht) — die Vorsilbe <i>in-</i> dreht die Bedeutung um."},
+  {t:"rf", q:"Thomas bekommt am Freitag eine halbe Stunde länger.", a:false,
+   beleg:"— Vingt-deux heures. Va faire tes maths.",
+   why:"Er versucht es, aber der Vater wiederholt nur <i>Vingt-deux heures</i>. Verhandlung gescheitert."},
+  {t:"kurz", q:"Welchen Kompromiss schlägt der Vater genau vor?",
+   muster:"Thomas macht jetzt seine Matheaufgabe und zeigt sie ihm; dann bekommt er das Handy von 20 bis 22 Uhr zurück. Nachts bleibt es im Wohnzimmer.",
+   why:"Der Vorschlag steht in einem einzigen langen Satz — mit drei Teilen, die durch Kommas getrennt sind."}
+ ]
+},
+{
+ id:"stage-bericht", stufe:3, art:"Bericht", titel:"Mon stage à la boulangerie",
+ intro:"Elsa berichtet in der Schule von ihrem Praktikum. Der Text steht in der Vergangenheit.",
+ text:[
+  "J'avais choisi la boulangerie parce que j'adore le pain. Je pensais que ce serait {{tranquille|ruhig}}.",
+  "Le premier jour, mon réveil a sonné à cinq heures et quart. Il faisait encore nuit et il pleuvait.",
+  "Quand je suis arrivée, Monsieur Moreau travaillait déjà depuis deux heures. Il m'a dit bonjour sans lever les yeux de sa {{pâte|Teig}}.",
+  "Au début, je n'avais pas le droit de toucher grand-chose. Je {{rangeais|räumte ein}} les baguettes et je {{balayais|fegte}} le sol.",
+  "Le mercredi, il m'a montré comment on {{pèse|wiegt ab}} la pâte. Mes premiers pains étaient tout {{tordus|krumm}}. Il les a mis au four quand même.",
+  "« On ne {{jette|wegwerfen}} rien ici », m'a-t-il dit. « Les pains tordus, on les mange nous-mêmes. »",
+  "Le plus dur, ce n'était pas de se lever. C'était de rester {{debout|stehend}} cinq heures sans s'asseoir.",
+  "Le vendredi, une cliente a demandé qui avait fait les {{croissants|Croissants}}. Monsieur Moreau m'a {{désignée|auf mich gezeigt}} du menton. Je crois que je n'ai jamais été aussi fière.",
+  "Est-ce que je veux devenir boulangère ? Honnêtement, non. Mais maintenant, quand j'achète une baguette, je sais ce qu'il y a {{derrière|dahinter}}."
+ ],
+ ueberblick:{q:"Was ist die Hauptaussage des Textes?",
+  opts:["Das Praktikum war anstrengend, aber es hat ihr etwas gebracht.",
+        "Sie will jetzt unbedingt Bäckerin werden.",
+        "Das Praktikum war eine Enttäuschung."], a:0,
+  why:"Der letzte Abschnitt sagt beides: Beruf — nein. Aber <i>je sais ce qu'il y a derrière</i>."},
+ fragen:[
+  {t:"mc", q:"Warum hatte sie die Bäckerei gewählt?",
+   opts:["Weil sie Brot liebt und dachte, es sei ruhig.",
+         "Weil ihre Eltern es wollten.",
+         "Weil sie nichts anderes gefunden hat."], a:0,
+   why:"Der erste Satz nennt beide Gründe — und das <i>Je pensais</i> kündigt schon an, dass es anders kam."},
+  {t:"rf", q:"Herr Moreau fing erst an zu arbeiten, als Elsa kam.", a:false,
+   beleg:"Monsieur Moreau travaillait déjà depuis deux heures",
+   why:"<i>depuis deux heures</i> — er war schon seit zwei Stunden dabei."},
+  {t:"mc", q:"Was passierte mit ihren ersten, krummen Broten?",
+   opts:["Sie wurden trotzdem gebacken und selbst gegessen.",
+         "Sie wurden weggeworfen.",
+         "Sie wurden verkauft."], a:0,
+   why:"<i>On ne jette rien ici</i> — <i>Les pains tordus, on les mange nous-mêmes.</i>"},
+  {t:"wort", q:"Welches Wort im Text heißt „stehend, auf den Beinen“?", a:["debout"],
+   why:"<i>debout</i> — unveränderlich, kein -e und kein -s. <i>rester debout</i> = stehen bleiben."},
+  {t:"mc", q:"Was war für sie das Schwierigste?",
+   opts:["das lange Stehen","das frühe Aufstehen","der Umgang mit den Kunden"], a:0,
+   why:"<i>Le plus dur, ce n'était pas de se lever. C'était de rester debout …</i> — die Konstruktion stellt beides gegeneinander."},
+  {t:"kurz", q:"Warum war sie am Freitag stolz?",
+   muster:"Weil eine Kundin fragte, wer die Croissants gemacht hatte, und Herr Moreau auf sie zeigte.",
+   why:"<i>je n'ai jamais été aussi fière</i> — der Grund steht in den zwei Sätzen davor."}
+ ]
+},
+{
+ id:"interview", stufe:3, art:"Interview", titel:"« Je m'entraîne avant l'école »",
+ intro:"Ein Interview aus einer Schülerzeitung mit einer jungen Schwimmerin.",
+ text:[
+  "Camille Rousseau, 16 ans, nage pour le club de Dijon. Elle vient de {{remporter|gewinnen}} le championnat régional.",
+  "— Camille, à quelle heure commence ta journée ?",
+  "— À cinq heures vingt. L'entraînement est de six à sept heures et demie, et après je file au lycée.",
+  "— Tous les jours ?",
+  "— Cinq matins sur sept. Le mercredi soir aussi, et le samedi il y a souvent une compétition. Le dimanche, je ne fais rien. {{Absolument|absolut}} rien.",
+  "— Comment ça se passe avec les cours ?",
+  "— {{Franchement|ehrlich gesagt}}, ce n'est pas simple. J'ai de bonnes notes, mais je ne sors presque jamais. Mes copines vont en ville le samedi, moi je suis dans un bassin.",
+  "— Tu le {{regrettes|bereuen}} parfois ?",
+  "— Le samedi matin à six heures, oui. Le jour d'une compétition, jamais.",
+  "— Qu'est-ce que tes parents en pensent ?",
+  "— Ma mère me {{conduit|fährt}} à la piscine depuis que j'ai huit ans. Elle dit qu'elle a fait autant de kilomètres que moi.",
+  "— Et après le lycée ?",
+  "— Je voudrais faire des études de {{kinésithérapie|Physiotherapie}}. Le sport de haut niveau, ça s'arrête un jour. Je préfère y penser maintenant qu'à trente ans."
+ ],
+ ueberblick:{q:"Welches Bild zeichnet das Interview von Camille?",
+  opts:["Eine Sportlerin, die viel aufgibt und trotzdem weiter plant.",
+        "Eine Sportlerin, die ihren Sport aufgeben will.",
+        "Eine Schülerin, die den Sport nur als Hobby betreibt."], a:0,
+  why:"Sie nennt die Verzichte offen (<i>je ne sors presque jamais</i>) — und denkt am Ende trotzdem schon an danach."},
+ fragen:[
+  {t:"mc", q:"Wie lange dauert ein Morgentraining?",
+   opts:["anderthalb Stunden","eine Stunde","zwei Stunden"], a:0,
+   why:"<i>de six à sept heures et demie</i> — von 6 bis 7.30 Uhr."},
+  {t:"rf", q:"Camille trainiert jeden Tag.", a:false,
+   beleg:"Le dimanche, je ne fais rien. Absolument rien.",
+   why:"<i>Cinq matins sur sept</i> — fünf von sieben. Und sonntags gar nichts."},
+  {t:"mc", q:"Worauf verzichtet sie vor allem?",
+   opts:["auf das Ausgehen mit Freundinnen","auf gute Noten","auf Urlaub"], a:0,
+   why:"<i>je ne sors presque jamais</i> — und direkt danach der Vergleich mit den Freundinnen."},
+  {t:"wort", q:"Welches Wort im Text heißt „ehrlich gesagt“?", a:["franchement"],
+   why:"<i>franchement</i> — von <i>franc</i> (offen, ehrlich). Es kündigt an, dass jetzt etwas Unangenehmes kommt."},
+  {t:"rf", q:"Camille bereut ihren Sport manchmal.", a:true,
+   beleg:"Le samedi matin à six heures, oui.",
+   why:"Die Antwort ist zweigeteilt: samstags früh ja, am Wettkampftag nie. Beides gehört zur Antwort."},
+  {t:"mc", q:"Warum denkt sie jetzt schon über ein Studium nach?",
+   opts:["Weil Leistungssport irgendwann aufhört.",
+         "Weil ihre Eltern es verlangen.",
+         "Weil sie mit dem Schwimmen aufhören will."], a:0,
+   why:"<i>Le sport de haut niveau, ça s'arrête un jour.</i> Deshalb lieber jetzt als mit dreißig."},
+  {t:"kurz", q:"Was sagt Camille über ihre Mutter?",
+   muster:"Dass sie sie fährt, seit Camille acht ist, und selbst sagt, sie habe genauso viele Kilometer gemacht wie Camille.",
+   why:"Die Pointe liegt im Vergleich: Camille schwimmt die Kilometer, die Mutter fährt sie."}
+ ]
+},
+
+/* ===================== STUFE 4 ===================== */
+{
+ id:"journee", stufe:4, art:"Erzählung", titel:"Une journée pas comme les autres",
+ intro:"Eine Erzählung. Achte auf den Wechsel zwischen Beschreibung (imparfait) und Handlung (passé composé).",
+ text:[
+  "Ce matin-là, tout avait mal commencé. Mon réveil n'avait pas sonné, il pleuvait, et j'avais oublié mon {{parapluie|Regenschirm}} chez Théo la veille.",
+  "Je suis sorti en courant. Le bus de 7 h 42 partait justement quand je suis arrivé au {{coin|Ecke}} de la rue. Le chauffeur m'a vu dans son {{rétroviseur|Rückspiegel}} — et il s'est arrêté.",
+  "Dans le bus, il n'y avait presque personne. Une vieille dame {{tricotait|strickte}} près de la porte. Un homme dormait, la tête contre la vitre.",
+  "C'est à ce moment-là que j'ai remarqué le sac. Un sac à dos noir, posé seul sur le siège d'à côté.",
+  "J'ai regardé autour de moi. Personne ne semblait le chercher. J'ai {{hésité|gezögert}} pendant trois arrêts.",
+  "Puis je l'ai ouvert. À l'intérieur : un cahier de maths, une trousse, un {{goûter|Pausenbrot}} et une carte de bus au nom de Inès Delaunay, 3e B.",
+  "3e B, c'était la classe de ma sœur.",
+  "À l'arrêt du collège, j'ai pris le sac et je suis descendu. Dans la cour, j'ai cherché ma sœur pendant dix minutes avant de la trouver.",
+  "« Inès Delaunay ? Elle est absente aujourd'hui. Elle a raté le bus. »",
+  "Alors j'ai compris. Le sac était tombé quand elle avait couru, et le bus était reparti sans elle.",
+  "Je l'ai {{déposé|abgegeben}} au {{secrétariat|Sekretariat}}. La secrétaire a {{noté|notiert}} mon nom.",
+  "Deux jours plus tard, une fille que je ne connaissais pas m'a arrêté dans le couloir. Elle tenait deux pains au chocolat.",
+  "« C'est toi, le garçon du sac ? »",
+  "Je n'ai jamais aussi bien mangé un pain au chocolat."
+ ],
+ ueberblick:{q:"Worum geht es in der Geschichte?",
+  opts:["Der Erzähler findet einen Rucksack und gibt ihn zurück.",
+        "Der Erzähler verpasst den Bus und kommt zu spät.",
+        "Der Erzähler verliert seinen eigenen Rucksack."], a:0,
+  why:"Der verregnete Morgen ist nur der Rahmen. Die Geschichte beginnt bei <i>C'est à ce moment-là que j'ai remarqué le sac.</i>"},
+ fragen:[
+  {t:"rf", q:"Der Erzähler hat den Bus verpasst.", a:false,
+   beleg:"Le chauffeur m'a vu dans son rétroviseur — et il s'est arrêté.",
+   why:"Fast hätte er ihn verpasst. Der Gedankenstrich vor <i>et il s'est arrêté</i> markiert genau die Wendung."},
+  {t:"mc", q:"Wie lange hat er gezögert, bevor er den Rucksack geöffnet hat?",
+   opts:["drei Haltestellen lang","drei Minuten","er hat gar nicht gezögert"], a:0,
+   why:"<i>J'ai hésité pendant trois arrêts.</i> — eine Zeitangabe, die man nur beim Busfahren versteht."},
+  {t:"mc", q:"Woran erkennt er, wem der Rucksack gehört?",
+   opts:["an der Busfahrkarte mit Namen und Klasse",
+         "am Matheheft","am Pausenbrot"], a:0,
+   why:"<i>une carte de bus au nom de Inès Delaunay, 3e B</i> — nur die Karte trägt einen Namen."},
+  {t:"wort", q:"Welches Wort im Text heißt „zögern“?", a:["hésité","hésiter"],
+   why:"<i>hésiter</i>, im Text als Partizip <i>hésité</i>."},
+  {t:"rf", q:"Inès war an diesem Tag in der Schule.", a:false,
+   beleg:"Elle est absente aujourd'hui. Elle a raté le bus.",
+   why:"<i>rater le bus</i> = den Bus verpassen. Deshalb lag der Rucksack allein im Bus."},
+  {t:"mc", q:"Warum war der Rucksack überhaupt im Bus, obwohl Inès es nicht war?",
+   opts:["Er ist ihr beim Rennen heruntergefallen, und der Bus fuhr ohne sie weiter.",
+         "Jemand anderes hatte ihn hineingetragen.",
+         "Sie hatte ihn absichtlich dort gelassen."], a:0,
+   why:"Der Erzähler schließt es selbst: <i>Le sac était tombé quand elle avait couru.</i>"},
+  {t:"kurz", q:"Wie endet die Geschichte, und was sagt das Ende über den Erzähler?",
+   muster:"Inès spricht ihn zwei Tage später im Flur an und bringt ihm ein Pain au chocolat. Der letzte Satz zeigt, dass ihm die Begegnung mehr bedeutet als das Gebäck.",
+   why:"<i>Je n'ai jamais aussi bien mangé un pain au chocolat.</i> — gesagt wird etwas über das Essen, gemeint ist etwas anderes."}
+ ]
+},
+{
+ id:"ados-ecrans", stufe:4, art:"Sachtext", titel:"Les ados et les écrans",
+ intro:"Ein Sachtext mit Zahlen. Bei solchen Texten lohnt es sich, die Zahlen zuerst zu markieren.",
+ text:[
+  "Combien de temps les adolescents français passent-ils devant un écran ? Une {{enquête|Umfrage}} menée dans trois collèges de la région de Lille donne des résultats qui ont {{surpris|überrascht}} les professeurs eux-mêmes.",
+  "En moyenne, les élèves interrogés déclarent passer trois heures et quarante minutes par jour devant un écran, en {{dehors|außerhalb}} des heures de cours. Le week-end, ce chiffre monte à presque six heures.",
+  "Mais la moyenne {{cache|verbirgt}} de grandes différences. Un quart des élèves reste sous deux heures par jour. À l'autre bout, un élève sur dix dépasse sept heures.",
+  "Ce qui a le plus étonné les {{chercheurs|Forscher}}, c'est l'usage du téléphone la nuit. Trente-huit pour cent des élèves de 3e disent consulter leur portable après minuit au moins trois fois par semaine.",
+  "« Le problème n'est pas l'écran en soi », explique Madame Fournier, {{médecin scolaire|Schulärztin}}. « Le problème, c'est le sommeil {{perdu|verloren}}. Un adolescent a besoin de neuf heures. Beaucoup en {{dorment|schlafen}} sept. »",
+  "Les élèves, eux, ne voient pas toujours les choses ainsi. « On dit toujours qu'on perd notre temps », remarque Yanis, 15 ans. « Mais moi, j'apprends la guitare sur mon téléphone. Mon père lit le journal deux heures par jour et personne ne lui dit rien. »",
+  "L'enquête montre d'ailleurs que les usages ont changé. La télévision {{recule|geht zurück}} fortement : seuls 12 % des élèves la regardent tous les jours. Les vidéos courtes, elles, {{progressent|nehmen zu}} chaque année.",
+  "Que faire ? Plusieurs collèges testent des solutions simples : {{interdire|verbieten}} le portable pendant la pause de midi, ou {{proposer|anbieten}} une salle de jeux de société.",
+  "Au collège Jean-Moulin, les élèves {{déposent|legen ab}} leur téléphone dans une boîte à l'entrée. « Les premières semaines, c'était la {{guerre|Krieg}} », raconte le principal. « Aujourd'hui, personne n'en parle plus. Et la cour est beaucoup plus {{bruyante|laut}} — dans le bon sens. »"
+ ],
+ ueberblick:{q:"Was will der Text vor allem?",
+  opts:["Zahlen zeigen und verschiedene Sichtweisen nebeneinanderstellen.",
+        "Die Jugendlichen für ihren Handykonsum kritisieren.",
+        "Erklären, wie man ein Handy benutzt."], a:0,
+  why:"Der Text bringt Zahlen, dann die Ärztin, dann Yanis, dann Schulen — er wertet nicht, er stellt gegenüber."},
+ fragen:[
+  {t:"mc", q:"Wie lange sind die Schüler an einem normalen Tag im Schnitt vor einem Bildschirm?",
+   opts:["3 Stunden 40 Minuten","6 Stunden","7 Stunden"], a:0,
+   why:"<i>trois heures et quarante minutes par jour</i> — die sechs Stunden gelten nur fürs Wochenende."},
+  {t:"rf", q:"Alle Schüler nutzen ungefähr gleich viel.", a:false,
+   beleg:"la moyenne cache de grandes différences",
+   why:"Ein Viertel bleibt unter zwei Stunden, einer von zehn kommt über sieben. Das Wort <i>moyenne</i> (Durchschnitt) ist hier die Falle."},
+  {t:"mc", q:"Was hat die Forscher am meisten überrascht?",
+   opts:["die Handynutzung nach Mitternacht","die Fernsehzeit","die Zahl der Videos"], a:0,
+   why:"<i>Ce qui a le plus étonné les chercheurs, c'est l'usage du téléphone la nuit.</i>"},
+  {t:"wort", q:"Welches Wort im Text heißt „Umfrage“?", a:["une enquête","enquête","l'enquête"],
+   why:"<i>une enquête</i> — eine Umfrage oder Untersuchung. Nicht zu verwechseln mit dem englischen <i>inquiry</i>, aber verwandt."},
+  {t:"mc", q:"Worin besteht das Problem für die Schulärztin?",
+   opts:["im verlorenen Schlaf","im Bildschirm selbst","in den schlechten Noten"], a:0,
+   why:"Sie sagt es ausdrücklich: <i>Le problème n'est pas l'écran en soi … c'est le sommeil perdu.</i>"},
+  {t:"rf", q:"Yanis findet, dass Erwachsene mit zweierlei Maß messen.", a:true,
+   beleg:"Mon père lit le journal deux heures par jour et personne ne lui dit rien.",
+   why:"Er vergleicht seine Zeit am Handy mit der Zeitungszeit seines Vaters — genau das ist der Vorwurf."},
+  {t:"mc", q:"Wie hat sich die Regel am Collège Jean-Moulin entwickelt?",
+   opts:["Zuerst gab es großen Widerstand, inzwischen ist sie normal.",
+         "Sie wurde nach wenigen Wochen abgeschafft.",
+         "Sie wurde von Anfang an akzeptiert."], a:0,
+   why:"<i>Les premières semaines, c'était la guerre … Aujourd'hui, personne n'en parle plus.</i>"},
+  {t:"kurz", q:"Was meint der Schulleiter damit, der Schulhof sei jetzt lauter „dans le bon sens“?",
+   muster:"Die Schüler reden und spielen wieder miteinander, statt schweigend auf ihr Handy zu schauen. Der Lärm ist also ein gutes Zeichen.",
+   why:"<i>dans le bon sens</i> = im guten Sinne. Der Satz dreht ein scheinbar negatives Wort ins Positive."}
+ ]
+},
+{
+ id:"nina-lyon", stufe:4, art:"Erfahrungsbericht", titel:"Nina à Lyon",
+ intro:"Nina aus Bielefeld war drei Monate in Lyon. Sie schreibt für die Schulhomepage.",
+ text:[
+  "Quand je suis arrivée à Lyon, en septembre, je croyais parler français. J'avais {{quand même|immerhin}} cinq ans de cours derrière moi.",
+  "Le premier soir, la mère de ma {{correspondante|Austauschpartnerin}} m'a demandé quelque chose à table. J'ai souri et j'ai dit « oui ». Tout le monde a ri. Elle m'avait demandé si j'étais fatiguée du voyage — et j'avais répondu « oui » à la question « Tu veux encore du fromage ? ».",
+  "Les trois premières semaines ont été les plus dures. Au collège, je comprenais les professeurs, mais pas les élèves. En cours d'histoire, tout allait bien. À la {{récré|Pause}}, je ne comprenais plus rien.",
+  "C'est normal, m'a expliqué ma correspondante : les profs parlent lentement et {{articulent|sprechen deutlich}}. Les jeunes, non. En plus, ils utilisent des mots qu'on n'apprend pas en cours.",
+  "Alors j'ai changé de méthode. J'ai arrêté de vouloir tout comprendre. J'ai {{repéré|herausgehört}} les mots qui revenaient souvent et je les ai notés le soir dans un carnet. {{Au bout de|nach}} trois semaines, j'en avais {{rempli|gefüllt}} vingt pages.",
+  "Le {{déclic|der Aha-Moment}} est venu un mardi. On regardait un film en classe et j'ai ri avant les sous-titres. Ce jour-là, j'ai compris que quelque chose avait changé.",
+  "Ce qui m'a le plus {{surprise|überrascht}}, ce n'est pas la langue, c'est le rythme de la journée. On commence à huit heures et on finit souvent à dix-sept heures. La pause de midi dure presque deux heures, et on mange à la {{cantine|Mensa}}, assis, avec une entrée, un plat et un dessert.",
+  "En rentrant en Allemagne, j'ai eu un problème {{inattendu|unerwartet}} : pendant une semaine, j'ai cherché mes mots en allemand.",
+  "Si quelqu'un {{hésite|zögert}} à partir : partez. Les trois premières semaines sont pénibles, et tout le reste ne l'est pas."
+ ],
+ ueberblick:{q:"Wie ist der Text aufgebaut?",
+  opts:["Von den ersten Schwierigkeiten über einen Wendepunkt bis zu einem Rat am Ende.",
+        "Als Liste von Tipps für den Austausch.",
+        "Als Vergleich zwischen Schulsystemen."], a:0,
+  why:"Erst das Missverständnis, dann die harten Wochen, dann <i>le déclic</i>, am Schluss <i>partez</i>."},
+ fragen:[
+  {t:"mc", q:"Was war das Missverständnis am ersten Abend?",
+   opts:["Sie antwortete auf eine andere Frage als die gestellte.",
+         "Sie hat die Gastmutter nicht gegrüßt.",
+         "Sie wollte kein Abendessen."], a:0,
+   why:"Gefragt war, ob sie müde sei — ihr „oui“ passte zur Frage nach dem Käse."},
+  {t:"rf", q:"Im Unterricht hatte sie mehr Probleme als in der Pause.", a:false,
+   beleg:"En cours d'histoire, tout allait bien. À la récré, je ne comprenais plus rien.",
+   why:"Genau andersherum. Der Grund steht im nächsten Abschnitt: Lehrer sprechen langsam und deutlich."},
+  {t:"mc", q:"Wie hat sie ihre Methode geändert?",
+   opts:["Sie hat aufgehört, alles verstehen zu wollen, und häufige Wörter notiert.",
+         "Sie hat mehr Grammatik gelernt.",
+         "Sie hat nur noch Deutsch gesprochen."], a:0,
+   why:"<i>J'ai arrêté de vouloir tout comprendre</i> — und dann das Heft mit den wiederkehrenden Wörtern."},
+  {t:"wort", q:"Welches Wort im Text heißt „der Aha-Moment“?", a:["le déclic","déclic"],
+   why:"<i>le déclic</i> — eigentlich das Klicken eines Schalters. Der Moment, in dem es umspringt."},
+  {t:"mc", q:"Woran merkte sie, dass sich etwas verändert hatte?",
+   opts:["Sie lachte bei einem Film vor den Untertiteln.",
+         "Sie bekam eine gute Note.",
+         "Ihre Gastmutter sagte es ihr."], a:0,
+   why:"Vor den Untertiteln zu lachen heißt: Sie hat das Französische verstanden, nicht die Übersetzung."},
+  {t:"rf", q:"Am meisten überrascht hat sie die Sprache.", a:false,
+   beleg:"ce n'est pas la langue, c'est le rythme de la journée",
+   why:"Die Konstruktion <i>ce n'est pas …, c'est …</i> schiebt die Antwort genau auf den zweiten Teil."},
+  {t:"kurz", q:"Welches unerwartete Problem hatte sie nach der Rückkehr?",
+   muster:"Eine Woche lang fehlten ihr die deutschen Wörter.",
+   why:"<i>j'ai cherché mes mots en allemand</i> — ein Problem, mit dem niemand rechnet."}
+ ]
+},
+
+/* ===================== STUFE 5 ===================== */
+{
+ id:"zero-dechet", stufe:5, art:"Sachtext", titel:"Le projet « Zéro déchet »",
+ intro:"Klassenarbeitslänge. Lies zuerst die Fragen, dann den Text — so weißt du, worauf du achten musst.",
+ text:[
+  "Au collège Marie-Curie de Rennes, la poubelle de la cantine était devenue un sujet de {{dispute|Streit}}. Chaque midi, les {{agents|Angestellten}} jetaient entre quarante et cinquante kilos de nourriture. Des assiettes à peine touchées, du pain entier, des fruits {{intacts|unberührt}}.",
+  "En octobre dernier, trois élèves de 3e ont décidé que cela suffisait. Lina, Marwan et Jules ont demandé un rendez-vous au principal. Ils y sont allés avec un {{dossier|Mappe, Unterlagen}} de six pages.",
+  "« Je pensais qu'ils venaient se plaindre », raconte le principal, Monsieur Benali. « Ils sont arrivés avec des chiffres, des photos et trois propositions. J'ai dit oui tout de suite. »",
+  "La première mesure a été la plus simple. Pendant deux semaines, les élèves ont {{pesé|gewogen}} tout ce qui partait à la poubelle, et le résultat était {{affiché|ausgehängt}} chaque jour à l'entrée de la cantine, sur une grande feuille.",
+  "« On n'a rien interdit, on n'a fait honte à personne », explique Lina. « On a juste écrit le nombre. Au début, les gens le lisaient en riant. Après quatre ou cinq jours, ils ont arrêté de rire. »",
+  "En quinze jours, sans aucune autre mesure, les {{déchets|Abfälle}} ont {{baissé|zurückgehen}} de vingt-trois pour cent.",
+  "La deuxième proposition a été plus difficile à faire accepter : laisser les élèves choisir la {{taille|Größe}} de leur portion. « Petite faim » ou « grande faim ». Les cuisines étaient contre, parce que c'était plus de travail.",
+  "« Au début, on a {{râlé|gemeckert}} », reconnaît Madame Perrot, qui travaille en cuisine depuis dix-neuf ans. « Et puis on a vu les assiettes revenir vides. {{Au fond|im Grunde}}, ça fait plaisir. Personne n'aime cuisiner pour la poubelle. »",
+  "La troisième mesure, elle, n'a pas marché. Les trois élèves voulaient installer un {{composteur|Komposter}} dans la cour et utiliser le compost pour un petit jardin. Le projet a été {{abandonné|aufgegeben}} après deux mois.",
+  "« Ce n'était pas une mauvaise idée », dit Marwan. « Mais il fallait quelqu'un tous les jours, y compris pendant les vacances. On avait prévu le composteur, on n'avait pas prévu les vacances. »",
+  "Aujourd'hui, un an plus tard, la cantine jette en moyenne dix-huit kilos par jour au lieu de quarante-cinq. Quatre collèges de la ville ont {{repris|übernommen}} le système d'affichage.",
+  "Lina, Marwan et Jules sont maintenant au lycée. Au collège Marie-Curie, ce sont des élèves de 5e qui pèsent les déchets le mardi.",
+  "« C'est ça, la vraie réussite », dit Monsieur Benali. « Un projet qui {{survit|überlebt}} à ceux qui l'ont lancé. »"
+ ],
+ ueberblick:{q:"Was ist die Hauptaussage des Textes?",
+  opts:["Ein Schülerprojekt gegen Essensverschwendung hat trotz eines Rückschlags gewirkt und wird fortgeführt.",
+        "Die Schulkantine wurde geschlossen, weil zu viel weggeworfen wurde.",
+        "Die Schulleitung hat ein Projekt gegen den Willen der Schüler eingeführt."], a:0,
+  why:"Drei Maßnahmen: zwei wirken, eine scheitert. Und am Ende machen jüngere Schüler weiter."},
+ fragen:[
+  {t:"mc", q:"Wie viel Essen wurde vor dem Projekt pro Mittag weggeworfen?",
+   opts:["40 bis 50 Kilo","18 Kilo","23 Kilo"], a:0,
+   why:"<i>entre quarante et cinquante kilos</i>. Die 18 Kilo sind der Wert von heute, die 23 Prozent der Rückgang."},
+  {t:"rf", q:"Der Schulleiter war von dem Vorschlag der Schüler überrascht.", a:true,
+   beleg:"Je pensais qu'ils venaient se plaindre",
+   why:"Er hatte eine Beschwerde erwartet und bekam eine sechsseitige Mappe."},
+  {t:"mc", q:"Worin bestand die erste Maßnahme?",
+   opts:["Die Abfallmenge wurde gewogen und täglich öffentlich ausgehängt.",
+         "Essensreste wurden verboten.",
+         "Die Portionen wurden verkleinert."], a:0,
+   why:"Wiegen und aushängen — mehr nicht. Lina betont ausdrücklich: <i>On n'a rien interdit.</i>"},
+  {t:"wort", q:"Welches Wort im Text heißt „Abfälle“?", a:["les déchets","déchets","déchet","le déchet"],
+   why:"<i>les déchets</i> — der Abfall. Steht auch im Titel des Projekts: <i>Zéro déchet</i>."},
+  {t:"mc", q:"Um wie viel sanken die Abfälle allein durch das Aushängen?",
+   opts:["um 23 Prozent","um 18 Prozent","um die Hälfte"], a:0,
+   why:"<i>En quinze jours, sans aucune autre mesure, les déchets ont baissé de vingt-trois pour cent.</i>"},
+  {t:"rf", q:"Die Küche war von Anfang an für die zweite Maßnahme.", a:false,
+   beleg:"Les cuisines étaient contre, parce que c'était plus de travail.",
+   why:"Madame Perrot sagt selbst: <i>Au début, on a râlé.</i> Erst die leeren Teller haben sie überzeugt."},
+  {t:"mc", q:"Warum scheiterte die dritte Maßnahme?",
+   opts:["Der Komposter brauchte jeden Tag jemanden — auch in den Ferien.",
+         "Die Schulleitung war dagegen.",
+         "Es gab keinen Platz im Hof."], a:0,
+   why:"Marwan sagt es wörtlich: <i>On avait prévu le composteur, on n'avait pas prévu les vacances.</i>"},
+  {t:"rf", q:"Das Projekt endete, als die drei Schüler aufs Gymnasium wechselten.", a:false,
+   beleg:"ce sont des élèves de 5e qui pèsent les déchets le mardi",
+   why:"Jüngere Schüler haben übernommen — genau das nennt der Schulleiter den eigentlichen Erfolg."},
+  {t:"kurz", q:"Warum ist für Monsieur Benali gerade das der eigentliche Erfolg?",
+   muster:"Weil ein Projekt, das ohne seine Gründer weiterläuft, zu einer festen Einrichtung geworden ist und nicht von einzelnen Personen abhängt.",
+   why:"<i>Un projet qui survit à ceux qui l'ont lancé.</i> — <i>survivre à qn</i> heißt „jemanden überleben“."},
+  {t:"kurz", q:"Nenne die drei Maßnahmen und sag jeweils, ob sie funktioniert haben.",
+   muster:"1. Abfall wiegen und aushängen — hat funktioniert (−23 % in zwei Wochen). 2. Portionsgröße wählen lassen — hat nach anfänglichem Widerstand funktioniert. 3. Komposter mit Garten — ist nach zwei Monaten gescheitert.",
+   why:"Die drei Maßnahmen sind im Text durch <i>La première / La deuxième / La troisième mesure</i> markiert — solche Gliederungswörter zeigen dir den Aufbau."}
+ ]
+},
+{
+ id:"malik", stufe:5, art:"Erzählung", titel:"Le choix de Malik",
+ intro:"Klassenarbeitslänge, Erzählung mit Dialog. Behalte im Kopf, wer was will.",
+ text:[
+  "Le papier était sur la table de la cuisine depuis trois jours. Personne ne l'avait touché, mais tout le monde savait qu'il était là.",
+  "{{En haut|oben}} : « Académie de Lille — Choix d'orientation après la 3e ». En bas : une ligne vide et, à côté, « Signature du {{responsable légal|Erziehungsberechtigter}} ».",
+  "Le vendredi soir, le père de Malik a posé sa fourchette.",
+  "— Alors ?",
+  "— Alors quoi ?",
+  "— Ne fais pas semblant. Tu dois rendre ça lundi.",
+  "Malik a regardé son assiette. Il savait exactement ce qu'il voulait écrire. Il savait aussi ce que son père voulait lire, et ce n'était pas la même chose.",
+  "— Je veux faire un {{CAP|Berufsausbildung}} cuisine.",
+  "Sa mère s'est arrêtée de manger. Son père n'a rien dit pendant cinq secondes, ce qui, chez lui, était très long.",
+  "— Tu as dix-sept de moyenne en maths.",
+  "— Je sais.",
+  "— Tes profs disent tous la même chose : lycée général, {{sans hésiter|ohne zu zögern}}.",
+  "— Je sais, papa.",
+  "— Et tu veux {{éplucher|schälen}} des pommes de terre.",
+  "Malik n'a pas répondu tout de suite. Il pensait à l'été dernier, chez son oncle, dans le restaurant à Boulogne. Trois semaines à {{plonger|spülen}} et à couper des légumes, debout de huit heures à minuit. Il n'avait jamais été aussi {{épuisé|erschöpft}}. Il n'avait jamais été aussi {{heureux|glücklich}} non plus.",
+  "— Papa, tu te souviens de ce que tu m'as dit quand j'avais douze ans ? Que tu avais fait comptable parce que ton père le voulait. Et que tu avais {{mis|gebraucht}} vingt ans à faire autre chose.",
+  "Le père n'a pas répondu.",
+  "— Je ne veux pas mettre vingt ans.",
+  "Sa mère s'est levée pour chercher de l'eau que personne n'avait demandée.",
+  "— Et si ça ne te plaît pas, après ? a dit son père. {{Une fois que|sobald}} tu es dans cette voie, c'est difficile de revenir.",
+  "— C'est difficile, mais ce n'est pas impossible. Thomas a fait l'{{inverse|das Umgekehrte}} : lycée, puis apprentissage. Ça existe dans les deux sens.",
+  "Son père a repris sa fourchette. Il a mangé trois bouchées en silence.",
+  "— Tu ferais un bon avocat, aussi, a-t-il dit enfin.",
+  "Malik a souri. Il a reconnu, dans cette phrase, quelque chose qui ressemblait à un accord.",
+  "Le dimanche soir, le papier n'était plus sur la table. Il était dans le sac de Malik, {{plié|gefaltet}} en deux, avec une signature en bas."
+ ],
+ ueberblick:{q:"Worum geht es in dem Text?",
+  opts:["Ein Sohn setzt seinen Berufswunsch gegen die Erwartung seines Vaters durch.",
+        "Ein Vater verbietet seinem Sohn eine Ausbildung.",
+        "Ein Schüler weiß nicht, was er werden will."], a:0,
+  why:"Malik weiß von Anfang an, was er will (<i>Il savait exactement ce qu'il voulait écrire</i>). Der Konflikt ist der Vater."},
+ fragen:[
+  {t:"mc", q:"Was liegt auf dem Küchentisch?",
+   opts:["ein Formular zur Schulwahl, das unterschrieben werden muss",
+         "ein Zeugnis","ein Brief vom Onkel"], a:0,
+   why:"<i>Choix d'orientation après la 3e</i> plus <i>Signature du responsable légal</i> — ein Formular, das die Eltern unterschreiben."},
+  {t:"rf", q:"Malik ist ein schlechter Schüler.", a:false,
+   beleg:"Tu as dix-sept de moyenne en maths.",
+   why:"In Frankreich wird von 0 bis 20 benotet — 17 ist sehr gut. Genau deshalb versteht sein Vater die Entscheidung nicht."},
+  {t:"mc", q:"Was hat Malik im letzten Sommer gemacht?",
+   opts:["Er hat drei Wochen im Restaurant seines Onkels gearbeitet.",
+         "Er war im Urlaub in Boulogne.",
+         "Er hat ein Praktikum bei einem Buchhalter gemacht."], a:0,
+   why:"<i>Trois semaines à plonger et à couper des légumes</i> — und zwar von acht bis Mitternacht."},
+  {t:"wort", q:"Welches Wort im Text heißt „erschöpft“?", a:["épuisé","épuisée"],
+   why:"<i>épuisé</i>. Der Satz danach stellt es bewusst gegen <i>heureux</i>."},
+  {t:"mc", q:"Welches Argument überzeugt den Vater am Ende am ehesten?",
+   opts:["dass der Vater selbst zwanzig Jahre gebraucht hat, um seinen Weg zu ändern",
+         "dass Malik gut in Mathe ist",
+         "dass die Mutter zustimmt"], a:0,
+   why:"Direkt nach diesem Satz antwortet der Vater nicht mehr — der Punkt sitzt."},
+  {t:"rf", q:"Malik behauptet, ein Wechsel sei später unmöglich.", a:false,
+   beleg:"C'est difficile, mais ce n'est pas impossible.",
+   why:"Er gibt den Einwand des Vaters halb zu und entkräftet ihn mit dem Beispiel von Thomas."},
+  {t:"mc", q:"Was bedeutet der Satz des Vaters „Tu ferais un bon avocat, aussi“?",
+   opts:["Er erkennt an, dass Malik gut argumentiert hat — und gibt damit nach.",
+         "Er will, dass Malik Jura studiert.",
+         "Er macht sich über Malik lustig."], a:0,
+   why:"Malik selbst deutet es: <i>quelque chose qui ressemblait à un accord</i>."},
+  {t:"rf", q:"Am Ende ist das Formular unterschrieben.", a:true,
+   beleg:"plié en deux, avec une signature en bas",
+   why:"Der Schluss sagt es, ohne es auszusprechen — man muss den letzten Satz genau lesen."},
+  {t:"kurz", q:"Warum steht im Text, die Mutter sei aufgestanden, um Wasser zu holen, das niemand verlangt hatte?",
+   muster:"Weil die Situation unangenehm geworden ist. Sie sucht einen Vorwand, um aufzustehen und den Moment zu entschärfen.",
+   why:"Solche Nebensätze erzählen die Stimmung, nicht die Handlung. Dasselbe gilt für die fünf Sekunden Schweigen des Vaters."},
+  {t:"kurz", q:"Fasse den Konflikt zwischen Malik und seinem Vater in zwei bis drei Sätzen zusammen.",
+   muster:"Malik will eine Kochausbildung machen, obwohl seine Noten für das Gymnasium reichen. Sein Vater hält das für eine Verschwendung und fürchtet, dass ein späterer Wechsel schwierig wird. Malik erinnert ihn daran, dass er selbst zwanzig Jahre gebraucht hat, um den von seinem Vater gewählten Beruf zu verlassen.",
+   why:"Für eine Zusammenfassung brauchst du: Wer will was — wer will etwas anderes — womit wird es entschieden."}
+ ]
+}
+
+);
+
+/* ============================================================
+   LESEN LERNEN — Teil 3: Logik
+   ============================================================ */
+
+const LQUOTE = 0.7;                 // ab hier gilt ein Text als geschafft
+const LKEY   = "cahier-lesen-v1";
+
+let LM = {txt:{}, offen:{}};
+try{
+  const r = JSON.parse(localStorage.getItem(LKEY) || "null");
+  if(r && typeof r === "object"){
+    LM.txt   = r.txt   && typeof r.txt   === "object" ? r.txt   : {};
+    LM.offen = r.offen && typeof r.offen === "object" ? r.offen : {};
+  }
+}catch(e){}
+function lSave(){ try{ localStorage.setItem(LKEY, JSON.stringify(LM)); }catch(e){} }
+
+const lStand   = id => LM.txt[id] || null;
+const lGut     = id => ((lStand(id) || {}).best || 0) >= LQUOTE * 100;
+const lStufeTx = n  => LESETEXTE.filter(t => t.stufe === n);
+function lStufeAuf(n){
+  if(n <= 1) return true;
+  if(LM.offen[n]) return true;
+  const v = lStufeTx(n - 1);
+  return v.length ? v.filter(t => lGut(t.id)).length / v.length >= LQUOTE : true;
+}
+
+/* ---------- Text zerlegen ---------------------------------
+   {{mot|Bedeutung}} wird zu einem Wort, das man antippen kann.
+   Die Zuordnung Nummer → Bedeutung entsteht einmal pro Text.
+----------------------------------------------------------- */
+function lParse(t){
+  if(t._abs) return t;
+  const gl = [];
+  t._abs = t.text.map(p => p.replace(/\{\{([^|}]+)\|([^}]+)\}\}/g, (_, w, de) => {
+    const i = gl.length;
+    gl.push({w, de});
+    return `<button class="gl" data-act="lgl" data-g="${i}">${esc(w)}<span class="gd">${esc(de)}</span></button>`;
+  }));
+  t._gl = gl;
+  t._n  = t.text.join(" ").replace(/\{\{([^|}]+)\|[^}]+\}\}/g, "$1").split(/\s+/).length;
+  return t;
+}
+
+/* ---------- Zustand der laufenden Lektüre ------------------ */
+let LS = null;   // {t, phase, idx, shown, ok, all, gl:Set, zu}
+
+function renderLesen(){
+  if(S.mode === "lwort") return lWortliste();
+  if(LS) return lRun();
+  return lUebersicht();
+}
+
+/* ============================================================
+   Übersicht
+   ============================================================ */
+function lUebersicht(){
+  const fertig = LESETEXTE.filter(t => lGut(t.id)).length;
+  let html = `<div class="sheet plain">
+    <div class="qmeta">Lesen lernen</div>
+    <div class="qtext">${LESETEXTE.length} Texte, von der SMS bis zur Klassenarbeit</div>
+    <p class="qsub">Jeder Text hat zuerst eine Frage zum <b>Überfliegen</b> und danach Fragen zum
+      genauen Lesen. Unbekannte Wörter sind unterstrichen — tippe sie an, wenn du nicht weiterkommst,
+      aber versuche es vorher zu erraten. Ab ${Math.round(LQUOTE*100)} % gilt ein Text als geschafft.</p>
+    <div class="progress"><span>${fertig} / ${LESETEXTE.length} geschafft</span>
+      <span class="pbar"><i style="width:${Math.round(fertig/LESETEXTE.length*100)}%"></i></span></div>
+  </div>`;
+
+  LSTUFEN.forEach(st => {
+    const ts = lStufeTx(st.nr);
+    if(!ts.length) return;
+    const auf = lStufeAuf(st.nr), g = ts.filter(t => lGut(t.id)).length;
+    html += `<div class="sect"><h2>Stufe ${st.nr} · ${esc(st.titel)}</h2>
+      <span>${auf ? `${g} von ${ts.length}` : "gesperrt"}</span><i></i></div>
+      <p class="qsub" style="margin:-6px 0 14px">${esc(st.kurz)}</p>`;
+    if(!auf){
+      const v = lStufeTx(st.nr - 1);
+      html += `<div class="sheet plain lsperre">
+        <p class="qsub">Geht von selbst auf, sobald in Stufe ${st.nr-1} mindestens
+          ${Math.ceil(v.length * LQUOTE)} von ${v.length} Texten geschafft sind.</p>
+        <button class="btn ghost" data-act="lforce" data-n="${st.nr}">Trotzdem öffnen</button>
+      </div>`;
+      return;
+    }
+    html += `<div class="grid">${ts.map(t => {
+      lParse(t);
+      const s = lStand(t.id);
+      const zust = !s ? `${t._n} Wörter`
+        : lGut(t.id) ? `✓ ${s.best} % · ${t._n} Wörter`
+        : `zuletzt ${s.best} % · ${t._n} Wörter`;
+      return `<button class="topic${lGut(t.id) ? "" : s ? " alert" : ""}" data-act="lopen" data-id="${t.id}">
+        <span class="num">${esc(t.art)}</span>
+        <span class="tname">${esc(t.titel)}</span>
+        <span class="tdesc">${esc(t.intro)}</span>
+        <span class="spstate">${zust}</span></button>`;
+    }).join("")}</div>`;
+  });
+
+  html += `<div class="sheet plain" style="margin-top:22px">
+    <div class="qmeta">Lernstand</div>
+    <p class="qsub">Welche Texte du geschafft hast, steht in diesem Browser.</p>
+    <div class="inputrow"><button class="btn ghost" data-act="lreset">Lesestand zurücksetzen</button></div></div>`;
+  stage.innerHTML = html;
+}
+
+/* ============================================================
+   Einen Text durcharbeiten
+   ============================================================ */
+function lOpen(id){
+  const t = LESETEXTE.find(x => x.id === id);
+  if(!t) return;
+  LS = {t:lParse(t), phase:"ueber", idx:0, shown:false, ok:0, all:0, gl:new Set(), zu:false};
+  lRun();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+const lKopf = () => `<div class="subs" style="margin:0 0 18px">
+  <button class="sub" data-act="lback">‹ Alle Texte</button>
+  <button class="sub" data-act="lzu" aria-selected="${LS && LS.zu}">${LS && LS.zu ? "Text zeigen" : "Text einklappen"}</button>
+</div>`;
+
+function lTextBlock(){
+  const t = LS.t;
+  if(LS.zu) return "";
+  return `<div class="sheet plain ltext">
+    <div class="qmeta">${esc(t.art)} · Stufe ${t.stufe}</div>
+    <div class="ltitel">${esc(t.titel)}</div>
+    ${t._abs.map(p => `<p>${p}</p>`).join("")}
+  </div>`;
+}
+
+function lRun(){
+  const t = LS.t;
+  const gesamt = 1 + t.fragen.length;
+  const nr = LS.phase === "ueber" ? 1 : LS.idx + 2;
+
+  if(LS.phase === "ende") return lErgebnis();
+
+  const frage = LS.phase === "ueber" ? t.ueberblick : t.fragen[LS.idx];
+  const art = LS.phase === "ueber" ? "Überfliegen"
+    : {mc:"Verstehen", rf:"Richtig oder falsch", wort:"Wort im Text", kurz:"Frei antworten"}[frage.t];
+
+  let koerper;
+  if(LS.phase === "ueber" || frage.t === "mc"){
+    koerper = `<div class="qtext">${esc(frage.q)}</div>
+      <div class="answers">${frage.opts.map((o,i) =>
+        `<button class="opt" data-act="lopt" data-i="${i}">${esc(o)}</button>`).join("")}</div>`;
+  } else if(frage.t === "rf"){
+    koerper = `<div class="qtext">${esc(frage.q)}</div>
+      <p class="qsub">Such die Stelle im Text, die deine Antwort beweist.</p>
+      <div class="answers">
+        <button class="opt" data-act="lrf" data-v="1">richtig — vrai</button>
+        <button class="opt" data-act="lrf" data-v="0">falsch — faux</button></div>`;
+  } else if(frage.t === "wort"){
+    koerper = `<div class="qtext">${esc(frage.q)}</div>
+      <div class="inputrow">
+        <input id="lans" autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="französisches Wort eintippen">
+        <button class="btn" data-act="lcheck">Prüfen</button></div>`;
+  } else {
+    koerper = `<div class="qtext">${esc(frage.q)}</div>
+      <textarea class="spfrei" id="lans" spellcheck="false"
+        placeholder="Antworte auf Deutsch, in ganzen Sätzen."></textarea>
+      <div class="inputrow"><button class="btn" data-act="lmuster">Musterlösung zeigen</button></div>`;
+  }
+
+  stage.innerHTML = `${lKopf()}${lTextBlock()}
+    <div class="sheet">
+      <div class="vdbar"><span class="tag">${esc(art)}</span>
+        <span>Frage ${nr} von ${gesamt}</span>
+        <span>${LS.all ? `${LS.ok} von ${LS.all} richtig` : ""}</span></div>
+      ${koerper}
+      <div class="verdict" id="lv"></div>
+      <div class="progress"><span>${nr} / ${gesamt}</span>
+        <span class="pbar"><i style="width:${Math.round((nr-1)/gesamt*100)}%"></i></span></div>
+    </div>`;
+
+  const inp = $("#lans");
+  if(inp && inp.tagName === "INPUT"){
+    inp.focus();
+    inp.addEventListener("keydown", e => {
+      if(e.key !== "Enter") return;
+      if(LS.shown) return;                 // dann übernimmt der globale Enter-Griff
+      e.preventDefault(); lCheckWort();
+    });
+  }
+}
+
+/* ---------- Auswerten ------------------------------------- */
+function lBuchen(ok){
+  LS.all++; if(ok) LS.ok++;
+  stats.all++;
+  if(ok){ stats.ok++; stats.streak++; } else stats.streak = 0;
+  saveMEM(); updateStats();
+}
+function lVerdict(kind, html){
+  const v = $("#lv");
+  v.className = "verdict show " + kind;
+  v.innerHTML = html + `<div class="inputrow"><button class="btn accent" data-act="lnext">Weiter</button></div>`;
+}
+const lFrage = () => LS.phase === "ueber" ? LS.t.ueberblick : LS.t.fragen[LS.idx];
+
+function lOpt(i){
+  if(LS.shown) return;
+  LS.shown = true;
+  const f = lFrage(), ok = i === f.a;
+  document.querySelectorAll(".opt").forEach((b,m) => {
+    b.disabled = true;
+    if(m === f.a) b.classList.add("right"); else if(m === i) b.classList.add("wrong");
+  });
+  lBuchen(ok);
+  lVerdict(ok ? "ok" : "no",
+    (ok ? "Richtig." : `Richtig ist: <b>${esc(f.opts[f.a])}</b>`) +
+    (f.why ? `<span class="why">${f.why}</span>` : ""));
+}
+function lRf(v){
+  if(LS.shown) return;
+  LS.shown = true;
+  const f = lFrage(), ok = (v === 1) === !!f.a;
+  document.querySelectorAll(".opt").forEach(b => {
+    b.disabled = true;
+    const ist = b.dataset.v === "1";
+    if(ist === !!f.a) b.classList.add("right"); else if((b.dataset.v === "1") === (v === 1)) b.classList.add("wrong");
+  });
+  lBuchen(ok);
+  lVerdict(ok ? "ok" : "no",
+    `${ok ? "Richtig" : "Falsch"} — die Aussage ist <b>${f.a ? "richtig" : "falsch"}</b>.` +
+    (f.beleg ? `<span class="why">Beleg im Text: <i>«&nbsp;${esc(f.beleg)}&nbsp;»</i></span>` : "") +
+    (f.why ? `<span class="why">${f.why}</span>` : ""));
+}
+function lCheckWort(){
+  if(LS.shown) return;
+  const f = lFrage();
+  const mine = ($("#lans") || {}).value || "";
+  if(!mine.trim()) return;
+  LS.shown = true;
+  const r = judge(mine, f.a);
+  const ok = r !== "no";
+  lBuchen(ok);
+  lVerdict(r === "ok" ? "ok" : r === "almost" ? "almost" : "no",
+    (r === "ok"     ? `Richtig: <b>${esc(f.a[0])}</b>`
+     : r === "almost" ? `Fast — es fehlen nur Akzente: <b>${esc(f.a[0])}</b>`
+     :                  `Im Text steht: <b>${esc(f.a[0])}</b>`) +
+    (f.why ? `<span class="why">${f.why}</span>` : ""));
+}
+function lMuster(){
+  if(LS.shown) return;
+  LS.shown = true;
+  const f = lFrage();
+  const v = $("#lv");
+  v.className = "verdict show almost";
+  v.innerHTML = `<span class="vlab">Musterlösung</span>
+    <div style="margin:6px 0 10px"><b>${esc(f.muster)}</b></div>
+    ${f.why ? `<span class="why">${f.why}</span>` : ""}
+    <div class="inputrow">
+      <button class="btn ghost" data-act="lmark" data-ok="0">Hatte ich nicht</button>
+      <button class="btn accent" data-act="lmark" data-ok="1">Hatte ich</button></div>`;
+}
+function lMark(ok){
+  const f = lFrage();
+  lBuchen(ok);
+  const v = $("#lv");
+  v.className = "verdict show " + (ok ? "ok" : "no");
+  v.innerHTML = `<span class="vlab">Musterlösung</span>
+    <div style="margin:6px 0 10px"><b>${esc(f.muster)}</b></div>
+    ${f.why ? `<span class="why">${f.why}</span>` : ""}
+    <div class="inputrow"><button class="btn accent" data-act="lnext">Weiter</button></div>`;
+}
+function lNext(){
+  LS.shown = false;
+  if(LS.phase === "ueber"){ LS.phase = "frage"; LS.idx = 0; }
+  else LS.idx++;
+  if(LS.phase === "frage" && LS.idx >= LS.t.fragen.length) LS.phase = "ende";
+  lRun();
+}
+
+/* ---------- Ergebnis --------------------------------------- */
+function lErgebnis(){
+  const t = LS.t;
+  const proz = LS.all ? Math.round(LS.ok / LS.all * 100) : 0;
+  const alt = lStand(t.id);
+  LM.txt[t.id] = {best: Math.max(proz, (alt || {}).best || 0), mal: ((alt || {}).mal || 0) + 1};
+  lSave();
+
+  const nach = LESETEXTE.filter(x => x.stufe === t.stufe || x.stufe === t.stufe + 1)
+    .find(x => x.id !== t.id && !lGut(x.id) && lStufeAuf(x.stufe));
+  const urteil = proz >= 90 ? "Das saß."
+    : proz >= 70 ? "Geschafft."
+    : proz >= 50 ? "Noch nicht sicher — lies den Text noch einmal in Ruhe."
+    : "Der Text war zu schwer. Nimm ihn dir mit den Fragen daneben noch einmal vor.";
+  const geschl = LS.gl.size;
+  const nachg = geschl === 0 ? "Du hast kein einziges Wort nachgeschlagen."
+    : geschl === 1 ? "Du hast ein Wort nachgeschlagen."
+    : `Du hast ${geschl} von ${t._gl.length} markierten Wörtern nachgeschlagen.`;
+
+  stage.innerHTML = `${lKopf()}
+    <div class="sheet">
+      <div class="qmeta">${esc(t.titel)} · fertig</div>
+      <div class="qtext">${LS.ok} von ${LS.all} richtig — ${proz} %</div>
+      <p class="qsub">${urteil} ${esc(nachg)}</p>
+      <div class="inputrow">
+        ${nach ? `<button class="btn accent" data-act="lopen" data-id="${nach.id}">Nächster Text: ${esc(nach.titel)}</button>` : ""}
+        <button class="btn ghost" data-act="lagain">Diesen Text noch einmal</button>
+        <button class="btn ghost" data-act="lback">Alle Texte</button></div>
+      <div class="progress"><span>bestes Ergebnis: ${LM.txt[t.id].best} %</span>
+        <span class="pbar"><i style="width:${LM.txt[t.id].best}%"></i></span></div>
+    </div>
+    <div class="sect"><h2>Wörter aus diesem Text</h2><span>${t._gl.length}</span><i></i></div>
+    <div class="sheet plain ref"><table class="tbl">
+      ${t._gl.map(g => `<tr><td style="width:42%"><b>${esc(g.w)}</b></td><td>${esc(g.de)}</td></tr>`).join("")}
+    </table></div>
+    ${lTextBlock()}`;
+}
+
+/* ============================================================
+   Wortliste über alle Texte
+   ============================================================ */
+function lWortliste(){
+  let html = `<div class="sheet plain">
+    <div class="qmeta">Wörter</div>
+    <div class="qtext">Alle Wörter, die in den Texten erklärt werden</div>
+    <p class="qsub">Nach Texten geordnet. Wer einen Text durchgearbeitet hat, kann hier noch einmal
+      nachsehen, ohne ihn neu zu öffnen.</p></div>`;
+  LSTUFEN.forEach(st => {
+    lStufeTx(st.nr).forEach(t => {
+      lParse(t);
+      if(!t._gl.length) return;
+      html += `<div class="sect"><h2>${esc(t.titel)}</h2>
+        <span>Stufe ${t.stufe} · ${t._gl.length} Wörter</span><i></i></div>
+        <div class="sheet plain ref"><table class="tbl">${t._gl.map(g =>
+          `<tr><td style="width:42%"><b>${esc(g.w)}</b></td><td>${esc(g.de)}</td></tr>`).join("")}
+        </table></div>`;
+    });
+  });
+  stage.innerHTML = html;
+}
+
+/* ============================================================
+   Klicks
+   ============================================================ */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if(!el) return;
+  const a = el.dataset.act;
+
+  if(a === "lgl"){
+    el.classList.toggle("on");
+    if(LS) LS.gl.add(+el.dataset.g);
+    return;
+  }
+  if(!S.topic || S.topic.id !== "lesen") return;
+
+  if(a === "lopen")  return lOpen(el.dataset.id);
+  if(a === "lback"){ LS = null; return lUebersicht(); }
+  if(a === "lzu"){   if(LS){ LS.zu = !LS.zu; LS.phase === "ende" ? lErgebnis() : lRun(); } return; }
+  if(a === "lagain"){ return lOpen(LS.t.id); }
+  if(a === "lopt")   return lOpt(+el.dataset.i);
+  if(a === "lrf")    return lRf(+el.dataset.v);
+  if(a === "lcheck") return lCheckWort();
+  if(a === "lmuster")return lMuster();
+  if(a === "lmark")  return lMark(el.dataset.ok === "1");
+  if(a === "lnext")  return lNext();
+  if(a === "lforce"){ LM.offen[+el.dataset.n] = 1; lSave(); return lUebersicht(); }
+  if(a === "lreset"){
+    if(!confirm("Den Lesestand zurücksetzen? Alle Ergebnisse der Texte gehen verloren.")) return;
+    LM.txt = {}; LM.offen = {}; lSave(); LS = null; return lUebersicht();
+  }
+});
+
+/* ============================================================
+   Erklärung und Thema
+   ============================================================ */
+EXPL.lesen = () => `
+<p class="lead">Beim Lesen scheitert fast niemand an der Grammatik. Man scheitert daran, dass man
+versucht, <b>jedes Wort</b> zu verstehen — und nach drei Zeilen aufgibt. Lesen lernen heißt vor
+allem: aushalten, dass man etwas nicht versteht, und trotzdem weiterkommen.</p>
+
+<h3>Die drei Durchgänge</h3>
+<ol class="steps">
+<li><b>Überfliegen.</b> Titel, erste und letzte Zeile, auffällige Wörter. Frage dich nur:
+  Worum geht es, und was für ein Text ist das? Dreißig Sekunden, nicht mehr.</li>
+<li><b>Fragen lesen.</b> Erst jetzt. Dann weißt du, worauf du achten musst — und liest den Text
+  nicht umsonst zweimal.</li>
+<li><b>Gezielt suchen.</b> Für jede Frage die Stelle im Text finden. Bei Zahlen, Uhrzeiten und
+  Namen musst du gar nicht lesen, sondern nur gucken.</li>
+</ol>
+<div class="rule"><b>In der Klassenarbeit:</b> Markiere die Stelle, die deine Antwort beweist, im
+Text mit der Nummer der Frage. Bei <i>vrai / faux</i> wird fast immer verlangt, dass du zitierst
+(<i>justifiez</i>) — und ein falsches Zitat kostet den Punkt, auch wenn das Kreuz stimmt.</div>
+
+<h3>Unbekannte Wörter erschließen</h3>
+<ul class="steps">
+<li><b>Sieht es aus wie ein deutsches oder englisches Wort?</b>
+  <i>la musique, le problème, la situation, intéressant, le téléphone</i> — sehr viele Wörter
+  musst du nicht lernen, nur erkennen.</li>
+<li><b>Steckt ein Wort drin, das du kennst?</b> <i>le dentiste</i> → <i>la dent</i> (Zahn).
+  <i>un antivol</i> → <i>le vol</i> (Diebstahl). <i>refaire</i> → <i>faire</i> noch einmal.</li>
+<li><b>Was steht drumherum?</b> <i>Il a pris son parapluie parce qu'il pleuvait.</i>
+  Auch ohne <i>parapluie</i> zu kennen, ist klar, was es ungefähr ist.</li>
+<li><b>Vorsilben drehen die Bedeutung um:</b> <i>in-</i>, <i>im-</i>, <i>mal-</i>, <i>dé-</i>
+  — <i>juste → injuste</i>, <i>possible → impossible</i>, <i>heureux → malheureux</i>,
+  <i>faire → défaire</i>.</li>
+</ul>
+
+<h3>Falsche Freunde</h3>
+<table class="tbl">
+<tr><th>französisch</th><th>heißt</th><th>nicht</th></tr>
+<tr><td><i>la veste</i></td><td>die Jacke</td><td class="sm">Weste</td></tr>
+<tr><td><i>le car</i></td><td>der Reisebus</td><td class="sm">Auto (= la voiture)</td></tr>
+<tr><td><i>la figure</i></td><td>das Gesicht</td><td class="sm">Figur</td></tr>
+<tr><td><i>la conférence</i></td><td>der Vortrag</td><td class="sm">Konferenz</td></tr>
+<tr><td><i>rester</i></td><td>bleiben</td><td class="sm">sich ausruhen</td></tr>
+<tr><td><i>demander</i></td><td>fragen, bitten</td><td class="sm">fordern</td></tr>
+<tr><td><i>le collège</i></td><td>Klasse 6–9</td><td class="sm">Hochschule</td></tr>
+<tr><td><i>le lycée</i></td><td>Oberstufe</td><td class="sm">Gymnasium ab Klasse 5</td></tr>
+<tr><td><i>sensible</i></td><td>empfindsam</td><td class="sm">vernünftig</td></tr>
+<tr><td><i>la monnaie</i></td><td>das Kleingeld</td><td class="sm">Geld (= l'argent)</td></tr>
+<tr><td><i>le gymnase</i></td><td>die Turnhalle</td><td class="sm">Gymnasium</td></tr>
+<tr><td><i>la librairie</i></td><td>die Buchhandlung</td><td class="sm">Bibliothek (= la bibliothèque)</td></tr>
+</table>
+
+<h3>Die Wörter, die den Text gliedern</h3>
+<p>Wenn du nur diese kennst, weißt du immer, <b>wo du gerade bist</b> — auch wenn der Satz
+dazwischen unklar bleibt.</p>
+<table class="tbl">
+<tr><td><i>d'abord · ensuite · puis · enfin</i></td><td>zuerst · dann · danach · schließlich</td></tr>
+<tr><td><i>donc · c'est pourquoi · alors</i></td><td>also, deshalb — jetzt kommt die Folge</td></tr>
+<tr><td><i>parce que · car · en effet</i></td><td>weil, denn — jetzt kommt der Grund</td></tr>
+<tr><td><i>mais · par contre · en revanche</i></td><td>aber, dagegen — jetzt kippt es</td></tr>
+<tr><td><i>pourtant · cependant · quand même</i></td><td>trotzdem, dennoch</td></tr>
+<tr><td><i>par exemple · c'est-à-dire</i></td><td>zum Beispiel · das heißt</td></tr>
+<tr><td><i>d'ailleurs · en plus · de plus</i></td><td>übrigens, außerdem</td></tr>
+<tr><td><i>en fait · au fond</i></td><td>in Wirklichkeit, im Grunde</td></tr>
+</table>
+
+<h3>Kleine Wörter, die alles umdrehen</h3>
+<p>Diese acht entscheiden bei <i>vrai / faux</i> öfter über den Punkt als jedes Verb:</p>
+<table class="tbl">
+<tr><td><i>ne … que</i></td><td>nur — keine Verneinung! <i>Je n'ai que dix euros</i> = ich habe nur zehn.</td></tr>
+<tr><td><i>ne … plus</i></td><td>nicht mehr</td></tr>
+<tr><td><i>ne … jamais</i></td><td>nie</td></tr>
+<tr><td><i>sans</i></td><td>ohne</td></tr>
+<tr><td><i>sauf</i></td><td>außer</td></tr>
+<tr><td><i>presque</i></td><td>fast — also gerade <b>nicht</b> ganz</td></tr>
+<tr><td><i>à peine</i></td><td>kaum</td></tr>
+<tr><td><i>plutôt</i></td><td>eher, ziemlich</td></tr>
+</table>
+
+<h3>So ist dieser Teil aufgebaut</h3>
+<ul class="steps">
+<li><b>${LESETEXTE.length} Texte in ${LSTUFEN.length} Stufen</b> — von der vierzeiligen Nachricht
+  bis zum Text in Klassenarbeitslänge. Jede Stufe geht auf, sobald
+  ${Math.round(LQUOTE*100)} % der vorherigen geschafft sind; öffnen kannst du sie trotzdem jederzeit.</li>
+<li><b>Erst überfliegen, dann genau lesen.</b> Die erste Frage prüft immer nur, ob du den Text
+  grob eingeordnet hast. Danach kommen die Einzelheiten.</li>
+<li><b>Unterstrichene Wörter</b> kannst du antippen. Am Ende steht, wie viele du gebraucht hast —
+  das ist der ehrlichste Hinweis darauf, ob der Text zu schwer für dich war.</li>
+<li><b>Der Text bleibt sichtbar.</b> Beim Lesen darf man zurückblättern; das ist keine
+  Gedächtnisübung. Über „Text einklappen“ bekommst du mehr Platz für die Frage.</li>
+</ul>`;
+
+TOPICS.push({
+  id:"lesen", title:"Lesen lernen", kat:"Sprechen & Lesen",
+  desc:`${LESETEXTE.length} französische Texte in ${LSTUFEN.length} Stufen — mit Fragen, Worthilfe und Lesestrategien.`,
+  modes:["lesen","how","lwort"], items:[]
 });
 
 
